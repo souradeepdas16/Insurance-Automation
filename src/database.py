@@ -223,3 +223,10 @@ def reset_document_classifications(case_id: int) -> None:
             "UPDATE documents SET doc_type = NULL, classified_name = NULL WHERE case_id = ?",
             (case_id,),
         )
+
+
+def delete_document(doc_id: int) -> bool:
+    """Delete a single document record from the database."""
+    with get_db() as conn:
+        cur = conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+        return cur.rowcount > 0

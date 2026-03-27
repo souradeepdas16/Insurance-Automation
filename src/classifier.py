@@ -18,8 +18,8 @@ Return ONLY one of these exact strings (nothing else):
 - insurance_policy (vehicle insurance policy / cover note)
 - registration_certificate (vehicle RC / registration certificate)
 - driving_license (driving licence / DL)
-- repair_estimate (repair estimate / quotation from workshop/dealer)
-- final_invoice (final repair bill / invoice from workshop/dealer)
+- repair_estimate (repair estimate / quotation / proforma from workshop/dealer — look for words like "Estimate", "Quotation", "Proforma", "Repair Estimate", "Estimated Cost"; these do NOT have GST/tax breakdowns or payment details; prices shown are estimated/projected, not final)
+- final_invoice (final repair bill / tax invoice from workshop/dealer — look for words like "Tax Invoice", "Invoice", "Bill", "Final Bill"; these typically include GST/CGST/SGST breakdowns, invoice number, and payment details; prices are actual/final amounts charged)
 - route_permit (route permit document)
 - fitness_certificate (fitness certificate)
 - accident_document (FIR / accident report / police report / panchnama)
@@ -28,6 +28,10 @@ Return ONLY one of these exact strings (nothing else):
 - tax_report (road tax receipt / tax challan / tax payment document)
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
 - unknown (if none of the above)
+
+IMPORTANT: To distinguish repair_estimate from final_invoice, check the document TITLE/HEADER carefully.
+If the header says "Estimate", "Quotation", or "Proforma" → repair_estimate.
+If the header says "Tax Invoice", "Invoice", or "Bill" → final_invoice.
 
 Return ONLY the type string, no explanation."""
 
@@ -40,8 +44,8 @@ Valid types (use ONLY these exact strings):
 - insurance_policy
 - registration_certificate
 - driving_license
-- repair_estimate
-- final_invoice
+- repair_estimate (look for "Estimate", "Quotation", "Proforma" in the title/header — estimated/projected costs, NO GST breakdown)
+- final_invoice (look for "Tax Invoice", "Invoice", "Bill" in the title/header — actual amounts with GST/CGST/SGST breakdown)
 - route_permit
 - fitness_certificate
 - accident_document (FIR / accident report / police report / panchnama)
@@ -50,6 +54,10 @@ Valid types (use ONLY these exact strings):
 - tax_report (road tax receipt / tax challan / tax payment document)
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
 - unknown
+
+IMPORTANT: To distinguish repair_estimate from final_invoice, check the document TITLE/HEADER carefully.
+If the header says "Estimate", "Quotation", or "Proforma" → repair_estimate.
+If the header says "Tax Invoice", "Invoice", or "Bill" → final_invoice.
 
 Return a JSON object mapping each file label to its type, e.g.:
 {"file_1": "insurance_policy", "file_2": "registration_certificate", "file_3": "driving_license"}

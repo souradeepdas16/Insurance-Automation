@@ -213,18 +213,32 @@ function renderCase(c) {
 			.map((d) => {
 				const ext = extOf(d.original_name);
 				const iconClass = ["jpg", "jpeg", "png"].includes(ext) ? "img" : "pdf";
+				const showDelete = !isProcessing;
 				return `
-				<div class="doc-tile doc-tile-clickable" data-url="/api/cases/${c.id}/documents/${d.id}">
-					<div class="doc-tile-icon ${iconClass}">${getDocEmoji(ext)}</div>
-					<div class="doc-tile-info">
+				<div class="doc-tile" data-doc-id="${d.id}">
+					<div class="doc-tile-icon ${iconClass}" data-url="/api/cases/${c.id}/documents/${d.id}" style="cursor:pointer">${getDocEmoji(ext)}</div>
+					<div class="doc-tile-info doc-tile-clickable" data-url="/api/cases/${c.id}/documents/${d.id}" style="cursor:pointer">
 						<div class="doc-tile-name" title="${esc(d.original_name)}">${esc(d.original_name)}</div>
 						<div class="doc-tile-type">${ext.toUpperCase()} &mdash; click to open</div>
 					</div>
+					${
+						showDelete
+							? `<button class="btn-delete-doc" data-doc-id="${d.id}" title="Delete document">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+					</button>`
+							: ""
+					}
 				</div>`;
 			})
 			.join("");
-		uploadedList.querySelectorAll(".doc-tile-clickable").forEach((tile) => {
-			tile.addEventListener("click", () => window.open(tile.dataset.url, "_blank"));
+		uploadedList.querySelectorAll(".doc-tile-clickable, .doc-tile-icon[data-url]").forEach((el) => {
+			el.addEventListener("click", () => window.open(el.dataset.url, "_blank"));
+		});
+		uploadedList.querySelectorAll(".btn-delete-doc").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				deleteDocument(c.id, parseInt(btn.dataset.docId));
+			});
 		});
 	} else {
 		uploadedList.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 0">No documents uploaded yet</p>';
@@ -241,19 +255,33 @@ function renderCase(c) {
 		classifiedList.innerHTML = classified
 			.map((d) => {
 				const ext = extOf(d.classified_name);
+				const showDelete = !isProcessing;
 				return `
-				<div class="doc-tile doc-tile-clickable" data-url="/api/cases/${c.id}/classified/${encodeURIComponent(d.classified_name)}">
-					<div class="doc-tile-icon classified">&#10003;</div>
-					<div class="doc-tile-info">
+				<div class="doc-tile" data-doc-id="${d.id}">
+					<div class="doc-tile-icon classified" data-url="/api/cases/${c.id}/classified/${encodeURIComponent(d.classified_name)}" style="cursor:pointer">&#10003;</div>
+					<div class="doc-tile-info doc-tile-clickable" data-url="/api/cases/${c.id}/classified/${encodeURIComponent(d.classified_name)}" style="cursor:pointer">
 						<div class="doc-tile-name" title="${esc(d.classified_name)}">${esc(d.classified_name)}</div>
 						${d.doc_type ? `<span class="doc-tile-badge">${esc(d.doc_type)}</span>` : ""}
 						<div class="doc-tile-type">click to open</div>
 					</div>
+					${
+						showDelete
+							? `<button class="btn-delete-doc" data-doc-id="${d.id}" title="Delete document">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+					</button>`
+							: ""
+					}
 				</div>`;
 			})
 			.join("");
-		classifiedList.querySelectorAll(".doc-tile-clickable").forEach((tile) => {
-			tile.addEventListener("click", () => window.open(tile.dataset.url, "_blank"));
+		classifiedList.querySelectorAll(".doc-tile-clickable, .doc-tile-icon[data-url]").forEach((el) => {
+			el.addEventListener("click", () => window.open(el.dataset.url, "_blank"));
+		});
+		classifiedList.querySelectorAll(".btn-delete-doc").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				deleteDocument(c.id, parseInt(btn.dataset.docId));
+			});
 		});
 
 		// Update pipeline: if we have classified docs, classify step is done
@@ -302,8 +330,12 @@ function renderCase(c) {
 		`,
 			)
 			.join("");
+
+		// Load extracted data summary
+		loadExtractedData(c.id);
 	} else {
 		outputCard.style.display = "none";
+		$("#extracted-card").style.display = "none";
 	}
 
 	// ── Error ──
@@ -508,6 +540,18 @@ $("#btn-delete-case").addEventListener("click", async () => {
 	}
 });
 
+// ── Delete Document ──────────────────────────────────────────────────────────
+async function deleteDocument(caseId, docId) {
+	if (!confirm("Delete this document?")) return;
+	try {
+		await api(`/api/cases/${caseId}/documents/${docId}`, { method: "DELETE" });
+		toast("Document deleted", "success");
+		openCase(caseId);
+	} catch (err) {
+		toast(err.message, "error");
+	}
+}
+
 // ── Back Button ──────────────────────────────────────────────────────────────
 $("#btn-back").addEventListener("click", () => {
 	showView("dashboard");
@@ -541,6 +585,144 @@ $("#btn-save-settings").addEventListener("click", async () => {
 		toast(err.message, "error");
 	}
 });
+
+// ── Extracted Data Display ────────────────────────────────────────────────────
+const SECTION_LABELS = {
+	insurance: { icon: "🛡️", title: "Insurance Policy" },
+	rc: { icon: "🚗", title: "Registration Certificate" },
+	dl: { icon: "🪪", title: "Driving License" },
+	estimate: { icon: "🔧", title: "Repair Estimate" },
+	invoice: { icon: "🧾", title: "Final Invoice" },
+	route_permit: { icon: "📋", title: "Route Permit" },
+	fitness_cert: { icon: "✅", title: "Fitness Certificate" },
+};
+
+const FIELD_LABELS = {
+	insurer_name: "Insurer",
+	insurer_address: "Insurer Address",
+	policy_number: "Policy No.",
+	policy_period: "Policy Period",
+	idv: "IDV (₹)",
+	insured_name: "Insured Name",
+	insured_address: "Insured Address",
+	contact_number: "Contact",
+	hpa_with: "HPA With",
+	tp_policy_number: "TP Policy No.",
+	registration_number: "Reg. No.",
+	date_of_reg_issue: "Reg. Issue Date",
+	date_of_reg_expiry: "Reg. Expiry",
+	chassis_number: "Chassis No.",
+	engine_number: "Engine No.",
+	make_year: "Make/Year",
+	body_type: "Body Type",
+	vehicle_class: "Vehicle Class",
+	laden_weight: "Laden Weight",
+	unladen_weight: "Unladen Weight",
+	seating_capacity: "Seats",
+	fuel_type: "Fuel",
+	colour: "Colour",
+	road_tax_paid_upto: "Road Tax Upto",
+	registered_owner: "Registered Owner",
+	cubic_capacity: "CC",
+	driver_name: "Driver Name",
+	dob: "Date of Birth",
+	address: "Address",
+	city_state: "City/State",
+	licence_number: "License No.",
+	alt_licence_number: "Alt License No.",
+	date_of_issue: "Issue Date",
+	valid_till: "Valid Till",
+	issuing_authority: "Authority",
+	licence_type: "License Type",
+	dealer_name: "Dealer",
+	dealer_address: "Dealer Address",
+	total_labour_estimated: "Total Labour (₹)",
+	estimate_date: "Estimate Date",
+	estimate_number: "Estimate No.",
+	labour_assessed_total: "Labour Total (₹)",
+	invoice_number: "Invoice No.",
+	invoice_date: "Invoice Date",
+	total_amount: "Total Amount (₹)",
+	gst_amount: "GST (₹)",
+	permit_no: "Permit No.",
+	permit_holder_name: "Permit Holder",
+	valid_upto: "Valid Upto",
+	type_of_permit: "Permit Type",
+	route_area: "Route/Area",
+};
+
+async function loadExtractedData(caseId) {
+	const card = $("#extracted-card");
+	const body = $("#extracted-body");
+	try {
+		const data = await api(`/api/cases/${caseId}/extracted`);
+		let html = "";
+		for (const [key, meta] of Object.entries(SECTION_LABELS)) {
+			const section = data[key];
+			if (!section) continue;
+			html += renderSection(meta.icon, meta.title, section, key);
+		}
+		if (!html) {
+			card.style.display = "none";
+			return;
+		}
+		body.innerHTML = html;
+		card.style.display = "";
+	} catch {
+		card.style.display = "none";
+	}
+}
+
+function renderSection(icon, title, data, sectionKey) {
+	let content = "";
+
+	// Render key-value fields (skip arrays)
+	const fields = Object.entries(data).filter(([k, v]) => !Array.isArray(v));
+	if (fields.length > 0) {
+		content += '<div class="ext-fields">';
+		for (const [k, v] of fields) {
+			if (v === "" || v === 0 || v === null || v === undefined) continue;
+			const label = FIELD_LABELS[k] || k.replace(/_/g, " ");
+			const displayVal = typeof v === "number" ? v.toLocaleString("en-IN") : v;
+			content += `<div class="ext-field"><span class="ext-label">${esc(label)}</span><span class="ext-value">${esc(String(displayVal))}</span></div>`;
+		}
+		content += "</div>";
+	}
+
+	// Render parts table (for estimate)
+	if (data.parts && data.parts.length > 0) {
+		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>#</th><th>Part Name</th><th>Est. Price (₹)</th><th>Type</th></tr></thead><tbody>`;
+		for (const p of data.parts) {
+			content += `<tr><td>${p.sn || ""}</td><td>${esc(p.name)}</td><td class="num">${Number(p.estimated_price).toLocaleString("en-IN")}</td><td><span class="ext-cat ext-cat-${esc(p.category || "")}">${esc(p.category || "")}</span></td></tr>`;
+		}
+		content += "</tbody></table></div>";
+	}
+
+	// Render labour table (for estimate)
+	if (data.labour && data.labour.length > 0) {
+		content += `<div class="ext-table-wrap"><h4 class="ext-subtitle">Labour Breakdown</h4><table class="ext-table"><thead><tr><th>#</th><th>Description</th><th>R/R (₹)</th><th>Denting (₹)</th><th>C/W (₹)</th><th>Painting (₹)</th></tr></thead><tbody>`;
+		for (const l of data.labour) {
+			content += `<tr><td>${l.sn || ""}</td><td>${esc(l.description)}</td><td class="num">${Number(l.rr).toLocaleString("en-IN")}</td><td class="num">${Number(l.denting).toLocaleString("en-IN")}</td><td class="num">${Number(l.cw).toLocaleString("en-IN")}</td><td class="num">${Number(l.painting).toLocaleString("en-IN")}</td></tr>`;
+		}
+		content += "</tbody></table></div>";
+	}
+
+	// Render parts_assessed table (for invoice)
+	if (data.parts_assessed && data.parts_assessed.length > 0) {
+		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>#</th><th>Part Name</th><th>Assessed Price (₹)</th></tr></thead><tbody>`;
+		data.parts_assessed.forEach((p, i) => {
+			content += `<tr><td>${i + 1}</td><td>${esc(p.name)}</td><td class="num">${Number(p.assessed_price).toLocaleString("en-IN")}</td></tr>`;
+		});
+		content += "</tbody></table></div>";
+	}
+
+	if (!content) return "";
+
+	return `<div class="ext-section">
+		<div class="ext-section-header"><span class="ext-section-icon">${icon}</span><h3>${esc(title)}</h3></div>
+		${content}
+	</div>`;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function esc(str) {

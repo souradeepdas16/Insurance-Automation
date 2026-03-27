@@ -66,6 +66,7 @@ from src.database import (
     update_case_status,
     delete_case,
     add_document,
+    delete_document,
     get_document_by_id,
     get_documents_by_case,
 )
@@ -296,6 +297,63 @@ def api_serve_document(case_id: int, doc_id: int):
         media_type = "application/octet-stream"
 
     return FileResponse(path=str(file_path), media_type=media_type)
+
+
+@app.delete("/api/cases/{case_id}/documents/{doc_id}")
+def api_delete_document(case_id: int, doc_id: int):
+    """Delete a single uploaded document from a case."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+    if case["status"] == "processing":
+        raise HTTPException(400, "Cannot delete documents while case is processing")
+
+    doc = get_document_by_id(doc_id)
+    if not doc or doc["case_id"] != case_id:
+        raise HTTPException(404, "Document not found")
+
+    # Remove the file from disk
+    file_path = Path(doc["file_path"])
+    if file_path.exists() and file_path.is_file():
+        case_folder = Path(case["folder_path"])
+        if file_path.resolve().is_relative_to(case_folder.resolve()):
+            file_path.unlink()
+
+    # Remove classified copy if it exists
+    if doc.get("classified_name"):
+        classified_path = (
+            Path(case["folder_path"]) / "classified" / doc["classified_name"]
+        )
+        if classified_path.exists() and classified_path.is_file():
+            classified_path.unlink()
+        # Also remove sidecar JSON
+        sidecar = classified_path.with_suffix(".json")
+        if sidecar.exists() and sidecar.is_file():
+            sidecar.unlink()
+
+    delete_document(doc_id)
+    return {"ok": True}
+
+
+@app.get("/api/cases/{case_id}/extracted")
+def api_get_extracted_data(case_id: int):
+    """Return the extracted JSON data for a completed case."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+
+    case_folder = Path(case["folder_path"])
+    case_name = case["name"]
+
+    # Try main extracted JSON
+    json_path = case_folder / "output" / f"{case_name}_extracted.json"
+    if not json_path.exists():
+        raise HTTPException(404, "No extracted data available yet")
+
+    import json as _json
+
+    data = _json.loads(json_path.read_text(encoding="utf-8"))
+    return data
 
 
 @app.get("/api/cases/{case_id}/classified/{filename}")

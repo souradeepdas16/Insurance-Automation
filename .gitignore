@@ -7,3 +7,5 @@ watch/
 .tmp_pdf_*
 dist/
 logs/
+cases/
+data/

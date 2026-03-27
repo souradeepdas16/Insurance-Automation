@@ -46,6 +46,15 @@ insurance_policy | registration_certificate | driving_license | repair_estimate 
 final_invoice | route_permit | fitness_certificate | accident_document |
 survey_report | claim_form | tax_report | labour_charges | unknown
 
+CRITICAL — How to distinguish repair_estimate from final_invoice:
+• Check the document TITLE / HEADER first:
+  - "Estimate", "Quotation", "Service Quotation", "Proforma" → repair_estimate
+  - "Tax Invoice", "Invoice", "Bill", "Final Bill" → final_invoice
+• repair_estimate may still show CGST/UGST columns — that does NOT make it an invoice.
+  The TITLE is the deciding factor.
+• A "Quotation No." or "Estimate No." field → repair_estimate.
+  A "GST Invc No." or "Invoice No." field → final_invoice.
+
 Step 2 — Extract the relevant fields for that type.
 Use "" for missing text fields, 0 for missing numeric fields.
 All dates must be in DD.MM.YYYY format. All prices as plain numbers (no commas, no ₹).
@@ -66,7 +75,7 @@ registration_certificate (vehicle RC / registration certificate):
 driving_license (driving licence / DL):
 {"type":"driving_license","data":{"driver_name":"","dob":"DD.MM.YYYY","address":"","city_state":"","licence_number":"","alt_licence_number":"","date_of_issue":"DD.MM.YYYY","valid_till":"DD.MM.YYYY","issuing_authority":"","licence_type":""}}
 
-repair_estimate (repair estimate / quotation from workshop or dealer):
+repair_estimate (repair estimate / quotation / service quotation / proforma — header says "Estimate" or "Quotation"):
 {"type":"repair_estimate","data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":""}}
 • Extract ALL parts (up to 50+). category must be "metal", "plastic", or "glass":
   - metal: panels, brackets, bolts, hinges, sensors, structural parts, washers, nuts
@@ -74,7 +83,7 @@ repair_estimate (repair estimate / quotation from workshop or dealer):
   - glass: windshield, window glass, mirror glass, headlamp glass, tail lamp lens
 • labour breakdown: rr=R/R (Remove/Refit), denting=Denting, cw=Cutting/Welding, painting=Painting
 
-final_invoice (final repair bill / invoice from workshop or dealer):
+final_invoice (final repair bill / tax invoice — header says "Tax Invoice" or "Invoice", has GST Invc No.):
 {"type":"final_invoice","data":{"parts_assessed":[{"name":"Part Name","assessed_price":0.0}],"labour_assessed_total":0.0,"dealer_name":"","dealer_address":""}}
 • Extract ALL parts. Use base price before GST if GST is shown separately.
 
