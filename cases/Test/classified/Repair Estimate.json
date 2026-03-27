@@ -1,0 +1,1380 @@
+{
+  "type": "repair_estimate",
+  "display_name": "Repair Estimate",
+  "source_file": "estimate_Maruti.pdf",
+  "data": {
+    "parts": [
+      {
+        "sn": 1,
+        "name": "COVER ASSY CYLINDER HEAD",
+        "estimated_price": 2327.5,
+        "category": "metal"
+      },
+      {
+        "sn": 2,
+        "name": "BLOCK ASSY, CYLINDER",
+        "estimated_price": 21175.0,
+        "category": "metal"
+      },
+      {
+        "sn": 3,
+        "name": "PAN, OIL",
+        "estimated_price": 2189.0,
+        "category": "metal"
+      },
+      {
+        "sn": 4,
+        "name": "PLUG OIL DRAIN",
+        "estimated_price": 43.0,
+        "category": "metal"
+      },
+      {
+        "sn": 5,
+        "name": "MOUNTING COMP, ENG RH",
+        "estimated_price": 1636.0,
+        "category": "metal"
+      },
+      {
+        "sn": 6,
+        "name": "MOUNTING COMP, ENG LH",
+        "estimated_price": 1138.5,
+        "category": "metal"
+      },
+      {
+        "sn": 7,
+        "name": "ROD, ENG RR",
+        "estimated_price": 585.0,
+        "category": "metal"
+      },
+      {
+        "sn": 8,
+        "name": "BRACKET, ENG RR MTG",
+        "estimated_price": 746.5,
+        "category": "metal"
+      },
+      {
+        "sn": 9,
+        "name": "PLATE, SENSOR",
+        "estimated_price": 89.0,
+        "category": "metal"
+      },
+      {
+        "sn": 10,
+        "name": "CLEANER ASSY, AIR",
+        "estimated_price": 915.0,
+        "category": "metal"
+      },
+      {
+        "sn": 11,
+        "name": "PIPE, AIR CLNR SUCT",
+        "estimated_price": 133.5,
+        "category": "metal"
+      },
+      {
+        "sn": 12,
+        "name": "PIPE,AIR CLNR SUCT",
+        "estimated_price": 96.5,
+        "category": "metal"
+      },
+      {
+        "sn": 13,
+        "name": "HOSE, AIR CLNR SUCT",
+        "estimated_price": 300.0,
+        "category": "metal"
+      },
+      {
+        "sn": 14,
+        "name": "HOSE, AIR CLNR OUTLET",
+        "estimated_price": 1226.0,
+        "category": "metal"
+      },
+      {
+        "sn": 15,
+        "name": "PIPE COMP, EXH",
+        "estimated_price": 903.0,
+        "category": "metal"
+      },
+      {
+        "sn": 16,
+        "name": "MUFFLER COMP",
+        "estimated_price": 6826.0,
+        "category": "metal"
+      },
+      {
+        "sn": 17,
+        "name": "PUMP ASSY, FUEL",
+        "estimated_price": 9089.5,
+        "category": "metal"
+      },
+      {
+        "sn": 18,
+        "name": "PUMP ASSY, OIL",
+        "estimated_price": 4930.0,
+        "category": "metal"
+      },
+      {
+        "sn": 19,
+        "name": "FILTER ASSY, OIL",
+        "estimated_price": 99.0,
+        "category": "metal"
+      },
+      {
+        "sn": 20,
+        "name": "STRAINER, OIL PUMP",
+        "estimated_price": 322.5,
+        "category": "metal"
+      },
+      {
+        "sn": 21,
+        "name": "VALVE, OIL CONTROL",
+        "estimated_price": 3152.5,
+        "category": "metal"
+      },
+      {
+        "sn": 22,
+        "name": "FAN ASSY, ENGINE COOLING",
+        "estimated_price": 7665.0,
+        "category": "metal"
+      },
+      {
+        "sn": 23,
+        "name": "PUMP ASSY, WATER",
+        "estimated_price": 1419.5,
+        "category": "metal"
+      },
+      {
+        "sn": 24,
+        "name": "PULLEY, WATER PUMP",
+        "estimated_price": 244.0,
+        "category": "metal"
+      },
+      {
+        "sn": 25,
+        "name": "CASE COMP, THERMO",
+        "estimated_price": 271.5,
+        "category": "metal"
+      },
+      {
+        "sn": 26,
+        "name": "RADIATOR ASSY",
+        "estimated_price": 6084.0,
+        "category": "metal"
+      },
+      {
+        "sn": 27,
+        "name": "PIPE, WTR INLET",
+        "estimated_price": 345.5,
+        "category": "metal"
+      },
+      {
+        "sn": 28,
+        "name": "HOSE, RDTR INLET",
+        "estimated_price": 68.0,
+        "category": "metal"
+      },
+      {
+        "sn": 29,
+        "name": "HOSE, RADIATOR OUTLET",
+        "estimated_price": 97.0,
+        "category": "metal"
+      },
+      {
+        "sn": 30,
+        "name": "HOSE, HTR INLET",
+        "estimated_price": 125.0,
+        "category": "metal"
+      },
+      {
+        "sn": 31,
+        "name": "HOSE, HTR OUTLET",
+        "estimated_price": 120.0,
+        "category": "metal"
+      },
+      {
+        "sn": 32,
+        "name": "TANK ASSY, WATER RESERVE",
+        "estimated_price": 216.5,
+        "category": "metal"
+      },
+      {
+        "sn": 33,
+        "name": "SENSOR, OXYGEN",
+        "estimated_price": 2194.0,
+        "category": "metal"
+      },
+      {
+        "sn": 34,
+        "name": "SENSOR, OXYGEN RR",
+        "estimated_price": 2205.0,
+        "category": "metal"
+      },
+      {
+        "sn": 35,
+        "name": "CASE, TRANSAXLE LEFT",
+        "estimated_price": 7855.0,
+        "category": "metal"
+      },
+      {
+        "sn": 36,
+        "name": "SHAFT ASSY, GEAR SHIFT &",
+        "estimated_price": 2936.0,
+        "category": "metal"
+      },
+      {
+        "sn": 37,
+        "name": "GENERATOR ASSY",
+        "estimated_price": 8906.0,
+        "category": "metal"
+      },
+      {
+        "sn": 38,
+        "name": "COVER COMP, BATTERY",
+        "estimated_price": 68.0,
+        "category": "metal"
+      },
+      {
+        "sn": 39,
+        "name": "CABLE, BTRY GND",
+        "estimated_price": 1189.0,
+        "category": "metal"
+      },
+      {
+        "sn": 40,
+        "name": "CABLE SET, BTRY GND",
+        "estimated_price": 1246.0,
+        "category": "metal"
+      },
+      {
+        "sn": 41,
+        "name": "SPEEDOMETER ASSY, COMB",
+        "estimated_price": 4955.0,
+        "category": "metal"
+      },
+      {
+        "sn": 42,
+        "name": "HEADLAMP ASSY,R",
+        "estimated_price": 3050.0,
+        "category": "metal"
+      },
+      {
+        "sn": 43,
+        "name": "HEADLAMP ASSY,L",
+        "estimated_price": 2885.0,
+        "category": "metal"
+      },
+      {
+        "sn": 44,
+        "name": "HARNESS SET, MAIN",
+        "estimated_price": 11345.0,
+        "category": "metal"
+      },
+      {
+        "sn": 45,
+        "name": "LAMP ASSY, SIDE TURN",
+        "estimated_price": 145.0,
+        "category": "metal"
+      },
+      {
+        "sn": 46,
+        "name": "WIRE COMP, A/B",
+        "estimated_price": 285.0,
+        "category": "metal"
+      },
+      {
+        "sn": 47,
+        "name": "CONTROLLER ASSY BODY ELEC",
+        "estimated_price": 3213.0,
+        "category": "metal"
+      },
+      {
+        "sn": 48,
+        "name": "SWITCH ASSY LIGHTING & TURN",
+        "estimated_price": 1045.0,
+        "category": "metal"
+      },
+      {
+        "sn": 49,
+        "name": "CAP, MIRROR SW HOLE",
+        "estimated_price": 37.5,
+        "category": "plastic"
+      },
+      {
+        "sn": 50,
+        "name": "SWITCH ASSY, WIPER & WASHER",
+        "estimated_price": 765.0,
+        "category": "metal"
+      },
+      {
+        "sn": 51,
+        "name": "SWITCH ASSY, HAZARD WARNING",
+        "estimated_price": 277.0,
+        "category": "metal"
+      },
+      {
+        "sn": 52,
+        "name": "CABLE ASSY, CONTACT COIL",
+        "estimated_price": 845.0,
+        "category": "metal"
+      },
+      {
+        "sn": 53,
+        "name": "SWITCH ASSYPOWER WINDOW",
+        "estimated_price": 1500.0,
+        "category": "metal"
+      },
+      {
+        "sn": 54,
+        "name": "WIPER ASSY, WINDSHIELD",
+        "estimated_price": 3569.0,
+        "category": "metal"
+      },
+      {
+        "sn": 55,
+        "name": "ARM ASSY, WIPER, DRVR",
+        "estimated_price": 620.0,
+        "category": "metal"
+      },
+      {
+        "sn": 56,
+        "name": "BLADE ASSY WIPER",
+        "estimated_price": 545.0,
+        "category": "metal"
+      },
+      {
+        "sn": 57,
+        "name": "BLADE ASSY WIPER DRIVER",
+        "estimated_price": 515.0,
+        "category": "metal"
+      },
+      {
+        "sn": 58,
+        "name": "INLET SET, WASHER WITH CAP",
+        "estimated_price": 50.5,
+        "category": "metal"
+      },
+      {
+        "sn": 59,
+        "name": "PUMP ASSY, RR",
+        "estimated_price": 308.5,
+        "category": "metal"
+      },
+      {
+        "sn": 60,
+        "name": "TANK",
+        "estimated_price": 193.5,
+        "category": "metal"
+      },
+      {
+        "sn": 61,
+        "name": "CAP ASSY TANK (ALTO)",
+        "estimated_price": 5.5,
+        "category": "plastic"
+      },
+      {
+        "sn": 62,
+        "name": "NOZZLE, WASHER",
+        "estimated_price": 103.0,
+        "category": "metal"
+      },
+      {
+        "sn": 63,
+        "name": "HOSE",
+        "estimated_price": 29.5,
+        "category": "metal"
+      },
+      {
+        "sn": 64,
+        "name": "HORN ASSY, LOW PITCHED",
+        "estimated_price": 345.0,
+        "category": "metal"
+      },
+      {
+        "sn": 65,
+        "name": "HORN ASSY, HIGH PITCHED",
+        "estimated_price": 345.0,
+        "category": "metal"
+      },
+      {
+        "sn": 66,
+        "name": "CONTROLLER ASSY, EPS",
+        "estimated_price": 5904.5,
+        "category": "metal"
+      },
+      {
+        "sn": 67,
+        "name": "HOSE ASSY, FR WASHER",
+        "estimated_price": 216.5,
+        "category": "metal"
+      },
+      {
+        "sn": 68,
+        "name": "CONTROLLER ASSYA/B",
+        "estimated_price": 3050.0,
+        "category": "metal"
+      },
+      {
+        "sn": 69,
+        "name": "SENSOR ASSY, FORWARD",
+        "estimated_price": 655.0,
+        "category": "metal"
+      },
+      {
+        "sn": 70,
+        "name": "STRUT ASSY, FRONT SPNSN RH",
+        "estimated_price": 1581.0,
+        "category": "metal"
+      },
+      {
+        "sn": 71,
+        "name": "STRUT ASSY, FRONT SPNSN LH",
+        "estimated_price": 1581.0,
+        "category": "metal"
+      },
+      {
+        "sn": 72,
+        "name": "CAP, STRUT ROD",
+        "estimated_price": 112.0,
+        "category": "plastic"
+      },
+      {
+        "sn": 73,
+        "name": "BAR, FRONT STABILIZER",
+        "estimated_price": 1091.5,
+        "category": "metal"
+      },
+      {
+        "sn": 74,
+        "name": "JOINT COMP, FR STABILIZER BAR",
+        "estimated_price": 1032.0,
+        "category": "metal"
+      },
+      {
+        "sn": 75,
+        "name": "185/65R15 ECOPIA EP150 (BS)",
+        "estimated_price": 6784.0,
+        "category": "metal"
+      },
+      {
+        "sn": 76,
+        "name": "VALVE, TIRE (TR414)",
+        "estimated_price": 66.0,
+        "category": "metal"
+      },
+      {
+        "sn": 77,
+        "name": "WHEEL COMP",
+        "estimated_price": 3125.0,
+        "category": "metal"
+      },
+      {
+        "sn": 78,
+        "name": "HUB ASSY FRONT WHEEL",
+        "estimated_price": 2655.0,
+        "category": "metal"
+      },
+      {
+        "sn": 79,
+        "name": "SHAFT ASSY, FRONT DRIVE,R",
+        "estimated_price": 6821.5,
+        "category": "metal"
+      },
+      {
+        "sn": 80,
+        "name": "SHAFT ASSY, FRONT DRIVE,L",
+        "estimated_price": 6683.5,
+        "category": "metal"
+      },
+      {
+        "sn": 81,
+        "name": "KNUCKLE, STEERING,R",
+        "estimated_price": 1476.5,
+        "category": "metal"
+      },
+      {
+        "sn": 82,
+        "name": "KNUCKLE, STEERING,L",
+        "estimated_price": 1476.5,
+        "category": "metal"
+      },
+      {
+        "sn": 83,
+        "name": "ARM ASSY, FRONT SUSPENSION RH",
+        "estimated_price": 1613.0,
+        "category": "metal"
+      },
+      {
+        "sn": 84,
+        "name": "ARM ASSY, FRONT SUSPENSION LH",
+        "estimated_price": 1613.0,
+        "category": "metal"
+      },
+      {
+        "sn": 85,
+        "name": "FRAME COMP, FRONT SUSPENSION",
+        "estimated_price": 6042.5,
+        "category": "metal"
+      },
+      {
+        "sn": 86,
+        "name": "BOLT SPNSN ARM FR BUSHIN",
+        "estimated_price": 1080.0,
+        "category": "metal"
+      },
+      {
+        "sn": 87,
+        "name": "BEAM ASSY REAR SPNSN",
+        "estimated_price": 9057.0,
+        "category": "metal"
+      },
+      {
+        "sn": 88,
+        "name": "WHEEL S/ASSY, STEERING",
+        "estimated_price": 2256.5,
+        "category": "metal"
+      },
+      {
+        "sn": 89,
+        "name": "MODULE ASSY, AIRBAG",
+        "estimated_price": 4305.0,
+        "category": "metal"
+      },
+      {
+        "sn": 90,
+        "name": "COLUMN ASSY, COLPS STEERING",
+        "estimated_price": 21940.5,
+        "category": "metal"
+      },
+      {
+        "sn": 91,
+        "name": "COVER ASSY, STEERING COLUMN",
+        "estimated_price": 239.5,
+        "category": "plastic"
+      },
+      {
+        "sn": 92,
+        "name": "STEERING GEAR BOX ASSY",
+        "estimated_price": 9435.0,
+        "category": "metal"
+      },
+      {
+        "sn": 93,
+        "name": "PEDAL ASSY, ACCELERATOR",
+        "estimated_price": 1528.0,
+        "category": "metal"
+      },
+      {
+        "sn": 94,
+        "name": "PEDAL, BRAKE",
+        "estimated_price": 193.5,
+        "category": "metal"
+      },
+      {
+        "sn": 95,
+        "name": "PEDAL, CLUTCH",
+        "estimated_price": 193.5,
+        "category": "metal"
+      },
+      {
+        "sn": 96,
+        "name": "BOOSTER MASTER CYLINDER ASSY",
+        "estimated_price": 4307.0,
+        "category": "metal"
+      },
+      {
+        "sn": 97,
+        "name": "HOSE, BRAKE VACUUM PIPE TO INTK",
+        "estimated_price": 69.0,
+        "category": "metal"
+      },
+      {
+        "sn": 98,
+        "name": "CALIPER ASSY, FRONT BRAKE,R",
+        "estimated_price": 3526.0,
+        "category": "metal"
+      },
+      {
+        "sn": 99,
+        "name": "ACTUATOR ASSY, ABS",
+        "estimated_price": 17630.5,
+        "category": "metal"
+      },
+      {
+        "sn": 100,
+        "name": "SENSOR COMP, FR WHEEL,R",
+        "estimated_price": 825.0,
+        "category": "metal"
+      },
+      {
+        "sn": 101,
+        "name": "FRONT HOOD",
+        "estimated_price": 6960.0,
+        "category": "metal"
+      },
+      {
+        "sn": 102,
+        "name": "HINGE COMP, FRONT HOOD,R",
+        "estimated_price": 194.5,
+        "category": "metal"
+      },
+      {
+        "sn": 103,
+        "name": "HINGE COMP, FRONT HOOD, L",
+        "estimated_price": 188.5,
+        "category": "metal"
+      },
+      {
+        "sn": 104,
+        "name": "PANELFRONT FENDERR",
+        "estimated_price": 1899.0,
+        "category": "metal"
+      },
+      {
+        "sn": 105,
+        "name": "MEMBER, HOOD LOCK",
+        "estimated_price": 1286.0,
+        "category": "metal"
+      },
+      {
+        "sn": 106,
+        "name": "MEMBER, FRONT BUMPER",
+        "estimated_price": 3996.0,
+        "category": "metal"
+      },
+      {
+        "sn": 107,
+        "name": "PANEL COMP, FENDER APRON,R",
+        "estimated_price": 1364.0,
+        "category": "metal"
+      },
+      {
+        "sn": 108,
+        "name": "BRACKET, FR FENDER LWR RH",
+        "estimated_price": 43.0,
+        "category": "metal"
+      },
+      {
+        "sn": 109,
+        "name": "BRACKET COMP, FR FNDR UPR FR,R",
+        "estimated_price": 70.0,
+        "category": "metal"
+      },
+      {
+        "sn": 110,
+        "name": "MEMBER COMP, FRONT SIDE,R",
+        "estimated_price": 5254.5,
+        "category": "metal"
+      },
+      {
+        "sn": 111,
+        "name": "PANEL COMP, DASH",
+        "estimated_price": 2067.5,
+        "category": "metal"
+      },
+      {
+        "sn": 112,
+        "name": "PANEL, DASH SIDE RH",
+        "estimated_price": 1078.5,
+        "category": "metal"
+      },
+      {
+        "sn": 113,
+        "name": "PANEL COMP, COWL UPPER",
+        "estimated_price": 963.0,
+        "category": "metal"
+      },
+      {
+        "sn": 114,
+        "name": "MEMBER, COWL SIDE OTR RH",
+        "estimated_price": 258.0,
+        "category": "metal"
+      },
+      {
+        "sn": 115,
+        "name": "PANEL COMP, COWL TOP",
+        "estimated_price": 382.5,
+        "category": "metal"
+      },
+      {
+        "sn": 116,
+        "name": "PAN, MAIN FLOOR RH",
+        "estimated_price": 1006.5,
+        "category": "metal"
+      },
+      {
+        "sn": 117,
+        "name": "PANEL COMP SIDE SILL INNER RH",
+        "estimated_price": 1327.5,
+        "category": "metal"
+      },
+      {
+        "sn": 118,
+        "name": "PANEL, REAR FLOOR FR",
+        "estimated_price": 1105.0,
+        "category": "metal"
+      },
+      {
+        "sn": 119,
+        "name": "PANEL COMP, FRONT PILLAR INR,R",
+        "estimated_price": 926.0,
+        "category": "metal"
+      },
+      {
+        "sn": 120,
+        "name": "REINF COMP, FRONT DOOR HINGE,R",
+        "estimated_price": 1189.0,
+        "category": "metal"
+      },
+      {
+        "sn": 121,
+        "name": "REINF, FR PLR UPR RH",
+        "estimated_price": 645.0,
+        "category": "metal"
+      },
+      {
+        "sn": 122,
+        "name": "PANEL COMP, CTR PILLAR INNER,R",
+        "estimated_price": 405.5,
+        "category": "metal"
+      },
+      {
+        "sn": 123,
+        "name": "STRENGTH COMP, SIDE SILL,R",
+        "estimated_price": 1418.5,
+        "category": "metal"
+      },
+      {
+        "sn": 124,
+        "name": "REINF, REAR DOOR HINGE, LH",
+        "estimated_price": 1843.5,
+        "category": "metal"
+      },
+      {
+        "sn": 125,
+        "name": "PANEL, SIDE BODY OUTER,R",
+        "estimated_price": 6775.5,
+        "category": "metal"
+      },
+      {
+        "sn": 126,
+        "name": "PANEL, SIDE SILL RH",
+        "estimated_price": 6070.5,
+        "category": "metal"
+      },
+      {
+        "sn": 127,
+        "name": "PANEL, ROOF",
+        "estimated_price": 3071.5,
+        "category": "metal"
+      },
+      {
+        "sn": 128,
+        "name": "MEMBER COMP, ROOF FRONT INNER",
+        "estimated_price": 520.5,
+        "category": "metal"
+      },
+      {
+        "sn": 129,
+        "name": "MEMBER, ROOF CTR INNER",
+        "estimated_price": 419.0,
+        "category": "metal"
+      },
+      {
+        "sn": 130,
+        "name": "MEMBER, ROOF NO1",
+        "estimated_price": 119.5,
+        "category": "metal"
+      },
+      {
+        "sn": 131,
+        "name": "PANEL ASSY FRONT DOOR RH",
+        "estimated_price": 8757.5,
+        "category": "metal"
+      },
+      {
+        "sn": 132,
+        "name": "HINGE COMP, FRONT DOOR UPPER,R",
+        "estimated_price": 133.5,
+        "category": "metal"
+      },
+      {
+        "sn": 133,
+        "name": "HINGE COMP, FRONT DOOR LOWER,R",
+        "estimated_price": 133.5,
+        "category": "metal"
+      },
+      {
+        "sn": 134,
+        "name": "BUMPER FRONT(BLACK)",
+        "estimated_price": 1889.5,
+        "category": "plastic"
+      },
+      {
+        "sn": 135,
+        "name": "GRILLE, RADIATOR LOWER (BLACK)",
+        "estimated_price": 553.0,
+        "category": "plastic"
+      },
+      {
+        "sn": 136,
+        "name": "HOLDER, FR BUMPER SIDE,R",
+        "estimated_price": 48.5,
+        "category": "metal"
+      },
+      {
+        "sn": 137,
+        "name": "HOLDER, FR BUMPER SIDE,L",
+        "estimated_price": 48.5,
+        "category": "metal"
+      },
+      {
+        "sn": 138,
+        "name": "BEZEL, FRONT FOG LAMP,R",
+        "estimated_price": 115.0,
+        "category": "metal"
+      },
+      {
+        "sn": 139,
+        "name": "BEZEL, FRONT FOG LAMP, L",
+        "estimated_price": 115.0,
+        "category": "metal"
+      },
+      {
+        "sn": 140,
+        "name": "GUIDE, GRILLE AIR",
+        "estimated_price": 608.0,
+        "category": "metal"
+      },
+      {
+        "sn": 141,
+        "name": "COVER, FRONT FOG LAMP BEZEL",
+        "estimated_price": 41.0,
+        "category": "plastic"
+      },
+      {
+        "sn": 142,
+        "name": "GRILLE, RADIATOR UPPER",
+        "estimated_price": 1673.0,
+        "category": "metal"
+      },
+      {
+        "sn": 143,
+        "name": "COVER, RADIATOR UPPER GRILLE",
+        "estimated_price": 244.0,
+        "category": "metal"
+      },
+      {
+        "sn": 144,
+        "name": "GARNISH, RADIATOR GRILLE RH",
+        "estimated_price": 359.5,
+        "category": "metal"
+      },
+      {
+        "sn": 145,
+        "name": "GARNISH, RADIATOR GRILLE LH",
+        "estimated_price": 359.5,
+        "category": "metal"
+      },
+      {
+        "sn": 146,
+        "name": "STAY, FRONT HOOD",
+        "estimated_price": 24.5,
+        "category": "metal"
+      },
+      {
+        "sn": 147,
+        "name": "LINING, FRONT FENDER,R",
+        "estimated_price": 405.5,
+        "category": "metal"
+      },
+      {
+        "sn": 148,
+        "name": "LINING, FRONT FENDER,L",
+        "estimated_price": 405.5,
+        "category": "metal"
+      },
+      {
+        "sn": 149,
+        "name": "GARNISH COMP, COWL TOP CTR",
+        "estimated_price": 636.0,
+        "category": "metal"
+      },
+      {
+        "sn": 150,
+        "name": "GARNISH, COWL TOP SIDE RH",
+        "estimated_price": 14.5,
+        "category": "metal"
+      },
+      {
+        "sn": 151,
+        "name": "GARNISH, COWL TOP SIDE LH",
+        "estimated_price": 14.5,
+        "category": "metal"
+      },
+      {
+        "sn": 152,
+        "name": "CROSSMEMBER COMP, FRONT LOWER",
+        "estimated_price": 608.0,
+        "category": "metal"
+      },
+      {
+        "sn": 153,
+        "name": "COVER, FRONT FENDER,R",
+        "estimated_price": 119.5,
+        "category": "metal"
+      },
+      {
+        "sn": 154,
+        "name": "GARNISH, FRONT HOOD,RH",
+        "estimated_price": 63.5,
+        "category": "metal"
+      },
+      {
+        "sn": 155,
+        "name": "GARNISH, FRONT HOOD, LH",
+        "estimated_price": 63.5,
+        "category": "metal"
+      },
+      {
+        "sn": 156,
+        "name": "SILENCER COMP, FRONT HOOD",
+        "estimated_price": 377.5,
+        "category": "metal"
+      },
+      {
+        "sn": 157,
+        "name": "ABSORBER, FR BUMPER LWR,RH",
+        "estimated_price": 124.0,
+        "category": "metal"
+      },
+      {
+        "sn": 158,
+        "name": "ABSORBER, FR BUMPER LWR,LH",
+        "estimated_price": 124.0,
+        "category": "metal"
+      },
+      {
+        "sn": 159,
+        "name": "TRAY, BATTERY",
+        "estimated_price": 207.0,
+        "category": "metal"
+      },
+      {
+        "sn": 160,
+        "name": "PANEL INSTRUMENT MAIN",
+        "estimated_price": 1101.5,
+        "category": "metal"
+      },
+      {
+        "sn": 161,
+        "name": "MEMBER COMP, STEERING SUPPORT",
+        "estimated_price": 1078.5,
+        "category": "metal"
+      },
+      {
+        "sn": 162,
+        "name": "PANEL, INSTRUMENT CLUSTER",
+        "estimated_price": 193.5,
+        "category": "metal"
+      },
+      {
+        "sn": 163,
+        "name": "PANEL, METER VISOR",
+        "estimated_price": 230.0,
+        "category": "metal"
+      },
+      {
+        "sn": 164,
+        "name": "BOX COMP, GLOVE",
+        "estimated_price": 562.0,
+        "category": "metal"
+      },
+      {
+        "sn": 165,
+        "name": "COVER, GLOVE BOX UPPER",
+        "estimated_price": 216.5,
+        "category": "plastic"
+      },
+      {
+        "sn": 166,
+        "name": "CASE, SERVICE MANUAL",
+        "estimated_price": 198.0,
+        "category": "metal"
+      },
+      {
+        "sn": 167,
+        "name": "BASE, I/P CTR GARNISH",
+        "estimated_price": 89.0,
+        "category": "metal"
+      },
+      {
+        "sn": 168,
+        "name": "GARNISH, I/P PASSENGER",
+        "estimated_price": 133.5,
+        "category": "metal"
+      },
+      {
+        "sn": 169,
+        "name": "MODULE ASSY, PASSENGER AIR BAG",
+        "estimated_price": 6079.5,
+        "category": "metal"
+      },
+      {
+        "sn": 170,
+        "name": "HVAC UNIT",
+        "estimated_price": 12850.5,
+        "category": "metal"
+      },
+      {
+        "sn": 171,
+        "name": ".CABLE, MODE CONTROL",
+        "estimated_price": 63.0,
+        "category": "metal"
+      },
+      {
+        "sn": 172,
+        "name": "TRIM COMP, FRONT PILLAR,R",
+        "estimated_price": 101.0,
+        "category": "metal"
+      },
+      {
+        "sn": 173,
+        "name": "TRIM, DASH SIDE RH (BLACK)",
+        "estimated_price": 129.0,
+        "category": "metal"
+      },
+      {
+        "sn": 174,
+        "name": "SCUFF, SIDE SILL FRONT RH (BLACK)",
+        "estimated_price": 61.5,
+        "category": "metal"
+      },
+      {
+        "sn": 175,
+        "name": "TRIM, CTR PILLAR LOWER,R",
+        "estimated_price": 341.0,
+        "category": "metal"
+      },
+      {
+        "sn": 176,
+        "name": "TRIM COMP, QUARTER LOWER,R",
+        "estimated_price": 857.0,
+        "category": "metal"
+      },
+      {
+        "sn": 177,
+        "name": "TRIM, REAR DOOR OPENING",
+        "estimated_price": 474.5,
+        "category": "metal"
+      },
+      {
+        "sn": 178,
+        "name": "GRIP, ASSISTANT (BEIGE), LH",
+        "estimated_price": 152.0,
+        "category": "metal"
+      },
+      {
+        "sn": 179,
+        "name": "EMBLEM, MARK(S)",
+        "estimated_price": 121.0,
+        "category": "metal"
+      },
+      {
+        "sn": 180,
+        "name": "LINING COMP, ROOF",
+        "estimated_price": 4384.0,
+        "category": "metal"
+      },
+      {
+        "sn": 181,
+        "name": "SASH COMP, FR DR REAR LOWER,R",
+        "estimated_price": 66.0,
+        "category": "metal"
+      },
+      {
+        "sn": 182,
+        "name": "STOP COMP, FRONT DOOR OPEN",
+        "estimated_price": 124.0,
+        "category": "metal"
+      },
+      {
+        "sn": 183,
+        "name": "LATCH COMP, HOOD",
+        "estimated_price": 180.0,
+        "category": "metal"
+      },
+      {
+        "sn": 184,
+        "name": "CABLE COMP, HOOD LATCH RELEASE",
+        "estimated_price": 170.5,
+        "category": "metal"
+      },
+      {
+        "sn": 185,
+        "name": "LATCH ASSY FRONT DOOR RH",
+        "estimated_price": 910.0,
+        "category": "metal"
+      },
+      {
+        "sn": 186,
+        "name": "HANDLE COMP, FRONT DOOR OUT,R",
+        "estimated_price": 304.0,
+        "category": "metal"
+      },
+      {
+        "sn": 187,
+        "name": "HANDLE, SIDE DOOR INSIDE,R",
+        "estimated_price": 101.0,
+        "category": "metal"
+      },
+      {
+        "sn": 188,
+        "name": "REGULATOR ASSY, FRONT WINDOW,RH",
+        "estimated_price": 437.5,
+        "category": "metal"
+      },
+      {
+        "sn": 189,
+        "name": "RUN, FRONT DOOR GLASS,R",
+        "estimated_price": 654.5,
+        "category": "metal"
+      },
+      {
+        "sn": 190,
+        "name": "TRIM, FRONT DOOR RH",
+        "estimated_price": 1796.5,
+        "category": "metal"
+      },
+      {
+        "sn": 191,
+        "name": "WEATHERSTRIP, FRONT DOOR OUT,R",
+        "estimated_price": 193.5,
+        "category": "metal"
+      },
+      {
+        "sn": 192,
+        "name": "WEATHERSTRIP, FRONT DOOR OUT,L",
+        "estimated_price": 184.0,
+        "category": "metal"
+      },
+      {
+        "sn": 193,
+        "name": "WEATHERSTRIP, FR DOOR INNER,R",
+        "estimated_price": 170.5,
+        "category": "metal"
+      },
+      {
+        "sn": 194,
+        "name": "GARNISH, FR DOOR OUTER RH",
+        "estimated_price": 156.5,
+        "category": "metal"
+      },
+      {
+        "sn": 195,
+        "name": "GLASS SET, WINDSHIELD",
+        "estimated_price": 6150.0,
+        "category": "glass"
+      },
+      {
+        "sn": 196,
+        "name": "GLASS COMP, FRONT DOOR WINDOW,R",
+        "estimated_price": 1135.0,
+        "category": "glass"
+      },
+      {
+        "sn": 197,
+        "name": "MOLDING, WINDSHIELD",
+        "estimated_price": 377.5,
+        "category": "metal"
+      },
+      {
+        "sn": 198,
+        "name": "WEATHERSTRIP, FRONT DOOR OPNG,R",
+        "estimated_price": 543.5,
+        "category": "metal"
+      },
+      {
+        "sn": 199,
+        "name": "WEATHERSTRIP,RR DR PARTITION, L",
+        "estimated_price": 414.5,
+        "category": "metal"
+      },
+      {
+        "sn": 200,
+        "name": "MIRROR ASSY, OUT REAR VIEW,R",
+        "estimated_price": 1140.0,
+        "category": "metal"
+      },
+      {
+        "sn": 201,
+        "name": "MIRROR ASSY, OUT REAR VIEW,L",
+        "estimated_price": 1210.0,
+        "category": "metal"
+      },
+      {
+        "sn": 202,
+        "name": "MIRROR ASSY, INSIDE R",
+        "estimated_price": 210.0,
+        "category": "metal"
+      },
+      {
+        "sn": 203,
+        "name": "GARNISH COMP, FR DOOR INR,R",
+        "estimated_price": 62.5,
+        "category": "metal"
+      },
+      {
+        "sn": 204,
+        "name": "BELT ASSY, FR, RH",
+        "estimated_price": 3678.0,
+        "category": "metal"
+      },
+      {
+        "sn": 205,
+        "name": "BELT ASSY, FR, LH",
+        "estimated_price": 3217.0,
+        "category": "metal"
+      },
+      {
+        "sn": 206,
+        "name": "FRAME ASSY, FR CUSH,R",
+        "estimated_price": 4760.0,
+        "category": "metal"
+      },
+      {
+        "sn": 207,
+        "name": "PAD, FR CUSH",
+        "estimated_price": 950.0,
+        "category": "metal"
+      },
+      {
+        "sn": 208,
+        "name": "BACK S/ASSY, FR RH",
+        "estimated_price": 2968.0,
+        "category": "metal"
+      },
+      {
+        "sn": 209,
+        "name": "FRAME ASSY, FR CUSH LH",
+        "estimated_price": 4039.0,
+        "category": "metal"
+      },
+      {
+        "sn": 210,
+        "name": "TANK, FUEL",
+        "estimated_price": 5992.0,
+        "category": "metal"
+      },
+      {
+        "sn": 211,
+        "name": "V-BELT(4PK)",
+        "estimated_price": 350.0,
+        "category": "metal"
+      },
+      {
+        "sn": 212,
+        "name": "COMPRESSOR ASSY",
+        "estimated_price": 15380.0,
+        "category": "metal"
+      },
+      {
+        "sn": 213,
+        "name": "CONDENSER ASSY",
+        "estimated_price": 4148.0,
+        "category": "metal"
+      },
+      {
+        "sn": 214,
+        "name": "HOSE, SUCTION",
+        "estimated_price": 1326.5,
+        "category": "metal"
+      },
+      {
+        "sn": 215,
+        "name": "HOSE, DISCHARGE",
+        "estimated_price": 802.0,
+        "category": "metal"
+      },
+      {
+        "sn": 216,
+        "name": "HOSE, LIQUID",
+        "estimated_price": 1922.0,
+        "category": "metal"
+      },
+      {
+        "sn": 217,
+        "name": "COMPRESSOR OIL(R134A)SANDEN SP10(25",
+        "estimated_price": 370.0,
+        "category": "metal"
+      },
+      {
+        "sn": 218,
+        "name": "DG SEALANT SET WITHOUT PRIMER",
+        "estimated_price": 790.0,
+        "category": "metal"
+      },
+      {
+        "sn": 219,
+        "name": "ANABOND 685 RTV SILICON (100 GM TUB",
+        "estimated_price": 235.0,
+        "category": "metal"
+      },
+      {
+        "sn": 220,
+        "name": "BRAKE FLUID GC1500AA (500 ML PACK)",
+        "estimated_price": 385.0,
+        "category": "metal"
+      },
+      {
+        "sn": 221,
+        "name": "AIR DRYING SEALER (PU 92)",
+        "estimated_price": 2640.0,
+        "category": "metal"
+      },
+      {
+        "sn": 222,
+        "name": "COOLANT PREMIX GOLDEN YELLOW",
+        "estimated_price": 555.0,
+        "category": "metal"
+      },
+      {
+        "sn": 223,
+        "name": "Mudflap Set",
+        "estimated_price": 451.5,
+        "category": "plastic"
+      },
+      {
+        "sn": 224,
+        "name": "AC CAN GAS (450GM) SRF",
+        "estimated_price": 720.0,
+        "category": "metal"
+      },
+      {
+        "sn": 225,
+        "name": "ECSTAR NEXA OW16 - IDEMITSU",
+        "estimated_price": 1824.0,
+        "category": "metal"
+      }
+    ],
+    "labour": [
+      {
+        "sn": 1,
+        "description": "DENTING/ PAINTING REPAIR",
+        "rr": 0,
+        "denting": 65000.0,
+        "painting": 0.0,
+        "cw": 0
+      },
+      {
+        "sn": 2,
+        "description": "TOWING CHARGES",
+        "rr": 2450.0,
+        "denting": 0.0,
+        "painting": 0.0,
+        "cw": 0
+      }
+    ],
+    "total_labour_estimated": 67450.0,
+    "dealer_name": "TRICITY AUTOS",
+    "dealer_address": ""
+  }
+}

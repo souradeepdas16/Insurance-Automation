@@ -1,0 +1,144 @@
+
+========================================
+  Building Insurance Automation .exe
+========================================
+
+
+Running PyInstaller...
+408 INFO: PyInstaller: 6.19.0, contrib hooks: 2026.3
+409 INFO: Python: 3.13.7
+457 INFO: Platform: Windows-11-10.0.26200-SP0
+458 INFO: Python environment: D:\Projects_S\Insurance Automation\venv
+462 INFO: Removing temporary files and cleaning cache in C:\Users\Souradeep Das\AppData\Local\pyinstaller
+483 INFO: Module search paths (PYTHONPATH):
+['D:\\Projects_S\\Insurance Automation\\venv\\Scripts\\pyinstaller.exe',
+ 'C:\\Python313\\python313.zip',
+ 'C:\\Python313\\DLLs',
+ 'C:\\Python313\\Lib',
+ 'C:\\Python313',
+ 'D:\\Projects_S\\Insurance Automation\\venv',
+ 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages',
+ 'D:\\Projects_S\\Insurance Automation']
+1164 INFO: Appending 'datas' from .spec
+1165 INFO: checking Analysis
+1166 INFO: Building Analysis because Analysis-00.toc is non existent
+1166 INFO: Looking for Python shared library...
+1166 INFO: Using Python shared library: C:\Python313\python313.dll
+1166 INFO: Running Analysis Analysis-00.toc
+1166 INFO: Target bytecode optimization level: 0
+1166 INFO: Initializing module dependency graph...
+1168 INFO: Initializing module graph hook caches...
+1193 INFO: Analyzing modules for base_library.zip ...
+4118 INFO: Processing standard module hook 'hook-encodings.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+7849 INFO: Processing standard module hook 'hook-pickle.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+9966 INFO: Processing standard module hook 'hook-heapq.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+10826 INFO: Caching module dependency graph...
+10899 INFO: Analyzing D:\Projects_S\Insurance Automation\launcher.py
+10996 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+11398 INFO: Processing standard module hook 'hook-xml.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+11914 INFO: Processing standard module hook 'hook-_ctypes.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12267 INFO: Processing standard module hook 'hook-platform.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12544 INFO: Processing standard module hook 'hook-anyio.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+13701 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+13705 INFO: SetuptoolsInfo: initializing cached setuptools info...
+17288 INFO: Processing standard module hook 'hook-pydantic.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+18963 INFO: Processing standard module hook 'hook-zoneinfo.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+19033 INFO: Processing standard module hook 'hook-sysconfig.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+22090 INFO: Processing standard module hook 'hook-sqlite3.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+23712 INFO: Processing standard module hook 'hook-certifi.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+25037 INFO: Processing standard module hook 'hook-difflib.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+27702 INFO: Processing standard module hook 'hook-websockets.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+31259 INFO: Processing standard module hook 'hook-PIL.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+31615 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+32466 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+32854 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+33394 INFO: Processing standard module hook 'hook-openpyxl.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+35686 INFO: Processing standard module hook 'hook-uvicorn.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+38087 INFO: Analyzing hidden import 'uvicorn.loops'
+38088 INFO: Analyzing hidden import 'uvicorn.loops.auto'
+38093 INFO: Analyzing hidden import 'uvicorn.protocols.http.auto'
+38095 INFO: Analyzing hidden import 'uvicorn.protocols.websockets.auto'
+38097 INFO: Analyzing hidden import 'uvicorn.lifespan'
+38098 INFO: Analyzing hidden import 'uvicorn.lifespan.on'
+38111 INFO: Analyzing hidden import 'uvicorn.lifespan.off'
+38114 INFO: Analyzing hidden import 'anyio._backends'
+38114 INFO: Analyzing hidden import 'anyio._backends._asyncio'
+38347 INFO: Analyzing hidden import 'thefuzz'
+38349 INFO: Analyzing hidden import 'email.mime.multipart'
+38355 INFO: Processing module hooks (post-graph stage)...
+38678 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+38679 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
+38690 INFO: Processing standard module hook 'hook-setuptools.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+38714 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+38771 INFO: Processing pre-safe-import-module hook 'hook-jaraco.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+38773 INFO: Setuptools: 'jaraco' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco'!
+38796 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+38798 INFO: Setuptools: 'more_itertools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.more_itertools'!
+39235 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+39581 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+39588 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+39607 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+39608 INFO: Setuptools: 'backports' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.backports'!
+40023 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+40025 INFO: Setuptools: 'importlib_metadata' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.importlib_metadata'!
+40094 INFO: Processing standard module hook 'hook-setuptools._vendor.importlib_metadata.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+40141 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+40143 INFO: Setuptools: 'zipp' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.zipp'!
+41439 INFO: Processing pre-safe-import-module hook 'hook-wheel.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+41441 INFO: Setuptools: 'wheel' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.wheel'!
+41810 WARNING: Hidden import "tzdata" not found!
+42422 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
+43975 INFO: Performing binary vs. data reclassification (17 entries)
+43978 INFO: Looking for ctypes DLLs
+44060 INFO: Analyzing run-time hooks ...
+44074 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+44080 INFO: Including run-time hook 'pyi_rth_setuptools.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+44082 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+44088 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'D:\\Projects_S\\Insurance Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+44132 INFO: Creating base_library.zip...
+44173 INFO: Looking for dynamic libraries
+49574 INFO: Extra DLL search directories (AddDllDirectory): []
+49574 INFO: Extra DLL search directories (PATH): []
+50304 INFO: Warnings written to D:\Projects_S\Insurance Automation\build\insurance_automation\warn-insurance_automation.txt
+50597 INFO: Graph cross-reference written to D:\Projects_S\Insurance Automation\build\insurance_automation\xref-insurance_automation.html
+50722 INFO: checking PYZ
+50722 INFO: Building PYZ because PYZ-00.toc is non existent
+50722 INFO: Building PYZ (ZlibArchive) D:\Projects_S\Insurance Automation\build\insurance_automation\PYZ-00.pyz
+52365 INFO: Building PYZ (ZlibArchive) D:\Projects_S\Insurance Automation\build\insurance_automation\PYZ-00.pyz completed successfully.
+52450 INFO: checking PKG
+52451 INFO: Building PKG because PKG-00.toc is non existent
+52451 INFO: Building PKG (CArchive) InsuranceAutomation.pkg
+52507 INFO: Building PKG (CArchive) InsuranceAutomation.pkg completed successfully.
+52509 INFO: Bootloader D:\Projects_S\Insurance Automation\venv\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+52509 INFO: checking EXE
+52509 INFO: Building EXE because EXE-00.toc is non existent
+52509 INFO: Building EXE from EXE-00.toc
+52509 INFO: Copying bootloader EXE to D:\Projects_S\Insurance Automation\build\insurance_automation\InsuranceAutomation.exe
+52598 INFO: Copying icon to EXE
+52677 INFO: Copying 0 resources to EXE
+52678 INFO: Embedding manifest in EXE
+52758 INFO: Appending PKG archive to EXE
+53071 INFO: Fixing EXE headers
+53664 INFO: Building EXE from EXE-00.toc completed successfully.
+53668 INFO: checking COLLECT
+53669 INFO: Building COLLECT because COLLECT-00.toc is non existent
+53669 INFO: Removing dir D:\Projects_S\Insurance Automation\dist\InsuranceAutomation
+53711 INFO: Building COLLECT COLLECT-00.toc
+54177 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+54181 INFO: Build complete! The results are available in: D:\Projects_S\Insurance Automation\dist
+
+Copying runtime files...
+  Copied .env
+
+========================================
+  BUILD COMPLETE!
+========================================
+
+Output: dist\InsuranceAutomation\InsuranceAutomation.exe
+
+To distribute:
+  1. Copy the entire "dist\InsuranceAutomation" folder
+  2. Edit .env with your OPENROUTER_API_KEY (and optionally set AI_MODEL)
+  3. Double-click InsuranceAutomation.exe
+
+Press any key to continue . . . 

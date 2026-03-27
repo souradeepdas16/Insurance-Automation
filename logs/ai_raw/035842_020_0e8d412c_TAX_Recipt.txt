@@ -1,0 +1,4 @@
+# finish_reason: stop
+# chars: 646
+
+{"type":"tax_report","data":{"vehicle_tax_details":[{"period":"01-Apr-2025 to 31-Mar-2026","amount":500,"tax_type":"MV Tax","rebate":0.0,"interest":0.0,"penalty":0.0,"surcharge":0.0,"cess_nt":0.0,"cess_tr":950.0,"total":10450}],"grand_total":10450,"grand_total_in_words":"TEN THOUSAND FOUR HUNDRED AND FIFTY ONLY","transaction_date":"31.03.2025","payment_date":"31.03.2025","receipt_number":"PB250331V9402816 / PB250331C876268","vehicle_number":"PB13BP9415","owner_name":"GURPREET SINGH","vehicle_class":"Goods Carrier","transaction_id":"PBZ2503313830845","grn_number":"16800613","chassis_number":"MAT308582J7CXXX","bank_reference":"CPAEZGPWA3"}}

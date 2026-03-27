@@ -1,0 +1,16 @@
+{
+  "type": "insurance_policy",
+  "display_name": "Insurance Policy",
+  "source_file": "policy.pdf",
+  "data": {
+    "insurer_name": "National Insurance Company Limited",
+    "insurer_address": "FEROZEPUR BUSINESS OFFICE IFFCO Building, The Malwa Road, Ferozepur City, Ferozepur, Dist: Firozpur, Punjab, 152002",
+    "policy_number": "401701312410000560",
+    "policy_period": "08.11.2024 to 07.11.2025",
+    "idv": 375000,
+    "insured_name": "CHINTPURNI FRUIT COMPANY",
+    "insured_address": "4 SABJI MANDI, JALALABAD WEST DIST.: FIROZPUR, PUNJAB, FIROZPUR - DISTRICT OTHERS, FIROZPUR, PUNJAB, 152024",
+    "contact_number": "9878703725",
+    "hpa_with": ""
+  }
+}

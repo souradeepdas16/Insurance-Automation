@@ -1,0 +1,4 @@
+# finish_reason: stop
+# chars: 455
+
+{"type":"labour_charges","data":{"labour_charges":[{"sn":1,"item":"Front bumper","rr":0,"denting":6500,"cw":0,"painting":0},{"sn":2,"item":"Bills Fender","rr":0,"denting":0,"cw":0,"painting":0},{"sn":3,"item":"Fort L.1AS door","rr":4000,"denting":1500,"cw":0,"painting":0},{"sn":4,"item":"Rear Lits doog","rr":1500,"denting":1000,"cw":0,"painting":0},{"sn":5,"item":"L.H.S Rum gly","rr":0,"denting":2500,"cw":0,"painting":0}],"total_labour_charges":7870}}

@@ -1,0 +1,4 @@
+# finish_reason: stop
+# chars: 35
+
+{"type":"labour_charges","data":{}}

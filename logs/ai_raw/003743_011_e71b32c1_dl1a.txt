@@ -1,0 +1,4 @@
+# finish_reason: stop
+# chars: 339
+
+{"type":"driving_license","data":{"driver_name":"LAKHVIR SINGH","dob":"09.08.1994","address":"VILLAGE BALIAN TEHSIL DHURI DISTRICT SANGRUR (PB) 148106","city_state":"PUNJAB","licence_number":"PB-5920140008437","alt_licence_number":"","date_of_issue":"31.03.2025","valid_till":"13.07.2034","issuing_authority":"PUNJAB","licence_type":"TR"}}

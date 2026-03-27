@@ -1,0 +1,67 @@
+('D:\\Projects_S\\Insurance '
+ 'Automation\\build\\insurance_automation\\InsuranceAutomation.pkg',
+ {'BINARY': True,
+  'DATA': True,
+  'EXECUTABLE': True,
+  'EXTENSION': True,
+  'PYMODULE': True,
+  'PYSOURCE': True,
+  'PYZ': False,
+  'SPLASH': True,
+  'SYMLINK': False},
+ [('pyi-contents-directory _internal', '', 'OPTION'),
+  ('PYZ-00.pyz',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\PYZ-00.pyz',
+   'PYZ'),
+  ('struct',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\localpycs\\struct.pyc',
+   'PYMODULE'),
+  ('pyimod01_archive',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\localpycs\\pyimod01_archive.pyc',
+   'PYMODULE'),
+  ('pyimod02_importers',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\localpycs\\pyimod02_importers.pyc',
+   'PYMODULE'),
+  ('pyimod03_ctypes',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\localpycs\\pyimod03_ctypes.pyc',
+   'PYMODULE'),
+  ('pyimod04_pywin32',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\localpycs\\pyimod04_pywin32.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('pyi_rth_inspect',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py',
+   'PYSOURCE'),
+  ('pyi_rth_setuptools',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
+   'PYSOURCE'),
+  ('pyi_rth_multiprocessing',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
+   'PYSOURCE'),
+  ('launcher',
+   'D:\\Projects_S\\Insurance Automation\\launcher.py',
+   'PYSOURCE')],
+ 'python313.dll',
+ True,
+ False,
+ False,
+ [],
+ None,
+ None,
+ None)

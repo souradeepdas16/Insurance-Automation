@@ -1,0 +1,20 @@
+{
+  "type": "accident_document",
+  "display_name": "Accident Document",
+  "source_file": "image.jpg",
+  "data": {
+    "damage_to_insured_vehicle_details": "",
+    "third_party_injury_property_damage_details": "",
+    "injury_to_driver_occupant_details": "",
+    "witness_details": "",
+    "theft_details": "",
+    "date_of_accident": "",
+    "discharge_voucher_received_from": "",
+    "discharge_voucher_amount": 0,
+    "discharge_voucher_policy_number": "",
+    "discharge_voucher_motor_car_vehicle_number": "",
+    "discharge_voucher_date_of_accident": "",
+    "discharge_voucher_signature": "",
+    "discharge_voucher_accident_department_signature": ""
+  }
+}

@@ -1,0 +1,4 @@
+# finish_reason: stop
+# chars: 351
+
+{"type":"registration_certificate","data":{"registration_number":"","date_of_reg_issue":"","date_of_reg_expiry":"","chassis_number":"","engine_number":"","make_year":"","body_type":"Semi-trailer","vehicle_class":"","laden_weight":"","unladen_weight":"990","seating_capacity":5,"road_tax_paid_upto":"","fuel_type":"","colour":"","cubic_capacity":1364}}

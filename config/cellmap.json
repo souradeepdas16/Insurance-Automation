@@ -1,0 +1,85 @@
+{
+	"sheet1": {
+		"insurance": {
+			"G13": "insurer_name",
+			"G14": "insurer_address",
+			"G15": "insurer_allotment_text",
+			"G16": "policy_number",
+			"K16": "policy_period",
+			"K13": "idv",
+			"G18": "insured_name",
+			"G19": "insured_address",
+			"G20": "contact_number",
+			"G22": "hpa_with"
+		},
+		"rc": {
+			"G25": "registration_number",
+			"G26": "date_of_reg_issue",
+			"G27": "date_of_reg_expiry",
+			"G29": "chassis_number",
+			"G30": "engine_number",
+			"G31": "make_year",
+			"G32": "body_type",
+			"G33": "vehicle_class",
+			"G35": "laden_weight",
+			"G36": "unladen_weight",
+			"G42": "seating_capacity",
+			"G43": "road_tax_paid_upto",
+			"J43": "fuel_type_label",
+			"K44": "colour",
+			"G45": "cubic_capacity"
+		},
+		"rc_date_serial": {
+			"E258": "date_of_reg_issue_serial"
+		},
+		"dl": {
+			"G47": "driver_name",
+			"K47": "dob",
+			"G48": "address",
+			"G49": "city_state",
+			"G50": "licence_number",
+			"I50": "alt_licence_number",
+			"G51": "date_of_issue",
+			"G52": "valid_till",
+			"G53": "issuing_authority",
+			"G54": "licence_type"
+		},
+		"workshop": {
+			"G68": "dealer_name",
+			"G69": "dealer_address"
+		},
+		"parts_table": {
+			"start_row": 100,
+			"max_slots": 35,
+			"cols": {
+				"B": "sn",
+				"C": "name",
+				"F": "estimated_price",
+				"G": "allowed_metal",
+				"H": "allowed_plastic",
+				"I": "allowed_glass"
+			}
+		},
+		"fitness_cert": {
+			"G37": "valid_upto"
+		},
+		"route_permit": {
+			"G38": "permit_no",
+			"G39": "valid_upto",
+			"G40": "type_of_permit",
+			"G41": "route_area"
+		},
+		"labour_table": {
+			"start_row": 156,
+			"max_slots": 5,
+			"cols": {
+				"C": "description",
+				"F": "rr",
+				"G": "denting",
+				"H": "cw",
+				"I": "painting"
+			},
+			"total_estimated_cell": "I154"
+		}
+	}
+}

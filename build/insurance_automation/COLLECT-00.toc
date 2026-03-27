@@ -1,0 +1,370 @@
+([('InsuranceAutomation.exe',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\InsuranceAutomation.exe',
+   'EXECUTABLE'),
+  ('python313.dll', 'C:\\Python313\\python313.dll', 'BINARY'),
+  ('select.pyd', 'C:\\Python313\\DLLs\\select.pyd', 'EXTENSION'),
+  ('_multiprocessing.pyd',
+   'C:\\Python313\\DLLs\\_multiprocessing.pyd',
+   'EXTENSION'),
+  ('pyexpat.pyd', 'C:\\Python313\\DLLs\\pyexpat.pyd', 'EXTENSION'),
+  ('_ssl.pyd', 'C:\\Python313\\DLLs\\_ssl.pyd', 'EXTENSION'),
+  ('_hashlib.pyd', 'C:\\Python313\\DLLs\\_hashlib.pyd', 'EXTENSION'),
+  ('unicodedata.pyd', 'C:\\Python313\\DLLs\\unicodedata.pyd', 'EXTENSION'),
+  ('_decimal.pyd', 'C:\\Python313\\DLLs\\_decimal.pyd', 'EXTENSION'),
+  ('_lzma.pyd', 'C:\\Python313\\DLLs\\_lzma.pyd', 'EXTENSION'),
+  ('_bz2.pyd', 'C:\\Python313\\DLLs\\_bz2.pyd', 'EXTENSION'),
+  ('_ctypes.pyd', 'C:\\Python313\\DLLs\\_ctypes.pyd', 'EXTENSION'),
+  ('_queue.pyd', 'C:\\Python313\\DLLs\\_queue.pyd', 'EXTENSION'),
+  ('_socket.pyd', 'C:\\Python313\\DLLs\\_socket.pyd', 'EXTENSION'),
+  ('_overlapped.pyd', 'C:\\Python313\\DLLs\\_overlapped.pyd', 'EXTENSION'),
+  ('_asyncio.pyd', 'C:\\Python313\\DLLs\\_asyncio.pyd', 'EXTENSION'),
+  ('_wmi.pyd', 'C:\\Python313\\DLLs\\_wmi.pyd', 'EXTENSION'),
+  ('httptools\\parser\\parser.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\httptools\\parser\\parser.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('httptools\\parser\\url_parser.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\httptools\\parser\\url_parser.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('_sqlite3.pyd', 'C:\\Python313\\DLLs\\_sqlite3.pyd', 'EXTENSION'),
+  ('PIL\\_webp.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PIL\\_webp.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('PIL\\_imagingtk.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PIL\\_imagingtk.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('PIL\\_avif.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PIL\\_avif.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('PIL\\_imagingcms.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PIL\\_imagingcms.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('PIL\\_imagingmath.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PIL\\_imagingmath.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('_elementtree.pyd', 'C:\\Python313\\DLLs\\_elementtree.pyd', 'EXTENSION'),
+  ('PIL\\_imaging.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\PIL\\_imaging.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('_uuid.pyd', 'C:\\Python313\\DLLs\\_uuid.pyd', 'EXTENSION'),
+  ('_zoneinfo.pyd', 'C:\\Python313\\DLLs\\_zoneinfo.pyd', 'EXTENSION'),
+  ('pydantic_core\\_pydantic_core.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\pydantic_core\\_pydantic_core.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('jiter\\jiter.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\jiter\\jiter.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('websockets\\speedups.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets\\speedups.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('yaml\\_yaml.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\yaml\\_yaml.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('watchfiles\\_rust_notify.cp313-win_amd64.pyd',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\watchfiles\\_rust_notify.cp313-win_amd64.pyd',
+   'EXTENSION'),
+  ('api-ms-win-crt-filesystem-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-filesystem-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-process-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-process-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-environment-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-environment-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-conio-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-conio-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-runtime-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-runtime-l1-1-0.dll',
+   'BINARY'),
+  ('VCRUNTIME140.dll', 'C:\\Python313\\VCRUNTIME140.dll', 'BINARY'),
+  ('api-ms-win-crt-time-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-time-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-math-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-math-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-locale-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-locale-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-heap-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-heap-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-stdio-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-stdio-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-string-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-string-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-convert-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-convert-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-crt-utility-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-crt-utility-l1-1-0.dll',
+   'BINARY'),
+  ('libcrypto-3.dll', 'C:\\Python313\\DLLs\\libcrypto-3.dll', 'BINARY'),
+  ('libssl-3.dll', 'C:\\Python313\\DLLs\\libssl-3.dll', 'BINARY'),
+  ('libffi-8.dll', 'C:\\Python313\\DLLs\\libffi-8.dll', 'BINARY'),
+  ('VCRUNTIME140_1.dll', 'C:\\Python313\\VCRUNTIME140_1.dll', 'BINARY'),
+  ('sqlite3.dll', 'C:\\Python313\\DLLs\\sqlite3.dll', 'BINARY'),
+  ('api-ms-win-core-synch-l1-2-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-synch-l1-2-0.dll',
+   'BINARY'),
+  ('ucrtbase.dll',
+   'C:\\Program Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\ucrtbase.dll',
+   'BINARY'),
+  ('api-ms-win-core-fibers-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-fibers-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-file-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-file-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-errorhandling-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-errorhandling-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-profile-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-profile-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-console-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-console-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-synch-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-synch-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-processthreads-l1-1-1.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-processthreads-l1-1-1.dll',
+   'BINARY'),
+  ('api-ms-win-core-file-l1-2-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-file-l1-2-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-rtlsupport-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-rtlsupport-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-processenvironment-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-processenvironment-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-file-l2-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-file-l2-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-namedpipe-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-namedpipe-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-processthreads-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-processthreads-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-debug-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-debug-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-libraryloader-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-libraryloader-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-timezone-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-timezone-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-util-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-util-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-handle-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-handle-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-interlocked-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-interlocked-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-memory-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-memory-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-heap-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-heap-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-string-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-string-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-sysinfo-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-sysinfo-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-datetime-l1-1-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-datetime-l1-1-0.dll',
+   'BINARY'),
+  ('api-ms-win-core-localization-l1-2-0.dll',
+   'C:\\Program '
+   'Files\\Microsoft\\jdk-17.0.12.7-hotspot\\bin\\api-ms-win-core-localization-l1-2-0.dll',
+   'BINARY'),
+  ('config\\cellmap.json',
+   'D:\\Projects_S\\Insurance Automation\\config\\cellmap.json',
+   'DATA'),
+  ('static\\app.js',
+   'D:\\Projects_S\\Insurance Automation\\static\\app.js',
+   'DATA'),
+  ('static\\index.html',
+   'D:\\Projects_S\\Insurance Automation\\static\\index.html',
+   'DATA'),
+  ('static\\style.css',
+   'D:\\Projects_S\\Insurance Automation\\static\\style.css',
+   'DATA'),
+  ('templates\\MASTER_OIC_TATA.xls',
+   'D:\\Projects_S\\Insurance Automation\\templates\\MASTER_OIC_TATA.xls',
+   'DATA'),
+  ('templates\\MASTER_OIC_TATA.xlsx',
+   'D:\\Projects_S\\Insurance Automation\\templates\\MASTER_OIC_TATA.xlsx',
+   'DATA'),
+  ('setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\top_level.txt',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\top_level.txt',
+   'DATA'),
+  ('setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\RECORD',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\RECORD',
+   'DATA'),
+  ('setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\REQUESTED',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\REQUESTED',
+   'DATA'),
+  ('setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\WHEEL',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\WHEEL',
+   'DATA'),
+  ('setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\INSTALLER',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\INSTALLER',
+   'DATA'),
+  ('setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\METADATA',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\METADATA',
+   'DATA'),
+  ('setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\licenses\\LICENSE',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_metadata-8.7.1.dist-info\\licenses\\LICENSE',
+   'DATA'),
+  ('setuptools\\_vendor\\jaraco\\text\\Lorem ipsum.txt',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\setuptools\\_vendor\\jaraco\\text\\Lorem '
+   'ipsum.txt',
+   'DATA'),
+  ('certifi\\cacert.pem',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\certifi\\cacert.pem',
+   'DATA'),
+  ('certifi\\py.typed',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\certifi\\py.typed',
+   'DATA'),
+  ('pydantic-2.12.5.dist-info\\licenses\\LICENSE',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\pydantic-2.12.5.dist-info\\licenses\\LICENSE',
+   'DATA'),
+  ('click-8.3.1.dist-info\\METADATA',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\click-8.3.1.dist-info\\METADATA',
+   'DATA'),
+  ('pydantic-2.12.5.dist-info\\WHEEL',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\pydantic-2.12.5.dist-info\\WHEEL',
+   'DATA'),
+  ('websockets-16.0.dist-info\\entry_points.txt',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets-16.0.dist-info\\entry_points.txt',
+   'DATA'),
+  ('websockets-16.0.dist-info\\WHEEL',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets-16.0.dist-info\\WHEEL',
+   'DATA'),
+  ('websockets-16.0.dist-info\\INSTALLER',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets-16.0.dist-info\\INSTALLER',
+   'DATA'),
+  ('websockets-16.0.dist-info\\licenses\\LICENSE',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets-16.0.dist-info\\licenses\\LICENSE',
+   'DATA'),
+  ('click-8.3.1.dist-info\\RECORD',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\click-8.3.1.dist-info\\RECORD',
+   'DATA'),
+  ('pydantic-2.12.5.dist-info\\RECORD',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\pydantic-2.12.5.dist-info\\RECORD',
+   'DATA'),
+  ('click-8.3.1.dist-info\\INSTALLER',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\click-8.3.1.dist-info\\INSTALLER',
+   'DATA'),
+  ('click-8.3.1.dist-info\\WHEEL',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\click-8.3.1.dist-info\\WHEEL',
+   'DATA'),
+  ('pydantic-2.12.5.dist-info\\METADATA',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\pydantic-2.12.5.dist-info\\METADATA',
+   'DATA'),
+  ('websockets-16.0.dist-info\\METADATA',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets-16.0.dist-info\\METADATA',
+   'DATA'),
+  ('click-8.3.1.dist-info\\licenses\\LICENSE.txt',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\click-8.3.1.dist-info\\licenses\\LICENSE.txt',
+   'DATA'),
+  ('websockets-16.0.dist-info\\top_level.txt',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets-16.0.dist-info\\top_level.txt',
+   'DATA'),
+  ('websockets-16.0.dist-info\\RECORD',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\venv\\Lib\\site-packages\\websockets-16.0.dist-info\\RECORD',
+   'DATA'),
+  ('base_library.zip',
+   'D:\\Projects_S\\Insurance '
+   'Automation\\build\\insurance_automation\\base_library.zip',
+   'DATA')],)

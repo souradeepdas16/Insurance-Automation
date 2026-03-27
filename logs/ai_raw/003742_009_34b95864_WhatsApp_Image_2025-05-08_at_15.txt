@@ -1,0 +1,4 @@
+# finish_reason: stop
+# chars: 194
+
+{"type":"route_permit","data":{"permit_no":"PB2025-GP-5460A","permit_holder_name":"GURPREET SINGH","valid_upto":"23.03.2030","type_of_permit":"Goods Service","route_area":"WITHIN PUNJAB STATE"}}
