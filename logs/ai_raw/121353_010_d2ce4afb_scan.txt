@@ -1,4 +1,0 @@
-# finish_reason: stop
-# chars: 679
-
-{"type":"claim_form","data":{"insurer_name":"UNITED INDIA INSURANCE CO. LTD.","insurer_address":"24, Whites Road, Chennai-600 014","policy_number":"04280031250160083969","insured_name":"Mr. Satnans Singh","insured_address":"VILL. Khirkian wela Disst. Muktsar","vehicle_make_model":"XL6","vehicle_year":"2024","engine_number":"K15CN9482942","chassis_number":"13785802","registration_number":"PB01Σ6866","accident_date":"11.01.2026","accident_time":"5:10 Am","accident_place":"Mew Gidhasbaba","driver_name":"Satnam Singh","driver_age":"34","driver_address":"VILL. Khirkian wela Distt. Muktsar","driving_licence_number":"PB3020140041115","driving_licence_expiry_date":"21.05.2029"}}

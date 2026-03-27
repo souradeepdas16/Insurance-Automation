@@ -1,4 +1,0 @@
-# finish_reason: stop
-# chars: 31
-
-{"type":"claim_form","data":{}}

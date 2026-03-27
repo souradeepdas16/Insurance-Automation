@@ -1,4 +1,0 @@
-# finish_reason: stop
-# chars: 292
-
-{"type":"driving_license","data":{"driver_name":"","dob":"","address":"","city_state":"","licence_number":"PB-5920140008437","alt_licence_number":"PBDL.13100000478564","date_of_issue":"14-07-2014","valid_till":"31-03-2025","issuing_authority":"RTO SANGRUR","licence_type":"MCWG, LMV, TRANS"}}

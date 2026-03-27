@@ -1,4 +1,0 @@
-# finish_reason: stop
-# chars: 334
-
-{"type":"tax_report","data":{"vehicle_number":"PB13BP9415","transaction_date":"31.03.2025","payment_date":"31.03.2025","receipt_number":"PB250331V9402816/PB250331C876268","owner_name":"GURPREET SINGH","vehicle_class":"Goods Carrier","tax_period_from":"01.04.2025","tax_period_to":"31.03.2026","tax_amount":10450,"total_amount":10450}}

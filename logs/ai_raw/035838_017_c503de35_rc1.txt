@@ -1,4 +1,0 @@
-# finish_reason: stop
-# chars: 442
-
-{"type":"registration_certificate","data":{"registration_number":"HR03N 4949","date_of_reg_issue":"31.01.2012","date_of_reg_expiry":"17.01.2027","chassis_number":"000011467","engine_number":"1ND1216491","make_year":"TOYOTA KIRLOSKAR MOTOR LTD/2012","body_type":"SALOON","vehicle_class":"L.M.V. (CAR)","laden_weight":"","unladen_weight":"","seating_capacity":0,"road_tax_paid_upto":"","fuel_type":"DIESEL","colour":"WHITE","cubic_capacity":0}}
