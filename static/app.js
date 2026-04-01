@@ -469,15 +469,141 @@ fileInput.addEventListener("change", () => {
 
 async function uploadFiles(files) {
 	if (!currentCaseId) return;
-	const fd = new FormData();
-	for (const f of files) fd.append("files", f);
-	try {
-		await api(`/api/cases/${currentCaseId}/upload`, { method: "POST", body: fd });
-		toast(`${files.length} file(s) uploaded`, "success");
-		openCase(currentCaseId);
-	} catch (err) {
-		toast(err.message, "error");
+
+	const fileList = Array.from(files);
+	const total = fileList.length;
+	let completed = 0;
+	let failed = 0;
+
+	const panel = $("#upload-progress-panel");
+	const titleEl = $("#upload-progress-title");
+	const summaryEl = $("#upload-progress-summary");
+	const barEl = $("#upload-progress-bar");
+	const listEl = $("#upload-file-list");
+	const uploadZoneEl = $("#upload-zone");
+
+	// Hide the drop zone, show progress panel
+	uploadZoneEl.style.display = "none";
+	panel.style.display = "";
+	titleEl.textContent = `Uploading ${total} file${total > 1 ? "s" : ""}...`;
+	summaryEl.textContent = `0 / ${total}`;
+	barEl.style.width = "0%";
+
+	// Build file item list
+	listEl.innerHTML = fileList
+		.map((f, i) => {
+			const size = formatFileSize(f.size);
+			return `<div class="upload-file-item pending" id="upload-item-${i}">
+				<div class="upload-file-icon">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+				</div>
+				<span class="upload-file-name" title="${esc(f.name)}">${esc(f.name)}</span>
+				<span class="upload-file-size">${size}</span>
+				<span class="upload-file-status">Waiting</span>
+			</div>`;
+		})
+		.join("");
+
+	// Upload files one by one
+	for (let i = 0; i < total; i++) {
+		const file = fileList[i];
+		const itemEl = $(`#upload-item-${i}`);
+
+		// Mark current file as uploading
+		itemEl.className = "upload-file-item uploading";
+		itemEl.querySelector(".upload-file-icon").innerHTML =
+			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4m-3.93 7.07l-2.83-2.83M7.76 7.76L4.93 4.93"/></svg>';
+		itemEl.querySelector(".upload-file-status").textContent = "Uploading...";
+		titleEl.textContent = `Uploading: ${file.name}`;
+
+		// Scroll the item into view
+		itemEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+		try {
+			await uploadSingleFile(currentCaseId, file, (percent) => {
+				// Update per-file progress in the overall bar
+				const overallPercent = ((completed + percent / 100) / total) * 100;
+				barEl.style.width = `${overallPercent.toFixed(1)}%`;
+				itemEl.querySelector(".upload-file-status").textContent = `${Math.round(percent)}%`;
+			});
+
+			completed++;
+			itemEl.className = "upload-file-item done";
+			itemEl.querySelector(".upload-file-icon").innerHTML =
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>';
+			itemEl.querySelector(".upload-file-status").textContent = "Done";
+		} catch (err) {
+			failed++;
+			completed++;
+			itemEl.className = "upload-file-item error";
+			itemEl.querySelector(".upload-file-icon").innerHTML =
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+			itemEl.querySelector(".upload-file-status").textContent = "Failed";
+		}
+
+		summaryEl.textContent = `${completed} / ${total}`;
+		barEl.style.width = `${(completed / total) * 100}%`;
 	}
+
+	// Final state
+	const successCount = completed - failed;
+	if (failed === 0) {
+		titleEl.textContent = `All ${total} file${total > 1 ? "s" : ""} uploaded successfully`;
+	} else {
+		titleEl.textContent = `${successCount} uploaded, ${failed} failed`;
+	}
+
+	// After a short delay, hide progress and restore upload zone
+	setTimeout(() => {
+		panel.style.display = "none";
+		uploadZoneEl.style.display = "";
+		openCase(currentCaseId);
+	}, 1500);
+
+	if (failed > 0) {
+		toast(`${failed} file(s) failed to upload`, "error");
+	} else {
+		toast(`${successCount} file${successCount > 1 ? "s" : ""} uploaded`, "success");
+	}
+}
+
+function uploadSingleFile(caseId, file, onProgress) {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		const fd = new FormData();
+		fd.append("files", file);
+
+		xhr.upload.addEventListener("progress", (e) => {
+			if (e.lengthComputable) {
+				onProgress((e.loaded / e.total) * 100);
+			}
+		});
+
+		xhr.addEventListener("load", () => {
+			if (xhr.status >= 200 && xhr.status < 300) {
+				resolve(JSON.parse(xhr.responseText));
+			} else {
+				let msg = `HTTP ${xhr.status}`;
+				try {
+					const body = JSON.parse(xhr.responseText);
+					if (body.detail) msg = body.detail;
+				} catch {}
+				reject(new Error(msg));
+			}
+		});
+
+		xhr.addEventListener("error", () => reject(new Error("Network error")));
+		xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
+
+		xhr.open("POST", `${API}/api/cases/${caseId}/upload`);
+		xhr.send(fd);
+	});
+}
+
+function formatFileSize(bytes) {
+	if (bytes < 1024) return bytes + " B";
+	if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+	return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
 // ── Process ──────────────────────────────────────────────────────────────────
