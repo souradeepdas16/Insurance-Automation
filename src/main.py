@@ -34,6 +34,51 @@ SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".pdf"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 DEBOUNCE_SEC = 3.0
 
+
+def _merge_files_to_pdf(file_paths: list[str], output_path: str) -> None:
+    """Merge multiple image/PDF files into a single PDF."""
+    import io
+
+    from PIL import Image
+    from pypdf import PdfReader, PdfWriter
+
+    writer = PdfWriter()
+
+    for fp in file_paths:
+        ext = Path(fp).suffix.lower()
+        if ext in IMAGE_EXTS:
+            img = Image.open(fp)
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            buf = io.BytesIO()
+            img.save(buf, format="PDF")
+            buf.seek(0)
+            reader = PdfReader(buf)
+            for page in reader.pages:
+                writer.add_page(page)
+        elif ext == ".pdf":
+            reader = PdfReader(fp)
+            for page in reader.pages:
+                writer.add_page(page)
+
+    with open(output_path, "wb") as f:
+        writer.write(f)
+
+
+def _extract_pdf_pages(pdf_path: str, pages: list[int], output_path: str) -> None:
+    """Extract specific pages (1-based) from a PDF into a new PDF file."""
+    from pypdf import PdfReader, PdfWriter
+
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
+    for page_num in pages:
+        idx = page_num - 1  # convert to 0-based
+        if 0 <= idx < len(reader.pages):
+            writer.add_page(reader.pages[idx])
+    with open(output_path, "wb") as f:
+        writer.write(f)
+
+
 # Human-readable names for classified document types
 DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "insurance_policy": "Insurance Policy",
@@ -89,10 +134,12 @@ def process_case(
         print(f"    ✗ Classification+extraction failed: {e}")
         return
 
-    for file_path, result in combined_results.items():
-        doc_type = result["type"]
-        print(f"    {os.path.basename(file_path)} → {doc_type}")
-        grouped_data.setdefault(doc_type, []).append(result["data"])
+    for file_path, doc_list in combined_results.items():
+        for doc_result in doc_list:
+            doc_type = doc_result["type"]
+            pages = doc_result.get("pages", [1])
+            print(f"    {os.path.basename(file_path)} → {doc_type} (pages {pages})")
+            grouped_data.setdefault(doc_type, []).append(doc_result["data"])
 
     # ── Step 2: Build AllExtractedData ────────────────────────────────────────
     all_data = build_all_extracted_data(grouped_data)
@@ -111,27 +158,31 @@ def process_case(
 
         # Per-doc sidecar JSONs
         _type_seen: dict[str, int] = {}
-        for _fp, _res in combined_results.items():
-            _dt = _res["type"]
-            _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, "Extra Document")
-            _ext = os.path.splitext(_fp)[1].lower()
-            if _ext in IMAGE_EXTS and _dt == "unknown":
-                _display = "Extra Image"
-            _type_seen[_dt] = _type_seen.get(_dt, 0) + 1
-            _cnt = _type_seen[_dt]
-            _stem = _display if _cnt == 1 else f"{_display} ({_cnt})"
-            with open(str(OUTPUT_DIR / f"{_stem}.json"), "w", encoding="utf-8") as _jf:
-                json.dump(
-                    {
-                        "type": _dt,
-                        "display_name": _display,
-                        "source_file": os.path.basename(_fp),
-                        "data": _res["data"],
-                    },
-                    _jf,
-                    indent=2,
-                    ensure_ascii=False,
-                )
+        for _fp, _doc_list in combined_results.items():
+            for _res in _doc_list:
+                _dt = _res["type"]
+                _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, "Extra Document")
+                _ext = os.path.splitext(_fp)[1].lower()
+                if _ext in IMAGE_EXTS and _dt == "unknown":
+                    _display = "Extra Image"
+                _type_seen[_dt] = _type_seen.get(_dt, 0) + 1
+                _cnt = _type_seen[_dt]
+                _stem = _display if _cnt == 1 else f"{_display} ({_cnt})"
+                with open(
+                    str(OUTPUT_DIR / f"{_stem}.json"), "w", encoding="utf-8"
+                ) as _jf:
+                    json.dump(
+                        {
+                            "type": _dt,
+                            "display_name": _display,
+                            "source_file": os.path.basename(_fp),
+                            "pages": _res.get("pages", [1]),
+                            "data": _res["data"],
+                        },
+                        _jf,
+                        indent=2,
+                        ensure_ascii=False,
+                    )
 
         doc_types = [k for k in grouped_data if k != "unknown"]
         print(f"\n  ✓ DONE: {case_name}")
@@ -187,7 +238,6 @@ def process_case_from_db(case_id: int) -> None:
     # ── Step 1: Classify and extract (one API call per doc, parallel) ────────
     print("  Step 1: Classifying and extracting documents...")
     grouped_data: dict[str, list[dict]] = {}
-    type_counters: dict[str, int] = {}
 
     # Gather valid file paths
     valid_docs = []
@@ -208,58 +258,128 @@ def process_case_from_db(case_id: int) -> None:
     except Exception as e:
         raise RuntimeError(f"Batch classification failed: {e}") from e
 
+    # Build a flat list: (doc_db_record, doc_type, pages, extracted_data, source_file_path)
+    classified_items: list[tuple[dict, str, list[int], dict, str]] = []
+
     for doc in valid_docs:
         file_path = doc["file_path"]
-        _res = combined_results.get(file_path, {"type": "unknown", "data": {}})
-        doc_type = _res["type"]
-        extracted_data = _res["data"]
-        print(f"    {doc['original_name']} → {doc_type}")
-
-        try:
-            # Copy file to classified/ subfolder, e.g. insurance_policy_1.jpg
-            classified_dir = case_folder / "classified"
-            classified_dir.mkdir(parents=True, exist_ok=True)
-
-            ext = Path(file_path).suffix
-            type_counters[doc_type] = type_counters.get(doc_type, 0) + 1
-            count = type_counters[doc_type]
-            display = DOC_TYPE_DISPLAY_NAMES.get(doc_type, "Extra Document")
-
-            # Use clean names: "Insurance Policy.jpg", "Repair Estimate (2).pdf"
-            if ext.lower() in IMAGE_EXTS and doc_type == "unknown":
-                display = "Extra Image"
-            if count == 1:
-                new_name = f"{display}{ext}"
+        doc_list = combined_results.get(
+            file_path, [{"type": "unknown", "pages": [1], "data": {}}]
+        )
+        for doc_result in doc_list:
+            doc_type = doc_result["type"]
+            pages = doc_result.get("pages", [1])
+            extracted_data = doc_result["data"]
+            multi = len(doc_list) > 1
+            if multi:
+                print(f"    {doc['original_name']} → {doc_type} (pages {pages})")
             else:
-                new_name = f"{display} ({count}){ext}"
+                print(f"    {doc['original_name']} → {doc_type}")
+            grouped_data.setdefault(doc_type, []).append(extracted_data)
+            classified_items.append((doc, doc_type, pages, extracted_data, file_path))
+
+    # ── Step 1b: Create classified/ with split/merged PDFs per type ──────────
+    classified_dir = case_folder / "classified"
+    classified_dir.mkdir(parents=True, exist_ok=True)
+
+    # Group classified_items by doc_type
+    type_to_items: dict[str, list[tuple[dict, list[int], dict, str]]] = {}
+    for doc, doc_type, pages, extracted_data, file_path in classified_items:
+        type_to_items.setdefault(doc_type, []).append(
+            (doc, pages, extracted_data, file_path)
+        )
+
+    for doc_type, items in type_to_items.items():
+        display = DOC_TYPE_DISPLAY_NAMES.get(doc_type, "Extra Document")
+
+        if len(items) > 1 and doc_type != "unknown":
+            # Multiple entries of same type (could be from different files or same split file)
+            # → merge all relevant pages into one PDF
+            all_source_paths: list[tuple[str, list[int]]] = [
+                (fp, pgs) for (_, pgs, _, fp) in items
+            ]
+            source_names = list(
+                dict.fromkeys(d["original_name"] for d, _, _, _ in items)
+            )
+            new_name = f"{display}.pdf"
             new_path = classified_dir / new_name
 
-            shutil.copy2(file_path, str(new_path))
+            try:
+                _merge_files_to_pdf([fp for fp, _ in all_source_paths], str(new_path))
+                print(f"    ✓ Merged {len(items)} {display} file(s) → {new_name}")
+            except Exception as e:  # pylint: disable=broad-except
+                print(f"    ✗ Merge failed for {display}: {e}, copying individually")
+                for i, (doc, pages, extracted_data, fp) in enumerate(items, 1):
+                    ext = Path(fp).suffix
+                    fallback_name = (
+                        f"{display}{ext}" if i == 1 else f"{display} ({i}){ext}"
+                    )
+                    shutil.copy2(fp, str(classified_dir / fallback_name))
+                    update_document_classification(doc["id"], doc_type, fallback_name)
+                continue
 
-            update_document_classification(doc["id"], doc_type, new_name)
+            for doc, _, _, _ in items:
+                update_document_classification(doc["id"], doc_type, new_name)
 
-            # Write per-doc sidecar JSON alongside the classified file
+            all_data_for_type = [ed for (_, _, ed, _) in items]
             with open(
-                str(classified_dir / f"{Path(new_name).stem}.json"),
-                "w",
-                encoding="utf-8",
+                str(classified_dir / f"{display}.json"), "w", encoding="utf-8"
             ) as _jf:
                 json.dump(
                     {
                         "type": doc_type,
                         "display_name": display,
-                        "source_file": doc["original_name"],
-                        "data": extracted_data,
+                        "source_files": source_names,
+                        "data": all_data_for_type,
                     },
                     _jf,
                     indent=2,
                     ensure_ascii=False,
                 )
+        else:
+            # Single entry for this type → split pages from source PDF or copy file
+            for i, (doc, pages, extracted_data, fp) in enumerate(items, 1):
+                ext = Path(fp).suffix.lower()
+                d = display
+                if ext in IMAGE_EXTS and doc_type == "unknown":
+                    d = "Extra Image"
+                new_name = f"{d}.pdf" if i == 1 else f"{d} ({i}).pdf"
 
-            grouped_data.setdefault(doc_type, []).append(extracted_data)
+                try:
+                    # For PDFs with page info, extract only the relevant pages
+                    if ext == ".pdf" and pages:
+                        _extract_pdf_pages(fp, pages, str(classified_dir / new_name))
+                    else:
+                        # Images or fallback: just copy (keep original extension)
+                        new_name = f"{d}{ext}" if i == 1 else f"{d} ({i}){ext}"
+                        shutil.copy2(fp, str(classified_dir / new_name))
 
-        except Exception as e:  # pylint: disable=broad-except
-            print(f"    ✗ Error processing {doc['original_name']}: {e}")
+                    update_document_classification(doc["id"], doc_type, new_name)
+
+                    with open(
+                        str(classified_dir / f"{Path(new_name).stem}.json"),
+                        "w",
+                        encoding="utf-8",
+                    ) as _jf:
+                        json.dump(
+                            {
+                                "type": doc_type,
+                                "display_name": d,
+                                "source_file": doc["original_name"],
+                                "pages": pages,
+                                "data": extracted_data,
+                            },
+                            _jf,
+                            indent=2,
+                            ensure_ascii=False,
+                        )
+
+                    if len(pages) > 0 and ext == ".pdf":
+                        print(
+                            f"    ✓ {doc['original_name']} pages {pages} → {new_name}"
+                        )
+                except Exception as e:  # pylint: disable=broad-except
+                    print(f"    ✗ Error processing {doc['original_name']}: {e}")
 
     # ── Step 2: Build AllExtractedData ────────────────────────────────────────
     print("  Step 2: Building extracted data...")

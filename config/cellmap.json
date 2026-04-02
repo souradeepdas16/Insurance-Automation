@@ -9,8 +9,7 @@
 			"K13": "idv",
 			"G18": "insured_name",
 			"G19": "insured_address",
-			"G20": "contact_number",
-			"G22": "hpa_with"
+			"G20": "contact_number"
 		},
 		"rc": {
 			"G25": "registration_number",
@@ -27,7 +26,8 @@
 			"G43": "road_tax_paid_upto",
 			"J43": "fuel_type_label",
 			"K44": "colour",
-			"G45": "cubic_capacity"
+			"G45": "cubic_capacity",
+			"G22": "hpa_with"
 		},
 		"rc_date_serial": {
 			"E258": "date_of_reg_issue_serial"

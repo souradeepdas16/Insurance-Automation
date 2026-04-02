@@ -41,7 +41,11 @@ VALID_TYPES = (
 
 PER_DOC_PROMPT = """You are a document classifier and data extractor for Indian vehicle insurance claims.
 
-Step 1 — Identify the document type from this list:
+IMPORTANT — A single file (PDF/image) may contain MULTIPLE different document types
+(e.g. a driving license and registration certificate scanned together).
+You MUST detect ALL document types present and extract data for each one separately.
+
+Step 1 — For EACH distinct document found, identify its type from this list:
 insurance_policy | registration_certificate | driving_license | repair_estimate |
 final_invoice | route_permit | fitness_certificate | accident_document |
 survey_report | claim_form | tax_report | labour_charges | unknown
@@ -55,28 +59,34 @@ CRITICAL — How to distinguish repair_estimate from final_invoice:
 • A "Quotation No." or "Estimate No." field → repair_estimate.
   A "GST Invc No." or "Invoice No." field → final_invoice.
 
-Step 2 — Extract the relevant fields for that type.
+Step 2 — Extract the relevant fields for each detected document type.
 Use "" for missing text fields, 0 for missing numeric fields.
 All dates must be in DD.MM.YYYY format. All prices as plain numbers (no commas, no ₹).
 
-Return ONLY a single JSON object in exactly this format:
-{"type":"<document_type>","data":{<fields>}}
+Return a JSON object with a "documents" array. Each item has "type", "pages", and "data".
+• "pages" = array of 1-based page numbers that belong to this document (e.g. [1,2] for pages 1-2).
+  For images (single page), always use [1].
+• If the file contains only ONE document type, still return the "documents" array with one item.
+
+Format:
+{"documents":[{"type":"<type>","pages":[1],"data":{<fields>}},{"type":"<type>","pages":[2,3],"data":{<fields>}}]}
 
 ━━━ SCHEMAS BY TYPE ━━━
 
 insurance_policy (vehicle insurance policy / cover note):
-{"type":"insurance_policy","data":{"insurer_name":"","insurer_address":"","policy_number":"","policy_period":"DD.MM.YYYY to DD.MM.YYYY","idv":0,"insured_name":"","insured_address":"","contact_number":"","hpa_with":""}}
+{"type":"insurance_policy","pages":[1],"data":{"insurer_name":"","insurer_address":"","policy_number":"","policy_period":"DD.MM.YYYY to DD.MM.YYYY","idv":0,"insured_name":"","insured_address":"","contact_number":""}}
 • idv is a plain integer (e.g. 1320000, NOT "13,20,000")
 
 registration_certificate (vehicle RC / registration certificate):
-{"type":"registration_certificate","data":{"registration_number":"","date_of_reg_issue":"DD.MM.YYYY","date_of_reg_expiry":"DD.MM.YYYY","chassis_number":"last 6 digits","engine_number":"last 6 or full","make_year":"MAKE MODEL/YEAR","body_type":"","vehicle_class":"","laden_weight":"","unladen_weight":"","seating_capacity":0,"road_tax_paid_upto":"","fuel_type":"","colour":"","cubic_capacity":0}}
-• If front+back are both visible, combine fields from both sides.
+{"type":"registration_certificate","pages":[1],"data":{"registration_number":"","date_of_reg_issue":"DD.MM.YYYY","date_of_reg_expiry":"DD.MM.YYYY","chassis_number":"last 6 digits","engine_number":"last 6 or full","make_year":"MAKE MODEL/YEAR","body_type":"","vehicle_class":"","laden_weight":"","unladen_weight":"","seating_capacity":0,"road_tax_paid_upto":"","fuel_type":"","colour":"","cubic_capacity":0,"hpa_with":""}}
+• If front+back are both visible on separate pages, combine fields from both sides into ONE entry with both page numbers.
+• hpa_with: name of the bank or financier shown in the Hypothecation/HPA field; use "" if not present.
 
 driving_license (driving licence / DL):
-{"type":"driving_license","data":{"driver_name":"","dob":"DD.MM.YYYY","address":"","city_state":"","licence_number":"","alt_licence_number":"","date_of_issue":"DD.MM.YYYY","valid_till":"DD.MM.YYYY","issuing_authority":"","licence_type":""}}
+{"type":"driving_license","pages":[1],"data":{"driver_name":"","dob":"DD.MM.YYYY","address":"","city_state":"","licence_number":"","alt_licence_number":"","date_of_issue":"DD.MM.YYYY","valid_till":"DD.MM.YYYY","issuing_authority":"","licence_type":""}}
 
 repair_estimate (repair estimate / quotation / service quotation / proforma — header says "Estimate" or "Quotation"):
-{"type":"repair_estimate","data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":""}}
+{"type":"repair_estimate","pages":[1],"data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":""}}
 • Extract ALL parts (up to 50+). category must be "metal", "plastic", or "glass":
   - metal: panels, brackets, bolts, hinges, sensors, structural parts, washers, nuts
   - plastic: bumpers, trim, claddings, spoilers, reflectors, foam
@@ -84,21 +94,23 @@ repair_estimate (repair estimate / quotation / service quotation / proforma — 
 • labour breakdown: rr=R/R (Remove/Refit), denting=Denting, cw=Cutting/Welding, painting=Painting
 
 final_invoice (final repair bill / tax invoice — header says "Tax Invoice" or "Invoice", has GST Invc No.):
-{"type":"final_invoice","data":{"parts_assessed":[{"name":"Part Name","assessed_price":0.0}],"labour_assessed_total":0.0,"dealer_name":"","dealer_address":""}}
+{"type":"final_invoice","pages":[1],"data":{"parts_assessed":[{"name":"Part Name","assessed_price":0.0}],"labour_assessed_total":0.0,"dealer_name":"","dealer_address":""}}
 • Extract ALL parts. Use base price before GST if GST is shown separately.
 
 route_permit (route permit / goods permit / passenger permit):
-{"type":"route_permit","data":{"permit_no":"","permit_holder_name":"","valid_upto":"DD.MM.YYYY","type_of_permit":"","route_area":""}}
+{"type":"route_permit","pages":[1],"data":{"permit_no":"","permit_holder_name":"","valid_upto":"DD.MM.YYYY","type_of_permit":"","route_area":""}}
 • valid_upto = permit validity end date. type_of_permit = service type (e.g. Goods Service). route_area = region/route covered.
 
 fitness_certificate (fitness certificate / vehicle fitness):
-{"type":"fitness_certificate","data":{"valid_upto":"DD.MM.YYYY"}}
+{"type":"fitness_certificate","pages":[1],"data":{"valid_upto":"DD.MM.YYYY"}}
 • valid_upto = fitness certificate validity end date.
 
 accident_document | survey_report | claim_form | tax_report | labour_charges | unknown:
-{"type":"<detected_type>","data":{}}
+{"type":"<detected_type>","pages":[1],"data":{}}
 
 ━━━ RULES ━━━
+• If multiple DIFFERENT document types are in the same file, return a separate entry for each.
+• If the same document type spans multiple pages (e.g. RC front+back), combine into ONE entry with all page numbers.
 • Choose the MOST specific matching type.
 • Output MUST be valid JSON. No markdown fences. No trailing commas. No explanation."""
 
@@ -275,10 +287,11 @@ def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData
 _MAX_OUTPUT_TOKENS = int(os.environ.get("AI_MAX_OUTPUT_TOKENS", "65536"))
 
 
-def classify_and_extract_single(file_path: str) -> dict[str, Any]:
-    """Classify and extract a single document in one API call.
+def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
+    """Classify and extract a single document file in one API call.
 
-    Returns {"type": "...", "data": {...}}
+    Returns a list of {"type": "...", "pages": [...], "data": {...}} dicts.
+    A single file may yield multiple documents (e.g. DL + RC in one PDF).
     Retries up to 2 times on JSON parse errors (e.g. truncated/malformed output).
     """
     last_exc: Exception | None = None
@@ -287,8 +300,25 @@ def classify_and_extract_single(file_path: str) -> dict[str, Any]:
             raw = vision_extract_json(
                 [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
             )
+
+            # Support new multi-doc format: {"documents": [...]}
+            if "documents" in raw and isinstance(raw["documents"], list):
+                results = []
+                for doc in raw["documents"]:
+                    doc_type = _clean_type(doc.get("type", "unknown"))
+                    pages = doc.get("pages", [1])
+                    results.append(
+                        {"type": doc_type, "pages": pages, "data": doc.get("data", {})}
+                    )
+                return (
+                    results
+                    if results
+                    else [{"type": "unknown", "pages": [1], "data": {}}]
+                )
+
+            # Backward compat: old single-doc format {"type": ..., "data": ...}
             doc_type = _clean_type(raw.get("type", "unknown"))
-            return {"type": doc_type, "data": raw.get("data", {})}
+            return [{"type": doc_type, "pages": [1], "data": raw.get("data", {})}]
         except (ValueError, Exception) as exc:
             last_exc = exc
             if attempt < 2:
@@ -316,12 +346,13 @@ def classify_and_extract_single(file_path: str) -> dict[str, Any]:
 
 def classify_and_extract_all(
     file_paths: list[str],
-) -> dict[str, dict[str, Any]]:
-    """Classify and extract all documents in parallel (one API call per doc).
+) -> dict[str, list[dict[str, Any]]]:
+    """Classify and extract all documents in parallel (one API call per file).
 
-    Returns {file_path: {"type": "...", "data": {...}}}
+    Returns {file_path: [{"type": "...", "pages": [...], "data": {...}}, ...]}
+    A single file may produce multiple document entries if it contains mixed types.
     """
-    results: dict[str, dict[str, Any]] = {}
+    results: dict[str, list[dict[str, Any]]] = {}
 
     with ThreadPoolExecutor(max_workers=5) as pool:
         future_to_path = {
@@ -333,6 +364,6 @@ def classify_and_extract_all(
                 results[fp] = future.result()
             except Exception as e:  # pylint: disable=broad-except
                 print(f"    ✗ classify+extract failed for {fp}: {e}")
-                results[fp] = {"type": "unknown", "data": {}}
+                results[fp] = [{"type": "unknown", "pages": [1], "data": {}}]
 
     return results

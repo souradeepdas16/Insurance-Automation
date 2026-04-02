@@ -13,7 +13,6 @@ class InsuranceData:  # pylint: disable=too-many-instance-attributes
     insured_name: str = ""
     insured_address: str = ""
     contact_number: str = ""
-    hpa_with: str = ""
     tp_policy_number: str = ""
 
 
@@ -35,6 +34,7 @@ class RCData:  # pylint: disable=too-many-instance-attributes
     road_tax_paid_upto: str = ""
     registered_owner: str = ""
     cubic_capacity: str | int = ""
+    hpa_with: str = ""
 
 
 @dataclass  # pylint: disable=too-many-instance-attributes

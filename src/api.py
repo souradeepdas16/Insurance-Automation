@@ -8,11 +8,12 @@ import shutil
 import sys
 import threading
 import uuid
+import zipfile
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 # ── Per-case log capture ──────────────────────────────────────────────────────
@@ -387,6 +388,46 @@ def api_serve_classified(case_id: int, filename: str):
         media_type = "application/octet-stream"
 
     return FileResponse(path=str(file_path), media_type=media_type)
+
+
+@app.get("/api/cases/{case_id}/classified/download/zip")
+def api_download_classified_zip(case_id: int):
+    """Download all classified documents for a case as a ZIP archive."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+
+    classified_dir = Path(case["folder_path"]) / "classified"
+    if not classified_dir.exists() or not classified_dir.is_dir():
+        raise HTTPException(404, "No classified documents found")
+
+    files = [
+        f
+        for f in classified_dir.iterdir()
+        if f.is_file() and f.suffix.lower() != ".json"
+    ]
+    if not files:
+        raise HTTPException(404, "No classified documents found")
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in files:
+            # Security: ensure file is inside classified_dir
+            if not f.resolve().is_relative_to(classified_dir.resolve()):
+                continue
+            zf.write(f, f.name)
+    buf.seek(0)
+
+    safe_name = "".join(
+        c if c.isalnum() or c in (" ", "-", "_") else "_" for c in case["name"]
+    )
+    filename = f"{safe_name}_classified.zip"
+
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ── Output file download ─────────────────────────────────────────────────────

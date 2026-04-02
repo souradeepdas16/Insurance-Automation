@@ -252,6 +252,14 @@ function renderCase(c) {
 	if (classified.length > 0) {
 		classifiedCard.style.display = "";
 		classifiedCount.textContent = classified.length;
+
+		// Set ZIP download link
+		const btnZip = $("#btn-download-classified-zip");
+		if (btnZip) {
+			btnZip.href = `/api/cases/${c.id}/classified/download/zip`;
+			btnZip.setAttribute("download", "");
+		}
+
 		classifiedList.innerHTML = classified
 			.map((d) => {
 				const ext = extOf(d.classified_name);
@@ -733,7 +741,6 @@ const FIELD_LABELS = {
 	insured_address: "Insured Address",
 	contact_number: "Contact",
 	hpa_with: "HPA With",
-	tp_policy_number: "TP Policy No.",
 	registration_number: "Reg. No.",
 	date_of_reg_issue: "Reg. Issue Date",
 	date_of_reg_expiry: "Reg. Expiry",
@@ -748,7 +755,6 @@ const FIELD_LABELS = {
 	fuel_type: "Fuel",
 	colour: "Colour",
 	road_tax_paid_upto: "Road Tax Upto",
-	registered_owner: "Registered Owner",
 	cubic_capacity: "CC",
 	driver_name: "Driver Name",
 	dob: "Date of Birth",
@@ -763,15 +769,7 @@ const FIELD_LABELS = {
 	dealer_name: "Dealer",
 	dealer_address: "Dealer Address",
 	total_labour_estimated: "Total Labour (₹)",
-	estimate_date: "Estimate Date",
-	estimate_number: "Estimate No.",
-	labour_assessed_total: "Labour Total (₹)",
-	invoice_number: "Invoice No.",
-	invoice_date: "Invoice Date",
-	total_amount: "Total Amount (₹)",
-	gst_amount: "GST (₹)",
 	permit_no: "Permit No.",
-	permit_holder_name: "Permit Holder",
 	valid_upto: "Valid Upto",
 	type_of_permit: "Permit Type",
 	route_area: "Route/Area",
@@ -803,14 +801,15 @@ function renderSection(icon, title, data, sectionKey) {
 	let content = "";
 
 	// Render key-value fields (skip arrays)
-	const fields = Object.entries(data).filter(([k, v]) => !Array.isArray(v));
+	const fields = Object.entries(data).filter(([k, v]) => !Array.isArray(v) && FIELD_LABELS[k]);
 	if (fields.length > 0) {
 		content += '<div class="ext-fields">';
 		for (const [k, v] of fields) {
-			if (v === "" || v === 0 || v === null || v === undefined) continue;
 			const label = FIELD_LABELS[k] || k.replace(/_/g, " ");
-			const displayVal = typeof v === "number" ? v.toLocaleString("en-IN") : v;
-			content += `<div class="ext-field"><span class="ext-label">${esc(label)}</span><span class="ext-value">${esc(String(displayVal))}</span></div>`;
+			const isEmpty = v === "" || v === null || v === undefined;
+			const displayVal = isEmpty ? "—" : typeof v === "number" ? v.toLocaleString("en-IN") : v;
+			const emptyClass = isEmpty ? " ext-value-empty" : "";
+			content += `<div class="ext-field"><span class="ext-label">${esc(label)}</span><span class="ext-value${emptyClass}">${esc(String(displayVal))}</span></div>`;
 		}
 		content += "</div>";
 	}

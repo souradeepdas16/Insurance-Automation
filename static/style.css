@@ -1245,6 +1245,12 @@ body {
 	word-break: break-word;
 }
 
+.ext-value-empty {
+	color: var(--text-secondary);
+	font-style: italic;
+	font-weight: 400;
+}
+
 .ext-subtitle {
 	font-size: 13px;
 	font-weight: 650;
