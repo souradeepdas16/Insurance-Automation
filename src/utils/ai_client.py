@@ -178,16 +178,32 @@ def _strip_json_fences(text: str) -> str:
     return text
 
 
+def _safe_json_loads(raw: str) -> Any:
+    """Parse JSON, recovering from 'Extra data' by truncating at the error position."""
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        if "Extra data" in str(exc) and exc.pos:
+            truncated = raw[: exc.pos].strip()
+            print(
+                f"    ⚠ Extra data after valid JSON at char {exc.pos}, truncating and retrying…"
+            )
+            return json.loads(truncated)
+        raise
+
+
 def vision_request(file_paths: list[str], prompt: str) -> str:
     """Send files to AI provider, return raw text response."""
     if _rate_limiter:
         _rate_limiter.wait()
 
     if AI_PROVIDER == "google":
+
         async def _do():
             gc = await _ensure_gemini_client()
             resp = await gc.generate_content(prompt=prompt, files=file_paths)
             return resp.text
+
         return _run_async(_do())
 
     # OpenRouter path
@@ -233,8 +249,12 @@ def vision_extract_json(
         label = Path(file_paths[0]).stem if file_paths else "nofile"
         _log_raw(label, raw)
 
-        parsed = json.loads(raw)
-        if isinstance(parsed, list) and len(parsed) == 1 and isinstance(parsed[0], dict):
+        parsed = _safe_json_loads(raw)
+        if (
+            isinstance(parsed, list)
+            and len(parsed) == 1
+            and isinstance(parsed[0], dict)
+        ):
             parsed = parsed[0]
         return parsed
 
@@ -266,7 +286,7 @@ def vision_extract_json(
             f"Raw saved to logs/ai_raw/"
         )
 
-    parsed = json.loads(raw)
+    parsed = _safe_json_loads(raw)
     if isinstance(parsed, list) and len(parsed) == 1 and isinstance(parsed[0], dict):
         parsed = parsed[0]
     return parsed
@@ -287,7 +307,9 @@ def vision_extract_json_labeled(
 
     if AI_PROVIDER == "google":
         # Build a prompt that includes labels before each file reference
-        label_lines = "\n".join(f"[{label}]: file {i+1}" for i, (label, _) in enumerate(labeled_files))
+        label_lines = "\n".join(
+            f"[{label}]: file {i+1}" for i, (label, _) in enumerate(labeled_files)
+        )
         full_prompt = f"{SYSTEM_JSON}\n\n{label_lines}\n\n{prompt}"
         files = [fp for _, fp in labeled_files]
 
@@ -299,7 +321,7 @@ def vision_extract_json_labeled(
         raw = _run_async(_do())
         raw = _strip_json_fences(raw)
         _log_raw("labeled", raw)
-        return json.loads(raw)
+        return _safe_json_loads(raw)
 
     # OpenRouter path
     content: list[dict[str, Any]] = []
@@ -333,4 +355,4 @@ def vision_extract_json_labeled(
             f"Raw saved to logs/ai_raw/"
         )
 
-    return json.loads(raw)
+    return _safe_json_loads(raw)

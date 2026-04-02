@@ -57,7 +57,8 @@
 				"F": "estimated_price",
 				"G": "allowed_metal",
 				"H": "allowed_plastic",
-				"I": "allowed_glass"
+				"I": "allowed_glass",
+				"J": "extra"
 			}
 		},
 		"fitness_cert": {

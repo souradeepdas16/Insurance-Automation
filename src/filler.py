@@ -372,21 +372,55 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
             assessed_price = _to_num(inv_parts[part_match[i]].assessed_price)
 
         cat = (part.category or "").lower()
+        est_num = _to_num(part.estimated_price)
 
         if assessed_price is not None:
-            if cat == "metal":
-                _write_cell(ws, f"G{row}", assessed_price)
-            elif cat == "glass":
-                _write_cell(ws, f"I{row}", assessed_price)
+            # Cap assessed at estimated; excess goes to column J
+            if est_num and est_num > 0:
+                capped = min(assessed_price, est_num)
+                excess = max(0, assessed_price - est_num)
             else:
-                _write_cell(ws, f"H{row}", assessed_price)
+                capped = assessed_price
+                excess = 0
+
+            if cat == "metal":
+                _write_cell(ws, f"G{row}", capped)
+            elif cat == "glass":
+                _write_cell(ws, f"I{row}", capped)
+            else:
+                _write_cell(ws, f"H{row}", capped)
+
+            if excess > 0:
+                _write_cell(ws, f"J{row}", excess)
         else:
             if cat == "metal":
                 _write_cell(ws, f"G{row}", "N.A.")
             elif cat == "glass":
                 _write_cell(ws, f"I{row}", "N.A.")
             else:
-                _write_cell(ws, f"G{row}", "N.A.")
+                _write_cell(ws, f"H{row}", "N.A.")
+
+    # Append unmatched invoice items (invoice-only) after estimate parts
+    matched_inv_indices = set(part_match.values())
+    next_row = start_row + len(parts)
+    next_sn = len(parts) + 1
+    for j, inv_part in enumerate(inv_parts):
+        if j not in matched_inv_indices:
+            row = next_row
+            _write_cell(ws, f"B{row}", next_sn)
+            _write_cell(ws, f"C{row}", inv_part.name)
+            # Ensure the part name cell (C) inherits styling from the styled B cell
+            b_cell = ws[f"B{row}"]
+            c_cell = ws[f"C{row}"]
+            c_cell.font = copy(b_cell.font)
+            c_cell.border = copy(b_cell.border)
+            c_cell.alignment = copy(b_cell.alignment)
+            # Full amount goes to extra (col J) — no estimate to cap against
+            inv_price = _to_num(inv_part.assessed_price)
+            if inv_price:
+                _write_cell(ws, f"J{row}", inv_price)
+            next_row += 1
+            next_sn += 1
 
     return extra
 
