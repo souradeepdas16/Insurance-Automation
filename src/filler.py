@@ -322,8 +322,25 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
     max_slots: int = cfg.get("max_slots", 6)
     parts = estimate.parts or []
 
-    # Insert extra rows if parts exceed available slots
-    extra = max(0, len(parts) - max_slots)
+    # AI-based matching FIRST so we know how many unmatched invoice items exist
+    inv_parts: list[InvoicePart] = (
+        list(invoice.parts_assessed) if invoice and invoice.parts_assessed else []
+    )
+    part_match: dict[int, int] = {}
+    if inv_parts:
+        print("    Matching estimate parts → invoice parts (AI)...")
+        part_match = _match_parts_ai(parts, inv_parts)
+        print(f"    Matched {len(part_match)} of {len(parts)} estimate parts")
+
+    # Count unmatched invoice items that will be appended
+    matched_inv_indices = set(part_match.values())
+    unmatched_inv_count = sum(
+        1 for j in range(len(inv_parts)) if j not in matched_inv_indices
+    )
+
+    # Insert extra rows if TOTAL items exceed available slots
+    total_items = len(parts) + unmatched_inv_count
+    extra = max(0, total_items - max_slots)
     if extra > 0:
         # Insert WITHIN the data range so SUM formulas auto-expand.
         # Inserting before the last slot (start_row + max_slots - 1) ensures
@@ -340,16 +357,6 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
         # openpyxl insert_rows creates blank rows — copy styles from template row.
         for r in range(insert_at, insert_at + extra):
             _copy_row_styles(ws, start_row, r)
-
-    # AI-based matching: estimate parts → invoice parts
-    inv_parts: list[InvoicePart] = (
-        list(invoice.parts_assessed) if invoice and invoice.parts_assessed else []
-    )
-    part_match: dict[int, int] = {}
-    if inv_parts:
-        print("    Matching estimate parts → invoice parts (AI)...")
-        part_match = _match_parts_ai(parts, inv_parts)
-        print(f"    Matched {len(part_match)} of {len(parts)} estimate parts")
 
     for i, part in enumerate(parts):
         row = start_row + i
@@ -401,7 +408,6 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
                 _write_cell(ws, f"H{row}", "N.A.")
 
     # Append unmatched invoice items (invoice-only) after estimate parts
-    matched_inv_indices = set(part_match.values())
     next_row = start_row + len(parts)
     next_sn = len(parts) + 1
     for j, inv_part in enumerate(inv_parts):
