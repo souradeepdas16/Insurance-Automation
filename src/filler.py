@@ -377,6 +377,8 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
         assessed_price: float | None = None
         if i in part_match:
             assessed_price = _to_num(inv_parts[part_match[i]].assessed_price)
+            # Write the invoice serial number (1-based)
+            _write_cell(ws, f"K{row}", part_match[i] + 1)
 
         cat = (part.category or "").lower()
         est_num = _to_num(part.estimated_price)
@@ -421,6 +423,8 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
             c_cell.font = copy(b_cell.font)
             c_cell.border = copy(b_cell.border)
             c_cell.alignment = copy(b_cell.alignment)
+            # Write invoice serial number (1-based)
+            _write_cell(ws, f"K{row}", j + 1)
             # Full amount goes to extra (col J) — no estimate to cap against
             inv_price = _to_num(inv_part.assessed_price)
             if inv_price:

@@ -58,7 +58,8 @@
 				"G": "allowed_metal",
 				"H": "allowed_plastic",
 				"I": "allowed_glass",
-				"J": "extra"
+				"J": "extra",
+				"K": "invoice_sn"
 			}
 		},
 		"fitness_cert": {
