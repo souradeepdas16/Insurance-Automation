@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
+from openpyxl.styles import Alignment, PatternFill
 from openpyxl.worksheet.worksheet import Worksheet
 
 # openpyxl ≤ 3.1.x doesn't accept 'extLst' that Excel embeds in style XML.
@@ -358,6 +358,12 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
         for r in range(insert_at, insert_at + extra):
             _copy_row_styles(ws, start_row, r)
 
+    # Write column headers in the row above the data
+    header_row = start_row - 1
+    _write_cell(ws, f"J{header_row}", "Extra")
+    _write_cell(ws, f"K{header_row}", "Invoice No")
+    ws[f"K{header_row}"].alignment = Alignment(horizontal="right")
+
     for i, part in enumerate(parts):
         row = start_row + i
         sn = part.sn if part.sn else i + 1
@@ -379,6 +385,7 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
             assessed_price = _to_num(inv_parts[part_match[i]].assessed_price)
             # Write the invoice serial number (1-based)
             _write_cell(ws, f"K{row}", part_match[i] + 1)
+            ws[f"K{row}"].alignment = Alignment(horizontal="right")
 
         cat = (part.category or "").lower()
         est_num = _to_num(part.estimated_price)
@@ -425,6 +432,7 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
             c_cell.alignment = copy(b_cell.alignment)
             # Write invoice serial number (1-based)
             _write_cell(ws, f"K{row}", j + 1)
+            ws[f"K{row}"].alignment = Alignment(horizontal="right")
             # Full amount goes to extra (col J) — no estimate to cap against
             inv_price = _to_num(inv_part.assessed_price)
             if inv_price:
