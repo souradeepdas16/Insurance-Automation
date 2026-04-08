@@ -440,6 +440,11 @@ def _fill_parts_table(  # pylint: disable=too-many-locals
             next_row += 1
             next_sn += 1
 
+    # Add SUM formula for the Extra column (J) subtotal
+    last_data_row = start_row + max_slots - 1 + extra  # template last slot, shifted
+    subtotal_row = last_data_row + 1  # row 135 in base template
+    ws[f"J{subtotal_row}"] = f"=SUM(J{start_row}:J{last_data_row})"
+
     return extra
 
 
