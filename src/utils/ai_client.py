@@ -1,7 +1,7 @@
 """AI client — routes vision requests through OpenRouter or Gemini Web.
 
 Providers (set AI_PROVIDER env var):
-  openrouter  (default) — uses OPENROUTER_API_KEY + AI_MODEL
+  openrouter  (default) — uses OPENROUTER_API_KEY, model from Settings page
   google      — uses gemini-webapi with browser cookies (free, no API key)
 """
 
@@ -35,7 +35,6 @@ if AI_PROVIDER == "google":
 
     _GEMINI_1PSID: str = os.environ.get("GEMINI_SECURE_1PSID", "")
     _GEMINI_1PSIDTS: str = os.environ.get("GEMINI_SECURE_1PSIDTS", "")
-    MODEL: str = os.environ.get("AI_MODEL", "")
 
     # Persistent event loop for async gemini-webapi calls
     _loop = asyncio.new_event_loop()
@@ -71,11 +70,23 @@ else:
     from openai import OpenAI
 
     OPENROUTER_API_KEY: str = os.environ.get("OPENROUTER_API_KEY", "")
-    MODEL: str = os.environ.get("AI_MODEL", "openai/gpt-5.4-pro")
     client = OpenAI(
         api_key=OPENROUTER_API_KEY,
         base_url="https://openrouter.ai/api/v1",
     )
+
+
+def _get_model() -> str:
+    """Return the active AI model from DB settings, falling back to a default."""
+    try:
+        from src.database import get_setting
+
+        db_model = get_setting("ai_model")
+        if db_model:
+            return db_model
+    except Exception:
+        pass
+    return "openai/gpt-4.1"
 
 
 # ── Rate limiter (for Gemini Web: be polite, ~8 RPM) ─────────────────────────
@@ -211,7 +222,7 @@ def vision_request(file_paths: list[str], prompt: str) -> str:
     content.append({"type": "text", "text": prompt})
 
     response = client.chat.completions.create(
-        model=MODEL,
+        model=_get_model(),
         messages=[{"role": "user", "content": content}],
         max_tokens=_MAX_OUTPUT_TOKENS,
     )
@@ -263,7 +274,7 @@ def vision_extract_json(
     content.append({"type": "text", "text": prompt})
 
     response = client.chat.completions.create(
-        model=MODEL,
+        model=_get_model(),
         messages=[
             {"role": "system", "content": SYSTEM_JSON},
             {"role": "user", "content": content},
@@ -333,7 +344,7 @@ def vision_extract_json_labeled(
     content.append({"type": "text", "text": prompt})
 
     response = client.chat.completions.create(
-        model=MODEL,
+        model=_get_model(),
         messages=[
             {"role": "system", "content": SYSTEM_JSON},
             {"role": "user", "content": content},

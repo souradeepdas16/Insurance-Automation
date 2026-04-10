@@ -472,11 +472,13 @@ def start_watcher() -> None:
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     print("=================================")
+    from src.utils.ai_client import _get_model
+
     print(" Insurance Automation — Watcher")
     print("=================================")
     print(f"Watching : {WATCH_DIR}")
     print(f"Output   : {OUTPUT_DIR}")
-    print(f"Model    : {os.environ.get('AI_MODEL', 'openai/gpt-5.4-pro')}")
+    print(f"Model    : {_get_model()}")
     print()
     print("Create a subfolder in watch/ for each claim case and")
     print("drop all documents for that case inside it.")

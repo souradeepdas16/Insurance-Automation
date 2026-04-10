@@ -697,6 +697,7 @@ async function loadSettings() {
 	try {
 		const settings = await api("/api/settings");
 		$("#cases-folder").value = settings.cases_folder || "";
+		$("#ai-model").value = settings.ai_model || "";
 	} catch (err) {
 		toast(err.message, "error");
 	}
@@ -715,6 +716,20 @@ $("#btn-save-settings").addEventListener("click", async () => {
 			body: JSON.stringify({ cases_folder: folder }),
 		});
 		toast("Settings saved", "success");
+	} catch (err) {
+		toast(err.message, "error");
+	}
+});
+
+$("#btn-save-model").addEventListener("click", async () => {
+	const model = $("#ai-model").value;
+	try {
+		await api("/api/settings", {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ ai_model: model }),
+		});
+		toast("Model saved", "success");
 	} catch (err) {
 		toast(err.message, "error");
 	}

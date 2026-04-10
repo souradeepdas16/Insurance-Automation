@@ -36,7 +36,7 @@ if not os.environ.get("GEMINI_SECURE_1PSID"):
     sys.exit(1)
 
 print("  Provider : Gemini Web (gemini-webapi)")
-print(f"  Model    : {os.environ.get('AI_MODEL', 'default')}")
+print("  Model    : configured in Settings page")
 print("  Rate     : ~8 req/min (auto-throttled)")
 print()
 

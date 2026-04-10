@@ -44,8 +44,6 @@ if exist ".env" (
     echo   Copied .env
 ) else (
     echo OPENROUTER_API_KEY=your-openrouter-key-here> "%DIST%\.env"
-    echo AI_MODEL=openai/gpt-5.4-pro>> "%DIST%\.env"
-    echo # To switch to Gemini 3 Pro, change AI_MODEL=google/gemini-3-pro>> "%DIST%\.env"
     echo   Created placeholder .env
 )
 
@@ -64,7 +62,7 @@ echo Output: %DIST%\InsuranceAutomation.exe
 echo.
 echo To distribute:
 echo   1. Copy the entire "%DIST%" folder
-echo   2. Edit .env with your OPENROUTER_API_KEY (and optionally set AI_MODEL)
+echo   2. Edit .env with your OPENROUTER_API_KEY
 echo   3. Double-click InsuranceAutomation.exe
 echo.
 pause
