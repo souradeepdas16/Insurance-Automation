@@ -21,7 +21,7 @@ PROJECT_ROOT = APP_DIR
 load_dotenv(APP_DIR / ".env")
 
 # pylint: disable=wrong-import-position
-from src.classifier import classify_document  # noqa: E402
+from src.classifier import classify_document, name_unknown_document  # noqa: E402
 from src.extractors.combined import (  # noqa: E402
     build_all_extracted_data,
     classify_and_extract_all,
@@ -164,8 +164,12 @@ def process_case(
                 _dt = _res["type"]
                 _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, "Extra Document")
                 _ext = os.path.splitext(_fp)[1].lower()
-                if _ext in IMAGE_EXTS and _dt == "unknown":
-                    _display = "Extra Image"
+                if _dt == "unknown":
+                    _ai_name = name_unknown_document(_fp)
+                    if _ai_name:
+                        _display = _ai_name
+                    elif _ext in IMAGE_EXTS:
+                        _display = "Extra Image"
                 _type_seen[_dt] = _type_seen.get(_dt, 0) + 1
                 _cnt = _type_seen[_dt]
                 _stem = _display if _cnt == 1 else f"{_display} ({_cnt})"
@@ -343,12 +347,19 @@ def process_case_from_db(
                 )
         else:
             # Single entry for this type → split pages from source PDF or copy file
+            _name_count: dict[str, int] = {}  # track name collisions for unknown docs
             for i, (doc, pages, extracted_data, fp) in enumerate(items, 1):
                 ext = Path(fp).suffix.lower()
                 d = display
-                if ext in IMAGE_EXTS and doc_type == "unknown":
-                    d = "Extra Image"
-                new_name = f"{d}.pdf" if i == 1 else f"{d} ({i}).pdf"
+                if doc_type == "unknown":
+                    ai_name = name_unknown_document(fp)
+                    if ai_name:
+                        d = ai_name
+                    elif ext in IMAGE_EXTS:
+                        d = "Extra Image"
+                _name_count[d] = _name_count.get(d, 0) + 1
+                cnt = _name_count[d]
+                new_name = f"{d}.pdf" if cnt == 1 else f"{d} ({cnt}).pdf"
 
                 try:
                     # For PDFs with page info, extract only the relevant pages
@@ -356,7 +367,7 @@ def process_case_from_db(
                         _extract_pdf_pages(fp, pages, str(classified_dir / new_name))
                     else:
                         # Images or fallback: just copy (keep original extension)
-                        new_name = f"{d}{ext}" if i == 1 else f"{d} ({i}){ext}"
+                        new_name = f"{d}{ext}" if cnt == 1 else f"{d} ({cnt}){ext}"
                         shutil.copy2(fp, str(classified_dir / new_name))
 
                     update_document_classification(doc["id"], doc_type, new_name)

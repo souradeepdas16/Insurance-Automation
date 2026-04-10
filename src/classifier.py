@@ -65,6 +65,39 @@ Return a JSON object mapping each file label to its type, e.g.:
 Return ONLY the JSON object."""
 
 
+NAME_UNKNOWN_PROMPT = """You are a document identifier for Indian vehicle insurance claims.
+Look at this document/image and give it a short, descriptive name (2-4 words) that describes what it is.
+
+Examples of good names: "Aadhar Card", "PAN Card", "Bank Statement", "Vehicle Photo", "Damage Photos", "Cancelled Cheque", "Passport", "Address Proof", "NOC Letter", "Payment Receipt", "Towing Bill", "Police Complaint", "Medical Report", "Salvage Photos"
+
+Rules:
+- Return ONLY the short name, nothing else
+- Use Title Case
+- Keep it 2-4 words maximum
+- Be specific about what the document/image shows
+- Do NOT return generic names like "Document", "Image", "Paper", "File"
+- For photos of vehicle damage, use "Damage Photos"
+- For photos of the vehicle (no damage visible), use "Vehicle Photos"
+- For any ID card or certificate not in the standard list, name it specifically (e.g. "Voter ID Card", "Aadhar Card")"""
+
+
+def name_unknown_document(file_path: str) -> str:
+    """Use AI to generate a descriptive name for an unclassified document."""
+    try:
+        response = vision_request([file_path], NAME_UNKNOWN_PROMPT)
+        name = response.strip().strip('"').strip("'").strip()
+        # Sanitize: remove characters not safe for filenames
+        name = re.sub(r'[<>:"/\\|?*]', '', name)
+        # Limit length and ensure non-empty
+        name = name[:60].strip()
+        if not name or name.lower() in ("document", "image", "unknown", "file", "paper"):
+            return ""
+        return name
+    except Exception as e:
+        print(f"  ⚠ Could not name unknown document {file_path}: {e}")
+        return ""
+
+
 def classify_document(file_path: str) -> DocumentType:
     """Classify a single document file (fallback for one-off use)."""
     response = vision_request([file_path], CLASSIFY_PROMPT)
