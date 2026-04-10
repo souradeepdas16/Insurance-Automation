@@ -144,6 +144,9 @@ MAX_DIM = 2048
 # Maximum output tokens — defaults to model hard limit; override via AI_MAX_OUTPUT_TOKENS env var.
 _MAX_OUTPUT_TOKENS: int = int(os.environ.get("AI_MAX_OUTPUT_TOKENS", "65536"))
 
+# Maximum PDF pages to send per API call (avoids huge payloads / provider limits).
+MAX_PAGES_PER_CALL: int = int(os.environ.get("AI_MAX_PAGES_PER_CALL", "10"))
+
 
 def _resize_image_to_base64(file_path: str, max_dim: int = MAX_DIM) -> str:
     """Open an image, resize if needed, return base64 JPEG string."""
@@ -156,7 +159,7 @@ def _resize_image_to_base64(file_path: str, max_dim: int = MAX_DIM) -> str:
         return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def _pdf_pages_to_base64(file_path: str, max_dim: int = MAX_DIM) -> list[str]:
+def pdf_pages_to_base64(file_path: str, max_dim: int = MAX_DIM) -> list[str]:
     """Render each PDF page to a JPEG base64 string using PyMuPDF."""
     import fitz  # PyMuPDF
 
@@ -191,7 +194,7 @@ def _file_to_content_items(file_path: str) -> list[dict[str, Any]]:
         ]
 
     # PDF — render each page to JPEG for universal model compatibility
-    pages = _pdf_pages_to_base64(file_path)
+    pages = pdf_pages_to_base64(file_path)
     return [
         {
             "type": "image_url",
@@ -199,6 +202,102 @@ def _file_to_content_items(file_path: str) -> list[dict[str, Any]]:
         }
         for b64 in pages
     ]
+
+
+def _b64_images_to_content(images_b64: list[str]) -> list[dict[str, Any]]:
+    """Convert a list of base64 JPEG strings to content items."""
+    return [
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "high"},
+        }
+        for b64 in images_b64
+    ]
+
+
+def vision_extract_json_from_images(
+    images_b64: list[str],
+    prompt: str,
+    max_output_tokens: int = _MAX_OUTPUT_TOKENS,
+    label: str = "chunk",
+) -> dict[str, Any]:
+    """Like vision_extract_json but takes pre-rendered base64 JPEG images.
+
+    Used when the caller has already split a PDF into page chunks.
+    """
+    if _rate_limiter:
+        _rate_limiter.wait()
+
+    if AI_PROVIDER == "google":
+        # Gemini web path — save images to temp files
+        import tempfile
+
+        full_prompt = f"{SYSTEM_JSON}\n\n{prompt}"
+        tmp_files: list[str] = []
+        try:
+            for i, b64 in enumerate(images_b64):
+                tmp = tempfile.NamedTemporaryFile(
+                    suffix=".jpg", prefix=f"page_{i}_", delete=False
+                )
+                tmp.write(base64.b64decode(b64))
+                tmp.close()
+                tmp_files.append(tmp.name)
+
+            async def _do():
+                gc = await _ensure_gemini_client()
+                resp = await gc.generate_content(prompt=full_prompt, files=tmp_files)
+                return resp.text
+
+            raw = _run_async(_do())
+        finally:
+            for tf in tmp_files:
+                try:
+                    os.unlink(tf)
+                except OSError:
+                    pass
+
+        raw = _strip_json_fences(raw)
+        _log_raw(label, raw)
+        parsed = _safe_json_loads(raw)
+        if (
+            isinstance(parsed, list)
+            and len(parsed) == 1
+            and isinstance(parsed[0], dict)
+        ):
+            parsed = parsed[0]
+        return parsed
+
+    # OpenRouter path
+    content: list[dict[str, Any]] = _b64_images_to_content(images_b64)
+    content.append({"type": "text", "text": prompt})
+
+    response = client.chat.completions.create(
+        model=_get_model(),
+        messages=[
+            {"role": "system", "content": SYSTEM_JSON},
+            {"role": "user", "content": content},
+        ],
+        response_format={"type": "json_object"},
+        max_tokens=max_output_tokens,
+        temperature=0,
+    )
+    choice = response.choices[0]
+    raw = (choice.message.content or "").strip()
+    finish_reason = getattr(choice, "finish_reason", "") or ""
+
+    _log_raw(label, raw, finish_reason)
+
+    if finish_reason == "length":
+        raise ValueError(
+            f"Output truncated (finish_reason=length, {len(raw)} chars). "
+            f"Increase max_output_tokens (currently {max_output_tokens}). "
+            f"Raw saved to logs/ai_raw/"
+        )
+
+    parsed = _safe_json_loads(raw)
+    if isinstance(parsed, list) and len(parsed) == 1 and isinstance(parsed[0], dict):
+        parsed = parsed[0]
+    return parsed
 
 
 def _strip_json_fences(text: str) -> str:

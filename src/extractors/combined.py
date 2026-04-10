@@ -6,6 +6,7 @@ import dataclasses
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any
 
 from src.types import (
@@ -21,7 +22,14 @@ from src.types import (
     RCData,
     RoutePermitData,
 )
-from src.utils.ai_client import vision_extract_json
+from src.utils.ai_client import (
+    MAX_PAGES_PER_CALL,
+    pdf_pages_to_base64,
+    vision_extract_json,
+    vision_extract_json_from_images,
+)
+
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 VALID_TYPES = (
     "insurance_policy",
@@ -287,38 +295,30 @@ def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData
 _MAX_OUTPUT_TOKENS = int(os.environ.get("AI_MAX_OUTPUT_TOKENS", "65536"))
 
 
-def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
-    """Classify and extract a single document file in one API call.
+def _parse_doc_results(raw: dict) -> list[dict[str, Any]]:
+    """Parse API response into a list of document result dicts."""
+    if "documents" in raw and isinstance(raw["documents"], list):
+        results = []
+        for doc in raw["documents"]:
+            doc_type = _clean_type(doc.get("type", "unknown"))
+            pages = doc.get("pages", [1])
+            results.append(
+                {"type": doc_type, "pages": pages, "data": doc.get("data", {})}
+            )
+        return results if results else [{"type": "unknown", "pages": [1], "data": {}}]
 
-    Returns a list of {"type": "...", "pages": [...], "data": {...}} dicts.
-    A single file may yield multiple documents (e.g. DL + RC in one PDF).
-    Retries up to 2 times on JSON parse errors (e.g. truncated/malformed output).
-    """
+    # Backward compat: old single-doc format {"type": ..., "data": ...}
+    doc_type = _clean_type(raw.get("type", "unknown"))
+    return [{"type": doc_type, "pages": [1], "data": raw.get("data", {})}]
+
+
+def _call_with_retry(call_fn, file_label: str) -> list[dict[str, Any]]:
+    """Call call_fn() up to 3 times, retrying on errors. Returns parsed doc list."""
     last_exc: Exception | None = None
     for attempt in range(3):
         try:
-            raw = vision_extract_json(
-                [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
-            )
-
-            # Support new multi-doc format: {"documents": [...]}
-            if "documents" in raw and isinstance(raw["documents"], list):
-                results = []
-                for doc in raw["documents"]:
-                    doc_type = _clean_type(doc.get("type", "unknown"))
-                    pages = doc.get("pages", [1])
-                    results.append(
-                        {"type": doc_type, "pages": pages, "data": doc.get("data", {})}
-                    )
-                return (
-                    results
-                    if results
-                    else [{"type": "unknown", "pages": [1], "data": {}}]
-                )
-
-            # Backward compat: old single-doc format {"type": ..., "data": ...}
-            doc_type = _clean_type(raw.get("type", "unknown"))
-            return [{"type": doc_type, "pages": [1], "data": raw.get("data", {})}]
+            raw = call_fn()
+            return _parse_doc_results(raw)
         except (ValueError, Exception) as exc:
             last_exc = exc
             if attempt < 2:
@@ -330,15 +330,106 @@ def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
                     or "json" in type(exc).__name__.lower()
                 ):
                     print(
-                        f"    ⚠ JSON parse error on attempt {attempt + 1}/3 for {os.path.basename(file_path)}: {exc} — retrying..."
+                        f"    ⚠ JSON parse error on attempt {attempt + 1}/3 for {file_label}: {exc} — retrying..."
                     )
                 else:
-                    # Non-parse errors (e.g. network) — still retry
                     print(
-                        f"    ⚠ Error on attempt {attempt + 1}/3 for {os.path.basename(file_path)}: {exc} — retrying..."
+                        f"    ⚠ Error on attempt {attempt + 1}/3 for {file_label}: {exc} — retrying..."
                     )
             else:
                 raise last_exc
+    raise last_exc  # unreachable, but keeps type checkers happy
+
+
+def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
+    """Classify and extract a single document file.
+
+    For images: one API call.
+    For PDFs with <= MAX_PAGES_PER_CALL pages: one API call.
+    For PDFs with > MAX_PAGES_PER_CALL pages: split into chunks,
+      one API call per chunk, then merge results with corrected page numbers.
+
+    Returns a list of {"type": "...", "pages": [...], "data": {...}} dicts.
+    """
+    file_label = os.path.basename(file_path)
+    ext = Path(file_path).suffix.lower()
+
+    # ── Images or small PDFs — single call ────────────────────────────────────
+    if ext in IMAGE_EXTS:
+        return _call_with_retry(
+            lambda: vision_extract_json(
+                [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
+            ),
+            file_label,
+        )
+
+    # ── PDF — render pages, then decide if chunking is needed ─────────────────
+    all_pages_b64 = pdf_pages_to_base64(file_path)
+    total_pages = len(all_pages_b64)
+
+    if total_pages <= MAX_PAGES_PER_CALL:
+        # Small PDF — single call (pass the file directly)
+        return _call_with_retry(
+            lambda: vision_extract_json(
+                [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
+            ),
+            file_label,
+        )
+
+    # ── Large PDF — chunk pages and make multiple calls ───────────────────────
+    print(
+        f"    📄 {file_label}: {total_pages} pages → splitting into chunks of {MAX_PAGES_PER_CALL}"
+    )
+    all_results: list[dict[str, Any]] = []
+
+    for chunk_start in range(0, total_pages, MAX_PAGES_PER_CALL):
+        chunk_end = min(chunk_start + MAX_PAGES_PER_CALL, total_pages)
+        chunk_b64 = all_pages_b64[chunk_start:chunk_end]
+        page_offset = chunk_start  # 0-based offset for this chunk
+
+        chunk_label = f"{file_label} pages {chunk_start + 1}-{chunk_end}"
+        print(f"      → Calling API for {chunk_label}")
+
+        chunk_results = _call_with_retry(
+            lambda _b64=chunk_b64, _lbl=chunk_label: vision_extract_json_from_images(
+                _b64,
+                PER_DOC_PROMPT,
+                max_output_tokens=_MAX_OUTPUT_TOKENS,
+                label=_lbl,
+            ),
+            chunk_label,
+        )
+
+        # Adjust page numbers: the AI returns 1-based pages relative to the chunk,
+        # but we need 1-based pages relative to the full PDF.
+        for doc in chunk_results:
+            doc["pages"] = [p + page_offset for p in doc.get("pages", [1])]
+
+        all_results.extend(chunk_results)
+
+    # ── Merge documents that span chunk boundaries ────────────────────────────
+    # If the same doc type appears at the end of one chunk and start of the next,
+    # they might be the same document. Merge consecutive same-type entries.
+    merged: list[dict[str, Any]] = []
+    for doc in all_results:
+        if (
+            merged
+            and merged[-1]["type"] == doc["type"]
+            and merged[-1]["type"] != "unknown"
+        ):
+            # Same type as previous — merge pages and data
+            merged[-1]["pages"].extend(doc["pages"])
+            # For list fields (parts, labour), concatenate; for scalar fields, last wins
+            prev_data = merged[-1]["data"]
+            for k, v in doc["data"].items():
+                if isinstance(v, list) and isinstance(prev_data.get(k), list):
+                    prev_data[k].extend(v)
+                elif v not in ("", None, 0, 0.0):
+                    prev_data[k] = v
+        else:
+            merged.append(doc)
+
+    return merged if merged else [{"type": "unknown", "pages": [1], "data": {}}]
 
 
 # ─── Parallel batch ───────────────────────────────────────────────────────────
