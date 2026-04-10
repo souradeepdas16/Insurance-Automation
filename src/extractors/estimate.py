@@ -2,8 +2,16 @@
 
 from __future__ import annotations
 
+import re
+
 from src.types import EstimateData, EstimatePart, LabourItem
 from src.utils.ai_client import vision_extract_json
+
+# Words that indicate a labour item, not a part
+_LABOUR_KEYWORDS_RE = re.compile(
+    r"\b(paint|painting|remove|removal|refit|refitting|replace|replacement|r/r|denting|c/w|cutting|welding)\b",
+    re.IGNORECASE,
+)
 
 # fmt: off
 # pylint: disable=line-too-long
@@ -30,21 +38,27 @@ Rules:
 - Extract ALL parts, even if there are many (up to 50+).
 - Prices must be plain numbers (no commas, no currency symbols).
 - Serial numbers (sn) start from 1.
+- IMPORTANT: Items whose description contains words like paint, painting, remove, removal, refit, refitting, replace, replacement, R/R, denting, C/W are LABOUR items, NOT parts. Do NOT include them in the parts list. They belong in the labour list only.
 - Output MUST be valid JSON. No trailing commas. No markdown. No explanation."""
 )
 
 
 def extract_estimate(file_paths: list[str]) -> EstimateData:
     data = vision_extract_json(file_paths, PROMPT, max_output_tokens=16384)
-    parts = [
-        EstimatePart(
-            sn=p.get("sn", i + 1),
-            name=p.get("name", ""),
-            estimated_price=float(p.get("estimated_price", 0)),
-            category=p.get("category", ""),
-        )
-        for i, p in enumerate(data.get("parts", []))
-    ]
+    parts = []
+    labour_from_parts = 0.0  # cost of items filtered out of parts (labour-like)
+    for i, p in enumerate(data.get("parts", [])):
+        if _LABOUR_KEYWORDS_RE.search(p.get("name", "")):
+            labour_from_parts += float(p.get("estimated_price", 0))
+        else:
+            parts.append(
+                EstimatePart(
+                    sn=p.get("sn", i + 1),
+                    name=p.get("name", ""),
+                    estimated_price=float(p.get("estimated_price", 0)),
+                    category=p.get("category", ""),
+                )
+            )
     labour = [
         LabourItem(
             sn=l.get("sn", i + 1),
@@ -56,10 +70,11 @@ def extract_estimate(file_paths: list[str]) -> EstimateData:
         )
         for i, l in enumerate(data.get("labour", []))
     ]
+    total_labour = float(data.get("total_labour_estimated", 0)) + labour_from_parts
     return EstimateData(
         parts=parts,
         labour=labour,
-        total_labour_estimated=float(data.get("total_labour_estimated", 0)),
+        total_labour_estimated=total_labour,
         dealer_name=data.get("dealer_name", ""),
         dealer_address=data.get("dealer_address", ""),
         estimate_date=data.get("estimate_date", ""),

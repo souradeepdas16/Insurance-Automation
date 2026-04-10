@@ -2,8 +2,16 @@
 
 from __future__ import annotations
 
+import re
+
 from src.types import InvoiceData, InvoicePart
 from src.utils.ai_client import vision_extract_json
+
+# Words that indicate a labour item, not a part
+_LABOUR_KEYWORDS_RE = re.compile(
+    r"\b(paint|painting|remove|removal|refit|refitting|replace|replacement|r/r|denting|c/w|cutting|welding)\b",
+    re.IGNORECASE,
+)
 
 # fmt: off
 # pylint: disable=line-too-long
@@ -24,22 +32,29 @@ Rules:
 - Extract ALL parts from the invoice.
 - Prices must be plain numbers (no commas, no currency symbols).
 - If prices include GST, extract base price (before GST).
+- IMPORTANT: Items whose description contains words like paint, painting, remove, removal, refit, refitting, replace, replacement, R/R, denting, C/W are LABOUR items, NOT parts. Do NOT include them in the parts list.
 - Output MUST be valid JSON. No trailing commas. No markdown. No explanation."""
 )
 
 
 def extract_invoice(file_paths: list[str]) -> InvoiceData:
     data = vision_extract_json(file_paths, PROMPT, max_output_tokens=16384)
-    parts = [
-        InvoicePart(
-            name=p.get("name", ""),
-            assessed_price=float(p.get("assessed_price", 0)),
-        )
-        for p in data.get("parts_assessed", [])
-    ]
+    parts = []
+    labour_from_parts = 0.0  # cost of items filtered out of parts (labour-like)
+    for p in data.get("parts_assessed", []):
+        if _LABOUR_KEYWORDS_RE.search(p.get("name", "")):
+            labour_from_parts += float(p.get("assessed_price", 0))
+        else:
+            parts.append(
+                InvoicePart(
+                    name=p.get("name", ""),
+                    assessed_price=float(p.get("assessed_price", 0)),
+                )
+            )
+    total_labour = float(data.get("labour_assessed_total", 0)) + labour_from_parts
     return InvoiceData(
         parts_assessed=parts,
-        labour_assessed_total=float(data.get("labour_assessed_total", 0)),
+        labour_assessed_total=total_labour,
         invoice_number=data.get("invoice_number", ""),
         invoice_date=data.get("invoice_date", ""),
         dealer_name=data.get("dealer_name", ""),
