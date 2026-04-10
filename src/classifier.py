@@ -87,10 +87,16 @@ def name_unknown_document(file_path: str) -> str:
         response = vision_request([file_path], NAME_UNKNOWN_PROMPT)
         name = response.strip().strip('"').strip("'").strip()
         # Sanitize: remove characters not safe for filenames
-        name = re.sub(r'[<>:"/\\|?*]', '', name)
+        name = re.sub(r'[<>:"/\\|?*]', "", name)
         # Limit length and ensure non-empty
         name = name[:60].strip()
-        if not name or name.lower() in ("document", "image", "unknown", "file", "paper"):
+        if not name or name.lower() in (
+            "document",
+            "image",
+            "unknown",
+            "file",
+            "paper",
+        ):
             return ""
         return name
     except Exception as e:
