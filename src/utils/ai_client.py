@@ -156,28 +156,49 @@ def _resize_image_to_base64(file_path: str, max_dim: int = MAX_DIM) -> str:
         return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def _file_to_content_item(file_path: str) -> dict[str, Any]:
-    """Convert a file to a chat-completions content item.
+def _pdf_pages_to_base64(file_path: str, max_dim: int = MAX_DIM) -> list[str]:
+    """Render each PDF page to a JPEG base64 string using PyMuPDF."""
+    import fitz  # PyMuPDF
 
-    Images -> inline base64 image_url (JPEG)
-    PDFs   -> inline base64 data URI  (application/pdf)
+    pages_b64: list[str] = []
+    with fitz.open(file_path) as doc:
+        for page in doc:
+            # Render at 2x for readability, then resize down if needed
+            pix = page.get_pixmap(dpi=200)
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=85)
+            pages_b64.append(base64.b64encode(buf.getvalue()).decode("ascii"))
+    return pages_b64
+
+
+def _file_to_content_items(file_path: str) -> list[dict[str, Any]]:
+    """Convert a file to one or more chat-completions content items.
+
+    Images -> single inline base64 image_url (JPEG)
+    PDFs   -> one image_url per page (rendered to JPEG via PyMuPDF)
     """
     ext = Path(file_path).suffix.lower()
 
     if ext in IMAGE_EXTS:
         b64 = _resize_image_to_base64(file_path)
-        return {
+        return [
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "high"},
+            }
+        ]
+
+    # PDF — render each page to JPEG for universal model compatibility
+    pages = _pdf_pages_to_base64(file_path)
+    return [
+        {
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "high"},
         }
-
-    # PDF / other document — send as base64 data URI
-    with open(file_path, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode("ascii")
-    return {
-        "type": "image_url",
-        "image_url": {"url": f"data:application/pdf;base64,{b64}"},
-    }
+        for b64 in pages
+    ]
 
 
 def _strip_json_fences(text: str) -> str:
@@ -218,7 +239,9 @@ def vision_request(file_paths: list[str], prompt: str) -> str:
         return _run_async(_do())
 
     # OpenRouter path
-    content: list[dict[str, Any]] = [_file_to_content_item(fp) for fp in file_paths]
+    content: list[dict[str, Any]] = []
+    for fp in file_paths:
+        content.extend(_file_to_content_items(fp))
     content.append({"type": "text", "text": prompt})
 
     response = client.chat.completions.create(
@@ -270,7 +293,9 @@ def vision_extract_json(
         return parsed
 
     # OpenRouter path
-    content: list[dict[str, Any]] = [_file_to_content_item(fp) for fp in file_paths]
+    content: list[dict[str, Any]] = []
+    for fp in file_paths:
+        content.extend(_file_to_content_items(fp))
     content.append({"type": "text", "text": prompt})
 
     response = client.chat.completions.create(
@@ -339,7 +364,7 @@ def vision_extract_json_labeled(
 
     for label, file_path in labeled_files:
         content.append({"type": "text", "text": f"[{label}]"})
-        content.append(_file_to_content_item(file_path))
+        content.extend(_file_to_content_items(file_path))
 
     content.append({"type": "text", "text": prompt})
 
