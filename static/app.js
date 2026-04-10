@@ -249,9 +249,16 @@ function renderCase(c) {
 	const classifiedList = $("#doc-classified-list");
 	const classifiedCount = $("#classified-count");
 	const classified = docs.filter((d) => d.classified_name);
-	if (classified.length > 0) {
+	// Deduplicate by classified_name (multiple source docs may merge into one classified file)
+	const seenClassified = new Set();
+	const uniqueClassified = classified.filter((d) => {
+		if (seenClassified.has(d.classified_name)) return false;
+		seenClassified.add(d.classified_name);
+		return true;
+	});
+	if (uniqueClassified.length > 0) {
 		classifiedCard.style.display = "";
-		classifiedCount.textContent = classified.length;
+		classifiedCount.textContent = uniqueClassified.length;
 
 		// Set ZIP download link
 		const btnZip = $("#btn-download-classified-zip");
@@ -260,7 +267,7 @@ function renderCase(c) {
 			btnZip.setAttribute("download", "");
 		}
 
-		classifiedList.innerHTML = classified
+		classifiedList.innerHTML = uniqueClassified
 			.map((d) => {
 				const ext = extOf(d.classified_name);
 				const showDelete = !isProcessing;
