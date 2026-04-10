@@ -305,12 +305,13 @@ function renderCase(c) {
 
 	// ── Process button ──
 	const btnProcess = $("#btn-process");
+	const btnStop = $("#btn-stop");
 	if (isProcessing) {
-		btnProcess.disabled = true;
-		btnProcess.innerHTML = `
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-			Processing...`;
+		btnProcess.style.display = "none";
+		btnStop.style.display = "";
 	} else {
+		btnProcess.style.display = "";
+		btnStop.style.display = "none";
 		btnProcess.disabled = docs.length === 0;
 		btnProcess.innerHTML = `
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -633,10 +634,9 @@ $("#btn-process").addEventListener("click", async () => {
 		// Immediately show processing state — don't re-fetch status, the background
 		// thread may not have updated it yet (race condition).
 		const btnProcess = $("#btn-process");
-		btnProcess.disabled = true;
-		btnProcess.innerHTML = `
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-			Processing...`;
+		btnProcess.style.display = "none";
+		const btnStop = $("#btn-stop");
+		btnStop.style.display = "";
 
 		const badge = $("#case-status-badge");
 		badge.textContent = "processing";
@@ -656,6 +656,26 @@ $("#btn-process").addEventListener("click", async () => {
 		startPolling(currentCaseId);
 	} catch (err) {
 		toast(err.message, "error");
+	}
+});
+
+// ── Stop Processing ──────────────────────────────────────────────────────────
+$("#btn-stop").addEventListener("click", async () => {
+	if (!currentCaseId) return;
+	const btnStop = $("#btn-stop");
+	try {
+		btnStop.disabled = true;
+		btnStop.innerHTML = `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="1" /></svg>
+			Stopping...`;
+		await api(`/api/cases/${currentCaseId}/stop`, { method: "POST" });
+		toast("Stop signal sent, waiting for current operation to finish...", "info");
+	} catch (err) {
+		toast(err.message, "error");
+		btnStop.disabled = false;
+		btnStop.innerHTML = `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="1" /></svg>
+			Stop Processing`;
 	}
 });
 

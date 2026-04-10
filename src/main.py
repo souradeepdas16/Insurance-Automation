@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
@@ -202,7 +203,9 @@ def process_case(
 # ─── DB-backed processing (used by web UI) ───────────────────────────────────
 
 
-def process_case_from_db(case_id: int) -> None:
+def process_case_from_db(
+    case_id: int, cancel_event: threading.Event | None = None
+) -> None:
     """Process a case using database records. Renames files on classification.
     Outputs are saved inside the case folder under output/."""
     from src.database import (
@@ -254,7 +257,9 @@ def process_case_from_db(case_id: int) -> None:
     valid_paths = [d["file_path"] for d in valid_docs]
 
     try:
-        combined_results = classify_and_extract_all(valid_paths)
+        combined_results = classify_and_extract_all(
+            valid_paths, cancel_event=cancel_event
+        )
     except Exception as e:
         raise RuntimeError(f"Batch classification failed: {e}") from e
 
@@ -382,10 +387,14 @@ def process_case_from_db(case_id: int) -> None:
                     print(f"    ✗ Error processing {doc['original_name']}: {e}")
 
     # ── Step 2: Build AllExtractedData ────────────────────────────────────────
+    if cancel_event and cancel_event.is_set():
+        return
     print("  Step 2: Building extracted data...")
     all_data = build_all_extracted_data(grouped_data)
 
     # ── Step 3: Fill Excel (output inside case folder) ────────────────────────
+    if cancel_event and cancel_event.is_set():
+        return
     print("  Step 3: Filling Excel template...")
     output_dir = case_folder / "output"
     output_dir.mkdir(parents=True, exist_ok=True)

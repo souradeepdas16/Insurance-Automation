@@ -5,9 +5,15 @@ from __future__ import annotations
 import dataclasses
 import os
 import re
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
+
+
+class ProcessingCancelledError(Exception):
+    """Raised when the user stops processing."""
+
 
 from src.types import (
     AllExtractedData,
@@ -312,10 +318,14 @@ def _parse_doc_results(raw: dict) -> list[dict[str, Any]]:
     return [{"type": doc_type, "pages": [1], "data": raw.get("data", {})}]
 
 
-def _call_with_retry(call_fn, file_label: str) -> list[dict[str, Any]]:
+def _call_with_retry(
+    call_fn, file_label: str, cancel_event: threading.Event | None = None
+) -> list[dict[str, Any]]:
     """Call call_fn() up to 3 times, retrying on errors. Returns parsed doc list."""
     last_exc: Exception | None = None
     for attempt in range(3):
+        if cancel_event and cancel_event.is_set():
+            raise ProcessingCancelledError("Processing stopped by user")
         try:
             raw = call_fn()
             return _parse_doc_results(raw)
@@ -341,7 +351,9 @@ def _call_with_retry(call_fn, file_label: str) -> list[dict[str, Any]]:
     raise last_exc  # unreachable, but keeps type checkers happy
 
 
-def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
+def classify_and_extract_single(
+    file_path: str, cancel_event: threading.Event | None = None
+) -> list[dict[str, Any]]:
     """Classify and extract a single document file.
 
     For images: one API call.
@@ -351,6 +363,9 @@ def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
 
     Returns a list of {"type": "...", "pages": [...], "data": {...}} dicts.
     """
+    if cancel_event and cancel_event.is_set():
+        raise ProcessingCancelledError("Processing stopped by user")
+
     file_label = os.path.basename(file_path)
     ext = Path(file_path).suffix.lower()
 
@@ -361,6 +376,7 @@ def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
                 [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
             ),
             file_label,
+            cancel_event,
         )
 
     # ── PDF — render pages, then decide if chunking is needed ─────────────────
@@ -374,6 +390,7 @@ def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
                 [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
             ),
             file_label,
+            cancel_event,
         )
 
     # ── Large PDF — chunk pages and make multiple calls ───────────────────────
@@ -383,6 +400,9 @@ def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
     all_results: list[dict[str, Any]] = []
 
     for chunk_start in range(0, total_pages, MAX_PAGES_PER_CALL):
+        if cancel_event and cancel_event.is_set():
+            raise ProcessingCancelledError("Processing stopped by user")
+
         chunk_end = min(chunk_start + MAX_PAGES_PER_CALL, total_pages)
         chunk_b64 = all_pages_b64[chunk_start:chunk_end]
         page_offset = chunk_start  # 0-based offset for this chunk
@@ -398,6 +418,7 @@ def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
                 label=_lbl,
             ),
             chunk_label,
+            cancel_event,
         )
 
         # Adjust page numbers: the AI returns 1-based pages relative to the chunk,
@@ -437,6 +458,7 @@ def classify_and_extract_single(file_path: str) -> list[dict[str, Any]]:
 
 def classify_and_extract_all(
     file_paths: list[str],
+    cancel_event: threading.Event | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """Classify and extract all documents in parallel (one API call per file).
 
@@ -447,12 +469,18 @@ def classify_and_extract_all(
 
     with ThreadPoolExecutor(max_workers=5) as pool:
         future_to_path = {
-            pool.submit(classify_and_extract_single, fp): fp for fp in file_paths
+            pool.submit(classify_and_extract_single, fp, cancel_event): fp
+            for fp in file_paths
         }
         for future in as_completed(future_to_path):
             fp = future_to_path[future]
             try:
                 results[fp] = future.result()
+            except ProcessingCancelledError:
+                # Cancel remaining futures
+                for f in future_to_path:
+                    f.cancel()
+                raise
             except Exception as e:  # pylint: disable=broad-except
                 print(f"    ✗ classify+extract failed for {fp}: {e}")
                 results[fp] = [{"type": "unknown", "pages": [1], "data": {}}]

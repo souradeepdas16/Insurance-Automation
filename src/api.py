@@ -23,6 +23,10 @@ _case_logs: dict[int, list[str]] = {}
 _thread_case_map: dict[int, int] = {}
 _log_lock = threading.Lock()
 
+# ── Per-case cancellation ─────────────────────────────────────────────────────
+# Maps case_id -> threading.Event; set() means "please stop"
+_cancel_events: dict[int, threading.Event] = {}
+
 
 class _ThreadAwareCapture(io.TextIOBase):
     """Tee: writes every print() to real stdout AND to per-case log buffer."""
@@ -217,14 +221,25 @@ def _run_processing(case_id: int) -> None:
     with _log_lock:
         _thread_case_map[tid] = case_id
 
+    cancel_event = _cancel_events.get(case_id)
+
     try:
-        process_case_from_db(case_id)
-        update_case_status(case_id, "completed")
+        process_case_from_db(case_id, cancel_event=cancel_event)
+        if cancel_event and cancel_event.is_set():
+            update_case_status(case_id, "failed", "Processing stopped by user")
+            print("  ⏹ Processing stopped by user.")
+        else:
+            update_case_status(case_id, "completed")
     except Exception as e:
-        update_case_status(case_id, "failed", str(e))
+        if cancel_event and cancel_event.is_set():
+            update_case_status(case_id, "failed", "Processing stopped by user")
+            print("  ⏹ Processing stopped by user.")
+        else:
+            update_case_status(case_id, "failed", str(e))
     finally:
         with _log_lock:
             _thread_case_map.pop(tid, None)
+        _cancel_events.pop(case_id, None)
 
 
 @app.get("/api/cases/{case_id}/logs")
@@ -258,10 +273,31 @@ def api_process_case(case_id: int):
     with _log_lock:
         _case_logs[case_id] = []
 
+    # Create a fresh cancellation event for this run
+    cancel_event = threading.Event()
+    _cancel_events[case_id] = cancel_event
+
     thread = threading.Thread(target=_run_processing, args=(case_id,), daemon=True)
     thread.start()
 
     return {"ok": True, "status": "processing"}
+
+
+@app.post("/api/cases/{case_id}/stop")
+def api_stop_case(case_id: int):
+    """Signal a running processing job to stop."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+    if case["status"] != "processing":
+        raise HTTPException(400, "Case is not currently processing")
+
+    cancel_event = _cancel_events.get(case_id)
+    if cancel_event:
+        cancel_event.set()
+        return {"ok": True, "message": "Stop signal sent"}
+    else:
+        raise HTTPException(400, "No active processing found for this case")
 
 
 # ── Document viewer ─────────────────────────────────────────────────────────
