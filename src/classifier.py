@@ -27,6 +27,7 @@ Return ONLY one of these exact strings (nothing else):
 - claim_form (insurance claim form filled by insured)
 - tax_report (road tax receipt / tax challan / tax payment document)
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
+- vehicle_image (vehicle damage photos / claim photos / survey photos showing the vehicle)
 - unknown (if none of the above)
 
 IMPORTANT: To distinguish repair_estimate from final_invoice, check the document TITLE/HEADER carefully.
@@ -53,6 +54,7 @@ Valid types (use ONLY these exact strings):
 - claim_form (insurance claim form filled by insured)
 - tax_report (road tax receipt / tax challan / tax payment document)
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
+- vehicle_image (vehicle damage photos / claim photos / survey photos showing the vehicle)
 - unknown
 
 IMPORTANT: To distinguish repair_estimate from final_invoice, check the document TITLE/HEADER carefully.

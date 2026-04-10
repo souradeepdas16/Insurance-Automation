@@ -94,6 +94,7 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "claim_form": "Claim Form",
     "tax_report": "Tax Report",
     "labour_charges": "Labour Charges",
+    "vehicle_image": "Vehicle Image",
     "unknown": "Extra Document",
 }
 

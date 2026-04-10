@@ -71,6 +71,14 @@
 			"G40": "type_of_permit",
 			"G41": "route_area"
 		},
+		"accident": {
+			"G57": "date_of_accident",
+			"G58": "place_of_accident"
+		},
+		"survey": {
+			"G61": "date_of_survey",
+			"G63": "place_of_survey"
+		},
 		"labour_table": {
 			"start_row": 156,
 			"max_slots": 5,

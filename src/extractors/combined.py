@@ -17,6 +17,7 @@ class ProcessingCancelledError(Exception):
 
 from src.types import (
     AllExtractedData,
+    ClaimFormData,
     DLData,
     EstimateData,
     EstimatePart,
@@ -27,6 +28,7 @@ from src.types import (
     LabourItem,
     RCData,
     RoutePermitData,
+    VehicleImageData,
 )
 from src.utils.ai_client import (
     MAX_PAGES_PER_CALL,
@@ -50,6 +52,7 @@ VALID_TYPES = (
     "claim_form",
     "tax_report",
     "labour_charges",
+    "vehicle_image",
     "unknown",
 )
 
@@ -119,7 +122,16 @@ fitness_certificate (fitness certificate / vehicle fitness):
 {"type":"fitness_certificate","pages":[1],"data":{"valid_upto":"DD.MM.YYYY"}}
 • valid_upto = fitness certificate validity end date.
 
-accident_document | survey_report | claim_form | tax_report | labour_charges | unknown:
+claim_form (insurance claim form filled by insured / claim intimation form):
+{"type":"claim_form","pages":[1],"data":{"date_of_accident":"DD.MM.YYYY","place_of_accident":""}}
+• date_of_accident = date of accident/loss as mentioned in the claim form.
+• place_of_accident = place/location of accident/loss as mentioned in the claim form.
+
+vehicle_image (vehicle damage photos / claim photos / survey photos with visible date):
+{"type":"vehicle_image","pages":[1],"data":{"date_of_survey":"DD.MM.YYYY"}}
+• date_of_survey = the date visible or stamped on the vehicle photo (e.g. date overlay, timestamp). Use "" if no date is visible.
+
+accident_document | survey_report | tax_report | labour_charges | unknown:
 {"type":"<detected_type>","pages":[1],"data":{}}
 
 ━━━ RULES ━━━
@@ -255,6 +267,19 @@ def _build_fitness_cert(data: dict) -> FitnessCertData:
     )
 
 
+def _build_claim_form(data: dict) -> ClaimFormData:
+    return ClaimFormData(
+        date_of_accident=data.get("date_of_accident", ""),
+        place_of_accident=data.get("place_of_accident", ""),
+    )
+
+
+def _build_vehicle_image(data: dict) -> VehicleImageData:
+    return VehicleImageData(
+        date_of_survey=data.get("date_of_survey", ""),
+    )
+
+
 def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData:
     """Assemble AllExtractedData by merging per-doc results grouped by type.
 
@@ -288,6 +313,14 @@ def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData
     if "fitness_certificate" in grouped:
         all_data.fitness_cert = _build_fitness_cert(
             _merge_simple(grouped["fitness_certificate"])
+        )
+
+    if "claim_form" in grouped:
+        all_data.claim_form = _build_claim_form(_merge_simple(grouped["claim_form"]))
+
+    if "vehicle_image" in grouped:
+        all_data.vehicle_image = _build_vehicle_image(
+            _merge_simple(grouped["vehicle_image"])
         )
 
     return all_data

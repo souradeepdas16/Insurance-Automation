@@ -28,6 +28,7 @@ PatternFill.__init__ = _patternfill_init_patched
 from src.paths import APP_DIR, BUNDLE_DIR
 from src.types import (
     AllExtractedData,
+    ClaimFormData,
     DLData,
     EstimateData,
     FitnessCertData,
@@ -36,6 +37,7 @@ from src.types import (
     InvoicePart,
     RCData,
     RoutePermitData,
+    VehicleImageData,
 )
 
 PROJECT_ROOT = APP_DIR
@@ -253,6 +255,38 @@ def _fill_workshop(
             _write_cell(ws, cell, dealer_name)
         elif field == "dealer_address":
             _write_cell(ws, cell, dealer_address)
+
+
+def _fill_accident(ws: Worksheet, data: ClaimFormData) -> None:
+    mapping = CELLMAP["sheet1"].get("accident", {})
+    data_dict = asdict(data)
+    for cell, field in mapping.items():
+        _write_cell(ws, cell, data_dict.get(field, ""))
+
+
+def _fill_survey(
+    ws: Worksheet,
+    vehicle_image: Optional[VehicleImageData],
+    estimate: Optional[EstimateData],
+    invoice: Optional[InvoiceData],
+) -> None:
+    """Fill survey details: date from vehicle image, place from estimate dealer address."""
+    mapping = CELLMAP["sheet1"].get("survey", {})
+    if not mapping:
+        return
+    date_of_survey = ""
+    if vehicle_image:
+        date_of_survey = vehicle_image.date_of_survey or ""
+    place_of_survey = ""
+    if estimate:
+        place_of_survey = estimate.dealer_address or ""
+    if not place_of_survey and invoice:
+        place_of_survey = invoice.dealer_address or ""
+    for cell, field in mapping.items():
+        if field == "date_of_survey":
+            _write_cell(ws, cell, date_of_survey)
+        elif field == "place_of_survey":
+            _write_cell(ws, cell, place_of_survey)
 
 
 def _match_parts_ai(
@@ -529,6 +563,13 @@ def fill_excel(
     # Fill workshop / place of survey from estimate or invoice
     _fill_workshop(ws1, all_data.estimate, all_data.invoice)
 
+    # Fill accident details from claim form
+    if all_data.claim_form:
+        _fill_accident(ws1, all_data.claim_form)
+
+    # Fill survey details: date from vehicle image, place from estimate
+    _fill_survey(ws1, all_data.vehicle_image, all_data.estimate, all_data.invoice)
+
     # Fill estimate AFTER insurance/rc/dl — parts insertion shifts rows below,
     # but all insurance/rc/dl cells are above the insertion point.
     row_offset = 0
@@ -539,6 +580,31 @@ def fill_excel(
     if ref_number:
         ref = f"SK/2025-26/OICL/{ref_number}"
         _write_cell(ws1, "C8", ref)
+
+    # ── NA fill: write "NA" to every static mapped cell still empty ──
+    _na_skip_sections = ("parts_table", "labour_table", "rc_date_serial")
+    _na_skip_fields = ("insurer_allotment_text", "fuel_type_label")
+    for section_key, section in CELLMAP.get("sheet1", {}).items():
+        if section_key in _na_skip_sections:
+            continue
+        if not isinstance(section, dict):
+            continue
+        for cell_addr, field_name in section.items():
+            if field_name in _na_skip_fields:
+                continue
+            cell = ws1[cell_addr]
+            from openpyxl.cell.cell import MergedCell as _MC
+
+            if isinstance(cell, _MC):
+                continue
+            if cell.data_type == "f" or (
+                cell.value is not None
+                and isinstance(cell.value, str)
+                and cell.value.startswith("=")
+            ):
+                continue
+            if cell.value is None or cell.value == "":
+                cell.value = "NA"
 
     # Other sheets (Sheet2, Sheet3, Sheet4, Sheet5, Sheet7) use formulas
     # referencing Sheet1, so they auto-populate — no manual fill needed.

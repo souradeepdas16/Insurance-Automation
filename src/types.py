@@ -114,6 +114,17 @@ class FitnessCertData:
 
 
 @dataclass
+class ClaimFormData:
+    date_of_accident: str = ""
+    place_of_accident: str = ""
+
+
+@dataclass
+class VehicleImageData:
+    date_of_survey: str = ""
+
+
+@dataclass
 class AllExtractedData:
     insurance: Optional[InsuranceData] = None
     rc: Optional[RCData] = None
@@ -122,6 +133,8 @@ class AllExtractedData:
     invoice: Optional[InvoiceData] = None
     route_permit: Optional[RoutePermitData] = None
     fitness_cert: Optional[FitnessCertData] = None
+    claim_form: Optional[ClaimFormData] = None
+    vehicle_image: Optional[VehicleImageData] = None
 
 
 DocumentType = Literal[
@@ -137,5 +150,6 @@ DocumentType = Literal[
     "claim_form",
     "tax_report",
     "labour_charges",
+    "vehicle_image",
     "unknown",
 ]
