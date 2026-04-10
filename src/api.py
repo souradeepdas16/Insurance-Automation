@@ -74,6 +74,7 @@ from src.database import (
     delete_document,
     get_document_by_id,
     get_documents_by_case,
+    reset_stuck_processing,
 )
 
 from src.paths import APP_DIR, BUNDLE_DIR
@@ -95,6 +96,9 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     init_db()
+    n = reset_stuck_processing()
+    if n:
+        print(f"  ⚠ Reset {n} case(s) stuck in 'processing' from a previous run.")
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
@@ -297,7 +301,11 @@ def api_stop_case(case_id: int):
         cancel_event.set()
         return {"ok": True, "message": "Stop signal sent"}
     else:
-        raise HTTPException(400, "No active processing found for this case")
+        # No in-memory cancel event means the thread is gone (e.g. server
+        # restarted while processing).  Force-reset the status so the user
+        # can retry.
+        update_case_status(case_id, "failed", "Processing orphaned — forced stop")
+        return {"ok": True, "message": "No active thread; status reset to failed"}
 
 
 # ── Document viewer ─────────────────────────────────────────────────────────

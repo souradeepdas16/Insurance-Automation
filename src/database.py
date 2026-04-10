@@ -168,6 +168,16 @@ def update_case_status(
             conn.execute("UPDATE cases SET status = ? WHERE id = ?", (status, case_id))
 
 
+def reset_stuck_processing() -> int:
+    """Reset any cases left in 'processing' state (e.g. after a server crash)."""
+    with get_db() as conn:
+        cur = conn.execute(
+            "UPDATE cases SET status = 'failed', error_message = 'Server restarted during processing' "
+            "WHERE status = 'processing'",
+        )
+        return cur.rowcount
+
+
 def delete_case(case_id: int) -> bool:
     with get_db() as conn:
         cur = conn.execute("DELETE FROM cases WHERE id = ?", (case_id,))
