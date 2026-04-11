@@ -516,49 +516,53 @@ def process_case_from_db(
                     except Exception as e:  # pylint: disable=broad-except
                         print(f"    ✗ Error processing {doc['original_name']}: {e}")
 
-    # ── Step 2: Build AllExtractedData ────────────────────────────────────────
-    if cancel_event and cancel_event.is_set():
-        return
-    print("  Step 2: Building extracted data...")
-    all_data = build_all_extracted_data(grouped_data)
+    # # ── Step 2: Build AllExtractedData ────────────────────────────────────────
+    # if cancel_event and cancel_event.is_set():
+    #     return
+    # print("  Step 2: Building extracted data...")
+    # all_data = build_all_extracted_data(grouped_data)
 
-    # ── Step 3: Fill Excel (output inside case folder) ────────────────────────
-    if cancel_event and cancel_event.is_set():
-        return
-    print("  Step 3: Filling Excel template...")
-    output_dir = case_folder / "output"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # # ── Step 3: Fill Excel (output inside case folder) ────────────────────────
+    # if cancel_event and cancel_event.is_set():
+    #     return
+    # print("  Step 3: Filling Excel template...")
+    # output_dir = case_folder / "output"
+    # output_dir.mkdir(parents=True, exist_ok=True)
 
-    output_path = str(output_dir / f"{case_name}.xlsx")
+    # output_path = str(output_dir / f"{case_name}.xlsx")
 
-    try:
-        ref_match = re.match(r"^(\d+)", case_name)
-        fill_excel(all_data, output_path, ref_match.group(1) if ref_match else None)
+    # try:
+    #     ref_match = re.match(r"^(\d+)", case_name)
+    #     fill_excel(all_data, output_path, ref_match.group(1) if ref_match else None)
 
-        json_path = str(output_dir / f"{case_name}_extracted.json")
-        with open(json_path, "w", encoding="utf-8") as jf:
-            json.dump(asdict(all_data), jf, indent=2, ensure_ascii=False)
+    #     json_path = str(output_dir / f"{case_name}_extracted.json")
+    #     with open(json_path, "w", encoding="utf-8") as jf:
+    #         json.dump(asdict(all_data), jf, indent=2, ensure_ascii=False)
 
-        doc_types = [k for k in grouped_data if k != "unknown"]
-        print(f"\n  ✓ DONE: {case_name}")
-        print(f"    Documents : {', '.join(doc_types)}")
-        print(
-            f"    Parts     : {len(all_data.estimate.parts) if all_data.estimate else 0}"
-        )
-        print(
-            f"    Labour    : {len(all_data.estimate.labour) if all_data.estimate else 0}"
-        )
-        print(f"    Output    : {output_path}")
-        print(f"    JSON dump : {json_path}")
-    except Exception as e:
-        raise RuntimeError(f"Excel filling failed: {e}") from e
-    finally:
-        # Release large intermediate objects and force garbage collection
-        combined_results = None  # noqa: F841
-        grouped_data = None  # noqa: F841
-        classified_items = None  # noqa: F841
-        all_data = None  # noqa: F841
-        gc.collect()
+    #     doc_types = [k for k in grouped_data if k != "unknown"]
+    #     print(f"\n  ✓ DONE: {case_name}")
+    #     print(f"    Documents : {', '.join(doc_types)}")
+    #     print(
+    #         f"    Parts     : {len(all_data.estimate.parts) if all_data.estimate else 0}"
+    #     )
+    #     print(
+    #         f"    Labour    : {len(all_data.estimate.labour) if all_data.estimate else 0}"
+    #     )
+    #     print(f"    Output    : {output_path}")
+    #     print(f"    JSON dump : {json_path}")
+    # except Exception as e:
+    #     raise RuntimeError(f"Excel filling failed: {e}") from e
+    # finally:
+    #     # Release large intermediate objects and force garbage collection
+    #     combined_results = None  # noqa: F841
+    #     grouped_data = None  # noqa: F841
+    #     classified_items = None  # noqa: F841
+    #     all_data = None  # noqa: F841
+    #     gc.collect()
+
+    print(f"\n  ✓ Classification complete for: {case_name}")
+    doc_types = [k for k in grouped_data if k != "unknown"]
+    print(f"    Documents : {', '.join(doc_types)}")
 
 
 # ─── Files dropped directly in watch root ────────────────────────────────────
