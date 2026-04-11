@@ -44,8 +44,18 @@ def _sanitize_ai_name(raw: str) -> str:
     return "" if not name or name.lower() in _GENERIC_NAMES else name
 
 
-def _merge_files_to_pdf(file_paths: list[str], output_path: str) -> None:
-    """Merge multiple image/PDF files into a single PDF."""
+def _merge_files_to_pdf(
+    file_paths: list[str],
+    output_path: str,
+    pages_per_file: list[list[int]] | None = None,
+) -> None:
+    """Merge multiple image/PDF files into a single PDF.
+
+    If *pages_per_file* is given it must be the same length as *file_paths*.
+    For PDFs the listed 1-based page numbers are extracted; for images the
+    list is ignored (an image is always a single page).
+    An empty list means "all pages".
+    """
     import io
 
     from PIL import Image
@@ -53,8 +63,11 @@ def _merge_files_to_pdf(file_paths: list[str], output_path: str) -> None:
 
     writer = PdfWriter()
 
-    for fp in file_paths:
+    for idx, fp in enumerate(file_paths):
         ext = Path(fp).suffix.lower()
+        wanted = (
+            pages_per_file[idx] if pages_per_file and idx < len(pages_per_file) else []
+        )
         if ext in IMAGE_EXTS:
             with Image.open(fp) as img:
                 if img.mode != "RGB":
@@ -67,8 +80,14 @@ def _merge_files_to_pdf(file_paths: list[str], output_path: str) -> None:
                     writer.add_page(page)
         elif ext == ".pdf":
             reader = PdfReader(fp)
-            for page in reader.pages:
-                writer.add_page(page)
+            if wanted:
+                for pn in wanted:
+                    pi = pn - 1  # 1-based → 0-based
+                    if 0 <= pi < len(reader.pages):
+                        writer.add_page(reader.pages[pi])
+            else:
+                for page in reader.pages:
+                    writer.add_page(page)
 
     with open(output_path, "wb") as f:
         writer.write(f)
@@ -334,7 +353,11 @@ def process_case_from_db(
             new_path = classified_dir / new_name
 
             try:
-                _merge_files_to_pdf([fp for fp, _ in all_source_paths], str(new_path))
+                _merge_files_to_pdf(
+                    [fp for fp, _ in all_source_paths],
+                    str(new_path),
+                    pages_per_file=[pgs for _, pgs in all_source_paths],
+                )
                 print(f"    ✓ Merged {len(items)} {display} file(s) → {new_name}")
             except Exception as e:  # pylint: disable=broad-except
                 print(f"    ✗ Merge failed for {display}: {e}, copying individually")
@@ -395,7 +418,9 @@ def process_case_from_db(
                         new_path = classified_dir / new_name
                         try:
                             _merge_files_to_pdf(
-                                [fp for (_, _, _, fp) in sub_items], str(new_path)
+                                [fp for (_, _, _, fp) in sub_items],
+                                str(new_path),
+                                pages_per_file=[pgs for (_, pgs, _, _) in sub_items],
                             )
                             print(
                                 f"    ✓ Merged {len(sub_items)} {d} file(s) → {new_name}"
