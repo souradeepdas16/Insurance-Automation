@@ -99,6 +99,9 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "labour_charges": "Labour Charges",
     "vehicle_image": "Vehicle Image",
     "towing_bill": "Towing Bill",
+    "aadhar_card": "Aadhar Card",
+    "pan_card": "PAN Card",
+    "discharge_voucher": "Discharge Voucher",
     "unknown": "Extra Document",
 }
 
@@ -351,56 +354,167 @@ def process_case_from_db(
                     ensure_ascii=False,
                 )
         else:
-            # Single entry for this type → split pages from source PDF or copy file
-            _name_count: dict[str, int] = {}  # track name collisions for unknown docs
-            for i, (doc, pages, extracted_data, fp) in enumerate(items, 1):
-                ext = Path(fp).suffix.lower()
-                d = display
-                if doc_type == "unknown":
+            # Single entry or unknown type → name each, then merge by same AI name
+            if doc_type == "unknown" and len(items) > 1:
+                # AI-name each unknown doc, group by name, merge same-name docs
+                named_items: dict[str, list[tuple[dict, list[int], dict, str]]] = {}
+                for doc, pages, extracted_data, fp in items:
+                    ext = Path(fp).suffix.lower()
                     ai_name = name_unknown_document(fp)
                     if ai_name:
                         d = ai_name
                     elif ext in IMAGE_EXTS:
                         d = "Extra Image"
-                _name_count[d] = _name_count.get(d, 0) + 1
-                cnt = _name_count[d]
-                new_name = f"{d}.pdf" if cnt == 1 else f"{d} ({cnt}).pdf"
-
-                try:
-                    # For PDFs with page info, extract only the relevant pages
-                    if ext == ".pdf" and pages:
-                        _extract_pdf_pages(fp, pages, str(classified_dir / new_name))
                     else:
-                        # Images or fallback: just copy (keep original extension)
-                        new_name = f"{d}{ext}" if cnt == 1 else f"{d} ({cnt}){ext}"
-                        shutil.copy2(fp, str(classified_dir / new_name))
+                        d = display
+                    named_items.setdefault(d, []).append(
+                        (doc, pages, extracted_data, fp)
+                    )
 
-                    update_document_classification(doc["id"], doc_type, new_name)
+                _name_count: dict[str, int] = {}
+                for d, sub_items in named_items.items():
+                    if len(sub_items) > 1:
+                        # Multiple unknown docs with same AI name → merge into PDF
+                        new_name = f"{d}.pdf"
+                        new_path = classified_dir / new_name
+                        try:
+                            _merge_files_to_pdf(
+                                [fp for (_, _, _, fp) in sub_items], str(new_path)
+                            )
+                            print(
+                                f"    ✓ Merged {len(sub_items)} {d} file(s) → {new_name}"
+                            )
+                        except Exception as e:  # pylint: disable=broad-except
+                            print(
+                                f"    ✗ Merge failed for {d}: {e}, copying individually"
+                            )
+                            for j, (doc, pages, extracted_data, fp) in enumerate(
+                                sub_items, 1
+                            ):
+                                ext = Path(fp).suffix
+                                fallback = f"{d}{ext}" if j == 1 else f"{d} ({j}){ext}"
+                                shutil.copy2(fp, str(classified_dir / fallback))
+                                update_document_classification(
+                                    doc["id"], doc_type, fallback
+                                )
+                            continue
 
-                    with open(
-                        str(classified_dir / f"{Path(new_name).stem}.json"),
-                        "w",
-                        encoding="utf-8",
-                    ) as _jf:
-                        json.dump(
-                            {
-                                "type": doc_type,
-                                "display_name": d,
-                                "source_file": doc["original_name"],
-                                "pages": pages,
-                                "data": extracted_data,
-                            },
-                            _jf,
-                            indent=2,
-                            ensure_ascii=False,
+                        for doc, _, _, _ in sub_items:
+                            update_document_classification(
+                                doc["id"], doc_type, new_name
+                            )
+
+                        source_names = list(
+                            dict.fromkeys(
+                                doc["original_name"] for doc, _, _, _ in sub_items
+                            )
                         )
+                        with open(
+                            str(classified_dir / f"{d}.json"), "w", encoding="utf-8"
+                        ) as _jf:
+                            json.dump(
+                                {
+                                    "type": doc_type,
+                                    "display_name": d,
+                                    "source_files": source_names,
+                                    "data": [ed for (_, _, ed, _) in sub_items],
+                                },
+                                _jf,
+                                indent=2,
+                                ensure_ascii=False,
+                            )
+                    else:
+                        # Single unknown doc with this name → copy as-is
+                        doc, pages, extracted_data, fp = sub_items[0]
+                        ext = Path(fp).suffix.lower()
+                        _name_count[d] = _name_count.get(d, 0) + 1
+                        cnt = _name_count[d]
+                        if ext == ".pdf" and pages:
+                            new_name = f"{d}.pdf" if cnt == 1 else f"{d} ({cnt}).pdf"
+                            try:
+                                _extract_pdf_pages(
+                                    fp, pages, str(classified_dir / new_name)
+                                )
+                            except Exception as e:  # pylint: disable=broad-except
+                                print(
+                                    f"    ✗ Error processing {doc['original_name']}: {e}"
+                                )
+                                continue
+                        else:
+                            new_name = f"{d}{ext}" if cnt == 1 else f"{d} ({cnt}){ext}"
+                            shutil.copy2(fp, str(classified_dir / new_name))
 
-                    if len(pages) > 0 and ext == ".pdf":
-                        print(
-                            f"    ✓ {doc['original_name']} pages {pages} → {new_name}"
-                        )
-                except Exception as e:  # pylint: disable=broad-except
-                    print(f"    ✗ Error processing {doc['original_name']}: {e}")
+                        update_document_classification(doc["id"], doc_type, new_name)
+                        with open(
+                            str(classified_dir / f"{Path(new_name).stem}.json"),
+                            "w",
+                            encoding="utf-8",
+                        ) as _jf:
+                            json.dump(
+                                {
+                                    "type": doc_type,
+                                    "display_name": d,
+                                    "source_file": doc["original_name"],
+                                    "pages": pages,
+                                    "data": extracted_data,
+                                },
+                                _jf,
+                                indent=2,
+                                ensure_ascii=False,
+                            )
+            else:
+                # Single entry for this type (known or unknown)
+                _name_count: dict[str, int] = {}
+                for i, (doc, pages, extracted_data, fp) in enumerate(items, 1):
+                    ext = Path(fp).suffix.lower()
+                    d = display
+                    if doc_type == "unknown":
+                        ai_name = name_unknown_document(fp)
+                        if ai_name:
+                            d = ai_name
+                        elif ext in IMAGE_EXTS:
+                            d = "Extra Image"
+                    _name_count[d] = _name_count.get(d, 0) + 1
+                    cnt = _name_count[d]
+                    new_name = f"{d}.pdf" if cnt == 1 else f"{d} ({cnt}).pdf"
+
+                    try:
+                        # For PDFs with page info, extract only the relevant pages
+                        if ext == ".pdf" and pages:
+                            _extract_pdf_pages(
+                                fp, pages, str(classified_dir / new_name)
+                            )
+                        else:
+                            # Images or fallback: just copy (keep original extension)
+                            new_name = f"{d}{ext}" if cnt == 1 else f"{d} ({cnt}){ext}"
+                            shutil.copy2(fp, str(classified_dir / new_name))
+
+                        update_document_classification(doc["id"], doc_type, new_name)
+
+                        with open(
+                            str(classified_dir / f"{Path(new_name).stem}.json"),
+                            "w",
+                            encoding="utf-8",
+                        ) as _jf:
+                            json.dump(
+                                {
+                                    "type": doc_type,
+                                    "display_name": d,
+                                    "source_file": doc["original_name"],
+                                    "pages": pages,
+                                    "data": extracted_data,
+                                },
+                                _jf,
+                                indent=2,
+                                ensure_ascii=False,
+                            )
+
+                        if len(pages) > 0 and ext == ".pdf":
+                            print(
+                                f"    ✓ {doc['original_name']} pages {pages} → {new_name}"
+                            )
+                    except Exception as e:  # pylint: disable=broad-except
+                        print(f"    ✗ Error processing {doc['original_name']}: {e}")
 
     # ── Step 2: Build AllExtractedData ────────────────────────────────────────
     if cancel_event and cancel_event.is_set():

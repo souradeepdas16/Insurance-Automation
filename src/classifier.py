@@ -30,6 +30,9 @@ Return ONLY one of these exact strings (nothing else):
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
 - vehicle_image (vehicle damage photos / claim photos / survey photos showing the vehicle)
 - towing_bill (towing charges / towing bill / towing receipt / crane charges / vehicle recovery bill)
+- aadhar_card (Aadhar card / UIDAI card / Aadhaar)
+- pan_card (PAN card / income tax PAN)
+- discharge_voucher (discharge voucher / satisfaction voucher / final discharge)
 - unknown (if none of the above)
 
 IMPORTANT DISTINCTIONS:
@@ -62,6 +65,9 @@ Valid types (use ONLY these exact strings):
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
 - vehicle_image (vehicle damage photos / claim photos / survey photos showing the vehicle)
 - towing_bill (towing charges / towing bill / towing receipt / crane charges / vehicle recovery bill)
+- aadhar_card (Aadhar card / UIDAI card / Aadhaar)
+- pan_card (PAN card / income tax PAN)
+- discharge_voucher (discharge voucher / satisfaction voucher / final discharge)
 - unknown
 
 IMPORTANT DISTINCTIONS:
@@ -83,7 +89,7 @@ Return ONLY the JSON object."""
 NAME_UNKNOWN_PROMPT = """You are a document identifier for Indian vehicle insurance claims.
 Look at this document/image and give it a short, descriptive name (2-4 words) that describes what it is.
 
-Examples of good names: "Aadhar Card", "PAN Card", "Bank Statement", "Vehicle Photo", "Damage Photos", "Cancelled Cheque", "Passport", "Address Proof", "NOC Letter", "Payment Receipt", "Discharge Voucher", "Police Complaint", "Medical Report", "Salvage Photos"
+Examples of good names: "Bank Statement", "Vehicle Photo", "Damage Photos", "Cancelled Cheque", "Passport", "Address Proof", "NOC Letter", "Payment Receipt", "Police Complaint", "Medical Report", "Salvage Photos"
 
 Rules:
 - Return ONLY the short name, nothing else

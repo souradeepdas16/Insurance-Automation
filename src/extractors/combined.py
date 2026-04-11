@@ -54,6 +54,9 @@ VALID_TYPES = (
     "labour_charges",
     "vehicle_image",
     "towing_bill",
+    "aadhar_card",
+    "pan_card",
+    "discharge_voucher",
     "unknown",
 )
 
@@ -66,7 +69,8 @@ You MUST detect ALL document types present and extract data for each one separat
 Step 1 — For EACH distinct document found, identify its type from this list:
 insurance_policy | registration_certificate | driving_license | repair_estimate |
 final_invoice | route_permit | fitness_certificate | accident_document |
-survey_report | claim_form | tax_report | labour_charges | towing_bill | unknown
+survey_report | claim_form | tax_report | labour_charges | towing_bill |
+aadhar_card | pan_card | discharge_voucher | unknown
 
 CRITICAL — How to distinguish repair_estimate from final_invoice from towing_bill:
 • Check the document TITLE / HEADER first:
@@ -136,6 +140,15 @@ vehicle_image (vehicle damage photos / claim photos / survey photos with visible
 
 towing_bill (towing charges / towing bill / crane charges / vehicle recovery bill):
 {"type":"towing_bill","pages":[1],"data":{}}
+
+aadhar_card (Aadhar card / UIDAI card / Aadhaar identity card):
+{"type":"aadhar_card","pages":[1],"data":{}}
+
+pan_card (PAN card / income tax permanent account number card):
+{"type":"pan_card","pages":[1],"data":{}}
+
+discharge_voucher (discharge voucher / satisfaction voucher / final discharge / no-claim voucher):
+{"type":"discharge_voucher","pages":[1],"data":{}}
 
 accident_document | survey_report | tax_report | labour_charges | unknown:
 {"type":"<detected_type>","pages":[1],"data":{}}

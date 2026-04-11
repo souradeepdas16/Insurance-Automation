@@ -152,5 +152,8 @@ DocumentType = Literal[
     "labour_charges",
     "vehicle_image",
     "towing_bill",
+    "aadhar_card",
+    "pan_card",
+    "discharge_voucher",
     "unknown",
 ]
