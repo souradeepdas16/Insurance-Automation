@@ -501,7 +501,6 @@ def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData
 # ─── Single-doc classify+extract ─────────────────────────────────────────────
 
 
-# Gemini 2.5 Flash supports up to 65536 output tokens.
 # Estimates with 50+ parts need ~3000+ tokens — use the full budget.
 _MAX_OUTPUT_TOKENS = int(os.environ.get("AI_MAX_OUTPUT_TOKENS", "65536"))
 

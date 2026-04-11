@@ -1,79 +1,31 @@
-"""AI client — routes vision requests through OpenRouter or Gemini Web.
-
-Providers (set AI_PROVIDER env var):
-  openrouter  (default) — uses OPENROUTER_API_KEY, model from Settings page
-  google      — uses gemini-webapi with browser cookies (free, no API key)
-"""
+"""AI client — sends vision requests through OpenRouter."""
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import io
 import json
 import os
 import re as _re
 import threading
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+from openai import OpenAI
 from PIL import Image
 
 from src.paths import APP_DIR
 
 load_dotenv(APP_DIR / ".env")
 
-# ── Provider setup ─────────────────────────────────────────────────────────────
-AI_PROVIDER: str = os.environ.get("AI_PROVIDER", "openrouter").lower()
-
-if AI_PROVIDER == "google":
-    # ── Gemini Web (gemini-webapi) ─────────────────────────────────────────────
-    from gemini_webapi import GeminiClient as _GeminiClient
-
-    _GEMINI_1PSID: str = os.environ.get("GEMINI_SECURE_1PSID", "")
-    _GEMINI_1PSIDTS: str = os.environ.get("GEMINI_SECURE_1PSIDTS", "")
-
-    # Persistent event loop for async gemini-webapi calls
-    _loop = asyncio.new_event_loop()
-    threading.Thread(target=_loop.run_forever, daemon=True, name="gemini-loop").start()
-
-    _gemini_client: _GeminiClient | None = None
-    _gemini_init_lock: asyncio.Lock | None = None
-
-    async def _ensure_gemini_client() -> _GeminiClient:
-        global _gemini_client, _gemini_init_lock
-        if _gemini_client is not None:
-            return _gemini_client
-        if _gemini_init_lock is None:
-            _gemini_init_lock = asyncio.Lock()
-        async with _gemini_init_lock:
-            if _gemini_client is not None:
-                return _gemini_client
-            gc = _GeminiClient(
-                secure_1psid=_GEMINI_1PSID,
-                secure_1psidts=_GEMINI_1PSIDTS,
-            )
-            await gc.init(auto_close=False, auto_refresh=True, verbose=False)
-            _gemini_client = gc
-            return _gemini_client
-
-    def _run_async(coro):  # noqa: ANN001
-        """Submit an async coroutine to the background event loop and block."""
-        return asyncio.run_coroutine_threadsafe(coro, _loop).result()
-
-    client = None  # not used for gemini-web provider
-else:
-    # ── OpenRouter ─────────────────────────────────────────────────────────────
-    from openai import OpenAI
-
-    OPENROUTER_API_KEY: str = os.environ.get("OPENROUTER_API_KEY", "")
-    client = OpenAI(
-        api_key=OPENROUTER_API_KEY,
-        base_url="https://openrouter.ai/api/v1",
-    )
+# ── OpenRouter setup ───────────────────────────────────────────────────────────
+OPENROUTER_API_KEY: str = os.environ.get("OPENROUTER_API_KEY", "")
+client = OpenAI(
+    api_key=OPENROUTER_API_KEY,
+    base_url="https://openrouter.ai/api/v1",
+)
 
 
 def _get_model() -> str:
@@ -88,32 +40,6 @@ def _get_model() -> str:
         pass
     return "openai/gpt-4.1"
 
-
-# ── Rate limiter (for Gemini Web: be polite, ~8 RPM) ─────────────────────────
-class _RateLimiter:
-    """Simple sliding-window rate limiter."""
-
-    def __init__(self, max_calls: int, period: float) -> None:
-        self._max = max_calls
-        self._period = period
-        self._timestamps: list[float] = []
-        self._lock = threading.Lock()
-
-    def wait(self) -> None:
-        with self._lock:
-            now = time.monotonic()
-            self._timestamps = [t for t in self._timestamps if now - t < self._period]
-            if len(self._timestamps) >= self._max:
-                sleep_time = self._period - (now - self._timestamps[0]) + 0.1
-                if sleep_time > 0:
-                    print(f"    ⏳ Rate limit: waiting {sleep_time:.1f}s...")
-                    time.sleep(sleep_time)
-            self._timestamps.append(time.monotonic())
-
-
-_rate_limiter: _RateLimiter | None = (
-    _RateLimiter(max_calls=8, period=60.0) if AI_PROVIDER == "google" else None
-)
 
 # ── Debug logging ────────────────────────────────────────────────────────────
 AI_DEBUG: bool = os.environ.get("AI_DEBUG", "1").strip() != "0"
@@ -229,49 +155,6 @@ def vision_extract_json_from_images(
 
     Used when the caller has already split a PDF into page chunks.
     """
-    if _rate_limiter:
-        _rate_limiter.wait()
-
-    if AI_PROVIDER == "google":
-        # Gemini web path — save images to temp files
-        import tempfile
-
-        full_prompt = f"{SYSTEM_JSON}\n\n{prompt}"
-        tmp_files: list[str] = []
-        try:
-            for i, b64 in enumerate(images_b64):
-                tmp = tempfile.NamedTemporaryFile(
-                    suffix=".jpg", prefix=f"page_{i}_", delete=False
-                )
-                tmp.write(base64.b64decode(b64))
-                tmp.close()
-                tmp_files.append(tmp.name)
-
-            async def _do():
-                gc = await _ensure_gemini_client()
-                resp = await gc.generate_content(prompt=full_prompt, files=tmp_files)
-                return resp.text
-
-            raw = _run_async(_do())
-        finally:
-            for tf in tmp_files:
-                try:
-                    os.unlink(tf)
-                except OSError:
-                    pass
-
-        raw = _strip_json_fences(raw)
-        _log_raw(label, raw)
-        parsed = _safe_json_loads(raw)
-        if (
-            isinstance(parsed, list)
-            and len(parsed) == 1
-            and isinstance(parsed[0], dict)
-        ):
-            parsed = parsed[0]
-        return parsed
-
-    # OpenRouter path
     content: list[dict[str, Any]] = _b64_images_to_content(images_b64)
     content.append({"type": "text", "text": prompt})
 
@@ -441,19 +324,6 @@ def _safe_json_loads(raw: str) -> Any:
 
 def vision_request(file_paths: list[str], prompt: str) -> str:
     """Send files to AI provider, return raw text response."""
-    if _rate_limiter:
-        _rate_limiter.wait()
-
-    if AI_PROVIDER == "google":
-
-        async def _do():
-            gc = await _ensure_gemini_client()
-            resp = await gc.generate_content(prompt=prompt, files=file_paths)
-            return resp.text
-
-        return _run_async(_do())
-
-    # OpenRouter path
     content: list[dict[str, Any]] = []
     for fp in file_paths:
         content.extend(_file_to_content_items(fp))
@@ -481,33 +351,6 @@ def vision_extract_json(
     max_output_tokens: int = _MAX_OUTPUT_TOKENS,
 ) -> dict[str, Any]:
     """Send files to AI provider with JSON response format, return parsed dict."""
-    if _rate_limiter:
-        _rate_limiter.wait()
-
-    if AI_PROVIDER == "google":
-        full_prompt = f"{SYSTEM_JSON}\n\n{prompt}"
-
-        async def _do():
-            gc = await _ensure_gemini_client()
-            resp = await gc.generate_content(prompt=full_prompt, files=file_paths)
-            return resp.text
-
-        raw = _run_async(_do())
-        raw = _strip_json_fences(raw)
-
-        label = Path(file_paths[0]).stem if file_paths else "nofile"
-        _log_raw(label, raw)
-
-        parsed = _safe_json_loads(raw)
-        if (
-            isinstance(parsed, list)
-            and len(parsed) == 1
-            and isinstance(parsed[0], dict)
-        ):
-            parsed = parsed[0]
-        return parsed
-
-    # OpenRouter path
     content: list[dict[str, Any]] = []
     for fp in file_paths:
         content.extend(_file_to_content_items(fp))
@@ -553,28 +396,6 @@ def vision_extract_json_labeled(
     Each file is preceded by a text label so the model knows which file is which.
     Returns parsed JSON dict.
     """
-    if _rate_limiter:
-        _rate_limiter.wait()
-
-    if AI_PROVIDER == "google":
-        # Build a prompt that includes labels before each file reference
-        label_lines = "\n".join(
-            f"[{label}]: file {i+1}" for i, (label, _) in enumerate(labeled_files)
-        )
-        full_prompt = f"{SYSTEM_JSON}\n\n{label_lines}\n\n{prompt}"
-        files = [fp for _, fp in labeled_files]
-
-        async def _do():
-            gc = await _ensure_gemini_client()
-            resp = await gc.generate_content(prompt=full_prompt, files=files)
-            return resp.text
-
-        raw = _run_async(_do())
-        raw = _strip_json_fences(raw)
-        _log_raw("labeled", raw)
-        return _safe_json_loads(raw)
-
-    # OpenRouter path
     content: list[dict[str, Any]] = []
 
     for label, file_path in labeled_files:
