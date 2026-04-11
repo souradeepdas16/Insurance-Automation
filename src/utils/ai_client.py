@@ -147,6 +147,11 @@ _MAX_OUTPUT_TOKENS: int = int(os.environ.get("AI_MAX_OUTPUT_TOKENS", "65536"))
 # Maximum PDF pages to send per API call (avoids huge payloads / provider limits).
 MAX_PAGES_PER_CALL: int = int(os.environ.get("AI_MAX_PAGES_PER_CALL", "10"))
 
+# Reasoning/thinking budget — limits expensive thinking tokens on reasoning models (e.g. Gemini 2.5 Pro).
+# Extraction tasks need more thinking; classification/naming need very little.
+_REASONING_BUDGET_EXTRACT: int = int(os.environ.get("AI_REASONING_BUDGET_EXTRACT", "8192"))
+_REASONING_BUDGET_SIMPLE: int = int(os.environ.get("AI_REASONING_BUDGET_SIMPLE", "1024"))
+
 
 def _resize_image_to_base64(file_path: str, max_dim: int = MAX_DIM) -> str:
     """Open an image, resize if needed, return base64 JPEG string."""
@@ -224,6 +229,7 @@ def vision_extract_json_from_images(
     prompt: str,
     max_output_tokens: int = _MAX_OUTPUT_TOKENS,
     label: str = "chunk",
+    reasoning_budget: int = _REASONING_BUDGET_EXTRACT,
 ) -> dict[str, Any]:
     """Like vision_extract_json but takes pre-rendered base64 JPEG images.
 
@@ -284,6 +290,7 @@ def vision_extract_json_from_images(
         response_format={"type": "json_object"},
         max_tokens=max_output_tokens,
         temperature=0,
+        extra_body={"reasoning": {"max_tokens": reasoning_budget}},
     )
     choice = response.choices[0]
     raw = (choice.message.content or "").strip()
@@ -439,7 +446,12 @@ def _safe_json_loads(raw: str) -> Any:
     return json.loads(raw)
 
 
-def vision_request(file_paths: list[str], prompt: str) -> str:
+def vision_request(
+    file_paths: list[str],
+    prompt: str,
+    max_tokens: int = 256,
+    reasoning_budget: int = _REASONING_BUDGET_SIMPLE,
+) -> str:
     """Send files to AI provider, return raw text response."""
     if _rate_limiter:
         _rate_limiter.wait()
@@ -462,7 +474,8 @@ def vision_request(file_paths: list[str], prompt: str) -> str:
     response = client.chat.completions.create(
         model=_get_model(),
         messages=[{"role": "user", "content": content}],
-        max_tokens=_MAX_OUTPUT_TOKENS,
+        max_tokens=max_tokens,
+        extra_body={"reasoning": {"max_tokens": reasoning_budget}},
     )
     return (response.choices[0].message.content or "").strip()
 
@@ -479,6 +492,7 @@ def vision_extract_json(
     file_paths: list[str],
     prompt: str,
     max_output_tokens: int = _MAX_OUTPUT_TOKENS,
+    reasoning_budget: int = _REASONING_BUDGET_EXTRACT,
 ) -> dict[str, Any]:
     """Send files to AI provider with JSON response format, return parsed dict."""
     if _rate_limiter:
@@ -522,6 +536,7 @@ def vision_extract_json(
         response_format={"type": "json_object"},
         max_tokens=max_output_tokens,
         temperature=0,
+        extra_body={"reasoning": {"max_tokens": reasoning_budget}},
     )
     choice = response.choices[0]
     raw = (choice.message.content or "").strip()
@@ -547,6 +562,7 @@ def vision_extract_json_labeled(
     labeled_files: list[tuple[str, str]],
     prompt: str,
     max_output_tokens: int = _MAX_OUTPUT_TOKENS,
+    reasoning_budget: int = _REASONING_BUDGET_SIMPLE,
 ) -> dict[str, Any]:
     """Send labeled files (label, path) with JSON response format.
 
@@ -592,6 +608,7 @@ def vision_extract_json_labeled(
         response_format={"type": "json_object"},
         max_tokens=max_output_tokens,
         temperature=0,
+        extra_body={"reasoning": {"max_tokens": reasoning_budget}},
     )
     choice = response.choices[0]
     raw = (choice.message.content or "").strip()
