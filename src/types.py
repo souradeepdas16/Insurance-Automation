@@ -151,5 +151,6 @@ DocumentType = Literal[
     "tax_report",
     "labour_charges",
     "vehicle_image",
+    "towing_bill",
     "unknown",
 ]

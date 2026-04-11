@@ -53,6 +53,7 @@ VALID_TYPES = (
     "tax_report",
     "labour_charges",
     "vehicle_image",
+    "towing_bill",
     "unknown",
 )
 
@@ -65,16 +66,18 @@ You MUST detect ALL document types present and extract data for each one separat
 Step 1 — For EACH distinct document found, identify its type from this list:
 insurance_policy | registration_certificate | driving_license | repair_estimate |
 final_invoice | route_permit | fitness_certificate | accident_document |
-survey_report | claim_form | tax_report | labour_charges | unknown
+survey_report | claim_form | tax_report | labour_charges | towing_bill | unknown
 
-CRITICAL — How to distinguish repair_estimate from final_invoice:
+CRITICAL — How to distinguish repair_estimate from final_invoice from towing_bill:
 • Check the document TITLE / HEADER first:
   - "Estimate", "Quotation", "Service Quotation", "Proforma" → repair_estimate
-  - "Tax Invoice", "Invoice", "Bill", "Final Bill" → final_invoice
+  - "Tax Invoice", "Invoice", "Bill", "Final Bill" → final_invoice (ONLY for workshop/dealer repair bills)
+  - "Towing", "Tow", "Crane", "Recovery", "Towing Bill", "Towing Charges" → towing_bill
 • repair_estimate may still show CGST/UGST columns — that does NOT make it an invoice.
   The TITLE is the deciding factor.
 • A "Quotation No." or "Estimate No." field → repair_estimate.
   A "GST Invc No." or "Invoice No." field → final_invoice.
+• A document about towing/crane/vehicle recovery charges is ALWAYS towing_bill, NEVER final_invoice.
 
 Step 2 — Extract the relevant fields for each detected document type.
 Use "" for missing text fields, 0 for missing numeric fields.
@@ -130,6 +133,9 @@ claim_form (insurance claim form filled by insured / claim intimation form):
 vehicle_image (vehicle damage photos / claim photos / survey photos with visible date):
 {"type":"vehicle_image","pages":[1],"data":{"date_of_survey":"DD.MM.YYYY"}}
 • date_of_survey = the date visible or stamped on the vehicle photo (e.g. date overlay, timestamp). Use "" if no date is visible.
+
+towing_bill (towing charges / towing bill / crane charges / vehicle recovery bill):
+{"type":"towing_bill","pages":[1],"data":{}}
 
 accident_document | survey_report | tax_report | labour_charges | unknown:
 {"type":"<detected_type>","pages":[1],"data":{}}

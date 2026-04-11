@@ -28,11 +28,16 @@ Return ONLY one of these exact strings (nothing else):
 - tax_report (road tax receipt / tax challan / tax payment document)
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
 - vehicle_image (vehicle damage photos / claim photos / survey photos showing the vehicle)
+- towing_bill (towing charges / towing bill / towing receipt / crane charges / vehicle recovery bill)
 - unknown (if none of the above)
 
-IMPORTANT: To distinguish repair_estimate from final_invoice, check the document TITLE/HEADER carefully.
-If the header says "Estimate", "Quotation", or "Proforma" → repair_estimate.
-If the header says "Tax Invoice", "Invoice", or "Bill" → final_invoice.
+IMPORTANT DISTINCTIONS:
+1. repair_estimate vs final_invoice — check TITLE/HEADER:
+   - "Estimate", "Quotation", or "Proforma" → repair_estimate
+   - "Tax Invoice", "Invoice", or "Bill" → final_invoice
+2. towing_bill vs final_invoice — A towing/crane/recovery bill is NOT a final_invoice.
+   If the document is about towing charges, crane charges, or vehicle recovery → towing_bill.
+   final_invoice is ONLY for workshop/dealer repair bills.
 
 Return ONLY the type string, no explanation."""
 
@@ -55,11 +60,16 @@ Valid types (use ONLY these exact strings):
 - tax_report (road tax receipt / tax challan / tax payment document)
 - labour_charges (standalone labour charges / labour bill / labour detail sheet)
 - vehicle_image (vehicle damage photos / claim photos / survey photos showing the vehicle)
+- towing_bill (towing charges / towing bill / towing receipt / crane charges / vehicle recovery bill)
 - unknown
 
-IMPORTANT: To distinguish repair_estimate from final_invoice, check the document TITLE/HEADER carefully.
-If the header says "Estimate", "Quotation", or "Proforma" → repair_estimate.
-If the header says "Tax Invoice", "Invoice", or "Bill" → final_invoice.
+IMPORTANT DISTINCTIONS:
+1. repair_estimate vs final_invoice — check TITLE/HEADER:
+   - "Estimate", "Quotation", or "Proforma" → repair_estimate
+   - "Tax Invoice", "Invoice", or "Bill" → final_invoice
+2. towing_bill vs final_invoice — A towing/crane/recovery bill is NOT a final_invoice.
+   If the document is about towing charges, crane charges, or vehicle recovery → towing_bill.
+   final_invoice is ONLY for workshop/dealer repair bills.
 
 Return a JSON object mapping each file label to its type, e.g.:
 {"file_1": "insurance_policy", "file_2": "registration_certificate", "file_3": "driving_license"}
@@ -70,7 +80,7 @@ Return ONLY the JSON object."""
 NAME_UNKNOWN_PROMPT = """You are a document identifier for Indian vehicle insurance claims.
 Look at this document/image and give it a short, descriptive name (2-4 words) that describes what it is.
 
-Examples of good names: "Aadhar Card", "PAN Card", "Bank Statement", "Vehicle Photo", "Damage Photos", "Cancelled Cheque", "Passport", "Address Proof", "NOC Letter", "Payment Receipt", "Towing Bill", "Police Complaint", "Medical Report", "Salvage Photos"
+Examples of good names: "Aadhar Card", "PAN Card", "Bank Statement", "Vehicle Photo", "Damage Photos", "Cancelled Cheque", "Passport", "Address Proof", "NOC Letter", "Payment Receipt", "Discharge Voucher", "Police Complaint", "Medical Report", "Salvage Photos"
 
 Rules:
 - Return ONLY the short name, nothing else
