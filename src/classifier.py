@@ -144,7 +144,9 @@ def classify_documents_batch(
         return {}
 
     # Build labeled list: [("file_1 (original_name.pdf)", path), ...]
-    labels = [f"file_{i + 1} ({os.path.basename(fp)})" for i, fp in enumerate(file_paths)]
+    labels = [
+        f"file_{i + 1} ({os.path.basename(fp)})" for i, fp in enumerate(file_paths)
+    ]
     labeled = list(zip(labels, file_paths))
 
     data = vision_extract_json_labeled(labeled, BATCH_CLASSIFY_PROMPT)
