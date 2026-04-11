@@ -66,6 +66,12 @@ IMPORTANT — A single file (PDF/image) may contain MULTIPLE different document 
 (e.g. a driving license and registration certificate scanned together).
 You MUST detect ALL document types present and extract data for each one separately.
 
+HOWEVER — For a single-page image (JPEG/PNG), there is almost always ONLY ONE document.
+Do NOT return multiple types for the same single image unless you can clearly see two
+PHYSICALLY SEPARATE documents scanned together in that one image (e.g. a DL card AND an
+RC card side by side). If the image shows ONE document, return exactly ONE entry.
+Never guess a second type — only report what you can actually see.
+
 Step 1 — For EACH distinct document found, identify its type from this list:
 insurance_policy | registration_certificate | driving_license | repair_estimate |
 final_invoice | route_permit | fitness_certificate | accident_document |
@@ -74,110 +80,154 @@ aadhar_card | pan_card | discharge_voucher | unknown
 
 ━━━ CRITICAL — HOW TO DISTINGUISH EACH DOCUMENT TYPE ━━━
 
-▶ insurance_policy — Vehicle insurance policy or cover note issued by an insurance company.
-  LOOK FOR: Insurance company logo/letterhead, "Policy Schedule", "Certificate of Insurance",
-  "Cover Note", policy number (e.g. POL-XXXX), IDV (Insured Declared Value), premium amount,
-  coverage period ("Period of Insurance"), insured's name, vehicle registration number.
-  NOT a claim_form (policy is issued BY insurer; claim form is filled BY insured TO insurer).
+★★★ FUNDAMENTAL RULE ★★★
+Classify a document by WHAT IT PHYSICALLY IS — not by what it MENTIONS or REFERS TO.
+Many documents reference other documents' details (e.g. an affidavit may quote an Aadhaar
+number, a DL number, a policy number, and an accident — but it is still just an AFFIDAVIT,
+not an aadhar_card, not a driving_license, not an insurance_policy, not a claim_form).
+Always ask: "What TYPE of document am I looking at?" — not "What information does it contain?"
 
-▶ registration_certificate — Government-issued vehicle RC card (smart card or paper).
-  LOOK FOR: "Registration Certificate", "Form 23" header, State Transport Authority emblem,
-  registration number (e.g. PB-65-XX-1234), chassis number, engine number, owner name,
+▶ insurance_policy — The actual vehicle insurance policy document or cover note ISSUED BY an insurance company.
+  IT IS: A formal policy schedule / certificate printed on insurance company letterhead.
+  LOOK FOR: "Policy Schedule", "Certificate of Insurance", "Cover Note", policy number, IDV
+  (Insured Declared Value), premium amount, coverage period, insured's name, vehicle details.
+  IT IS NOT: Any document that merely quotes a policy number. An affidavit or letter mentioning
+  a policy number is NOT an insurance_policy.
+
+▶ registration_certificate — The actual government-issued vehicle RC card (smart card or paper form).
+  IT IS: A physical card or Form 23 issued by the State Transport Authority for a specific vehicle.
+  LOOK FOR: "Registration Certificate" / "Form 23" header, transport authority emblem,
+  registration number (e.g. HR03N4949), chassis number, engine number, owner name,
   vehicle class (LMV/HMV/MCWG), fuel type, maker's name, body type.
-  Front side: owner details, registration number. Back side: address, hypothecation, fitness dates.
-  NOT a driving_license (RC is about a VEHICLE; DL is about a PERSON's driving authority).
+  IT IS NOT: Any document that merely mentions a registration number or vehicle details.
+  An affidavit quoting a vehicle reg number is NOT an RC.
 
-▶ driving_license — Government-issued driving licence (DL) identity card.
-  LOOK FOR: "DRIVING LICENCE" or "DRIVING LICENSE" header, "UNION OF INDIA" or state transport
-  authority logo, photograph of the holder, licence number (e.g. PB-6520130223269),
-  Date of Birth, vehicle class table (LMV/MCWG/HMV), "Date of Issue", "Valid Till".
-  It is a GOVERNMENT IDENTITY CARD with a photo — compact card/paper format.
-  NEVER a claim_form. NEVER an insurance_policy. A DL does NOT mention accidents or insurance.
+▶ driving_license — The actual government-issued driving licence (DL) card.
+  IT IS: A physical government ID CARD with the holder's photo, issued by a transport authority.
+  LOOK FOR: "DRIVING LICENCE" / "DRIVING LICENSE" header, "UNION OF INDIA" or state transport
+  logo, PHOTO of the holder printed on the card, licence number, Date of Birth,
+  vehicle class table (LMV/MCWG/HMV), "Date of Issue", "Valid Till", compact card format.
+  IT IS NOT: Any document that merely mentions a DL number. An affidavit or claim form stating
+  "Driving License No. HR-03..." is NOT a driving_license — it is whatever document it physically is.
 
-▶ aadhar_card — Indian government biometric identity card issued by UIDAI.
-  LOOK FOR: "UIDAI" logo, "Aadhaar" / "आधार" text, 12-digit Aadhaar number (XXXX XXXX XXXX),
-  "Unique Identification Authority of India", enrolment number, photograph, QR code.
-  It is a GOVERNMENT IDENTITY CARD — NOT a claim_form, NOT an insurance document.
+▶ aadhar_card — The actual physical Aadhaar identity card issued by UIDAI.
+  IT IS: A printed card/letter from UIDAI with the holder's PHOTO, biometric ID, and QR code.
+  LOOK FOR: "UIDAI" logo printed on the card, "Aadhaar" / "आधार" as the card title,
+  12-digit Aadhaar number displayed prominently AS THE CARD'S OWN NUMBER, holder's photograph
+  printed on the card, enrolment number, QR code, government of India emblem.
+  IT IS NOT: Any document that merely mentions an Aadhaar number in its text. An affidavit
+  stating "Aadhar Card No. 8376 1640 5083" is NOT an aadhar_card — it is an affidavit.
+  A claim form asking for Aadhaar details is NOT an aadhar_card.
 
-▶ pan_card — Income Tax PAN identity card.
-  LOOK FOR: "INCOME TAX DEPARTMENT" / "GOVT. OF INDIA", "Permanent Account Number",
-  10-character alphanumeric PAN (e.g. ABCDE1234F), photograph, signature, "NSDL"/"UTIITSL" logo.
-  It is a GOVERNMENT IDENTITY CARD — NOT a claim_form, NOT an insurance document.
+▶ pan_card — The actual physical PAN identity card issued by the Income Tax Department.
+  IT IS: A laminated card with the holder's PHOTO, printed by NSDL/UTIITSL.
+  LOOK FOR: "INCOME TAX DEPARTMENT" / "GOVT. OF INDIA" printed on the card, "Permanent Account
+  Number" as the card title, 10-character alphanumeric PAN (e.g. ABCDE1234F) displayed prominently,
+  holder's photograph on the card, signature, hologram.
+  IT IS NOT: Any document that mentions a PAN number. A bank form or affidavit quoting a PAN
+  number is NOT a pan_card.
 
-▶ claim_form — Insurance claim form / claim intimation form filled by the INSURED person
-  and submitted TO the insurance company to report an accident or loss.
-  LOOK FOR: "CLAIM FORM", "Claim Intimation", "Motor Claim Form", insurance company letterhead,
-  sections asking about: date of accident, place of accident, description of loss/damage,
-  driver details AT TIME OF ACCIDENT, policy number field, declaration/signature by insured.
-  It is a MULTI-SECTION FORM with questions to be answered — NOT an identity card, NOT a policy.
-  NEVER confuse with driving_license (DL is a govt ID card; claim form is an insurance form).
-  NEVER confuse with insurance_policy (policy is issued by insurer; claim form is filled by insured).
+▶ claim_form — The actual insurance claim form / claim intimation form — a PRINTED FORM with
+  BLANK FIELDS or SECTIONS TO BE FILLED by the insured and submitted to the insurance company.
+  IT IS: A structured form (often pre-printed by the insurance company) with labeled sections
+  like "Date of Accident", "Place of Accident", "Description of Loss", "Driver Details",
+  "Policy Number", checkboxes, and a declaration section. Usually has insurance company branding.
+  LOOK FOR: "CLAIM FORM" / "Claim Intimation" / "Motor Claim Form" as the title,
+  insurance company letterhead/logo, structured fields/boxes to fill in, tabular layout.
+  IT IS NOT: An affidavit, a letter, a sworn statement, or any narrative document that
+  merely describes an accident. If the document header says "AFFIDAVIT" — it is NOT a claim_form.
+  IT IS NOT: A driving license, Aadhaar card, PAN card, or any identity document.
+  IT IS NOT: An FIR or police report (those are accident_document).
 
 ▶ repair_estimate — Repair estimate / quotation / proforma from a garage or dealer.
+  IT IS: A workshop/dealer document listing parts and labour with ESTIMATED prices BEFORE repair.
   LOOK FOR: Header says "Estimate", "Quotation", "Service Quotation", "Proforma".
   Has "Quotation No." or "Estimate No." field. Lists parts with estimated prices.
   May show CGST/UGST columns — that does NOT make it an invoice. The TITLE decides.
-  NOT a final_invoice (estimate is BEFORE repair; invoice is AFTER repair).
+  IT IS NOT: A final_invoice (estimate is BEFORE repair; invoice is AFTER repair).
 
 ▶ final_invoice — Final repair bill / tax invoice from workshop/dealer AFTER repair is done.
+  IT IS: A workshop/dealer bill issued AFTER repairs are completed, with final prices and GST.
   LOOK FOR: Header says "Tax Invoice", "Invoice", "Bill", "Final Bill".
   Has "GST Invc No." or "Invoice No." field. Lists parts with final assessed prices + GST.
   ONLY for workshop/dealer repair bills — NOT for towing charges.
-  NOT a repair_estimate (invoice is AFTER repair; estimate is BEFORE).
+  IT IS NOT: A repair_estimate (invoice is AFTER repair; estimate is BEFORE).
 
 ▶ towing_bill — Bill for towing / crane / vehicle recovery charges.
+  IT IS: A bill or receipt specifically for vehicle towing, crane hire, or recovery services.
   LOOK FOR: "Towing", "Tow", "Crane", "Recovery", "Towing Bill", "Towing Charges",
   "Vehicle Recovery", "Crane Charges" in header or body.
   A document about towing/crane/vehicle recovery charges is ALWAYS towing_bill,
   NEVER final_invoice, NEVER repair_estimate.
 
-▶ route_permit — Government-issued permit allowing a vehicle to ply on specific routes.
+▶ route_permit — The actual government-issued permit document for a vehicle to ply on routes.
+  IT IS: A permit certificate issued by RTO/transport authority for a specific vehicle.
   LOOK FOR: "Route Permit", "Goods Permit", "Passenger Permit", "National Permit",
   permit number, permit holder name, route/area, validity period, RTO stamp.
-  NOT a fitness_certificate (route permit authorises routes; fitness certifies roadworthiness).
+  IT IS NOT: A fitness_certificate or registration_certificate.
 
-▶ fitness_certificate — Government certificate confirming vehicle is roadworthy.
+▶ fitness_certificate — The actual government certificate confirming a vehicle is roadworthy.
+  IT IS: A certificate issued by RTO/transport authority after vehicle inspection.
   LOOK FOR: "Fitness Certificate", "Certificate of Fitness", validity date ("Valid Upto"),
   issued by RTO/transport authority, vehicle registration number.
-  NOT a route_permit. NOT a registration_certificate.
+  IT IS NOT: A route_permit or registration_certificate.
 
-▶ accident_document — FIR, police report, or any official accident/incident report.
+▶ accident_document — FIR, police report, or any official police/incident report about the accident.
+  IT IS: An official document FROM THE POLICE or authorities about the accident.
   LOOK FOR: "FIR", "First Information Report", "Police Report", "Accident Report",
-  "General Diary", police station details, IO (Investigating Officer) name, FIR number.
-  NOT a claim_form (accident document is from POLICE; claim form is an INSURANCE form).
+  "General Diary", "DDR", police station name, IO (Investigating Officer) name, FIR number.
+  IT IS NOT: A claim_form (FIR is from POLICE; claim form is an INSURANCE company form).
+  IT IS NOT: An affidavit (an affidavit is a sworn personal statement, not a police report).
 
 ▶ survey_report — Report prepared by a surveyor/assessor inspecting vehicle damage.
+  IT IS: A professional assessment report by a licensed surveyor appointed by the insurer.
   LOOK FOR: "Survey Report", "Surveyor Report", "Assessment Report", surveyor name & licence,
   damage assessment details, photographs, recommended repair amounts.
-  NOT a repair_estimate (survey report is by an independent surveyor; estimate is from the garage).
+  IT IS NOT: A repair_estimate (survey report is by an independent surveyor; estimate is from the garage).
 
-▶ tax_report — Tax-related report or tax receipt for the vehicle.
+▶ tax_report — Tax-related report or receipt for the vehicle (road tax, token tax).
+  IT IS: A tax payment document or receipt from a government authority.
   LOOK FOR: "Tax Report", "Road Tax", "Tax Receipt", "Token Tax", tax payment details.
-  NOT a final_invoice and NOT a pan_card.
+  IT IS NOT: A final_invoice, NOT a pan_card.
 
 ▶ labour_charges — Standalone labour charges document (separate from estimate/invoice).
-  LOOK FOR: Labour-only breakdown (denting, painting, welding, R&R charges) WITHOUT parts list.
+  IT IS: A document listing ONLY labour charges without a parts list.
+  LOOK FOR: Labour-only breakdown (denting, painting, welding, R&R charges) WITHOUT parts.
   If the document also has parts → it is likely a repair_estimate or final_invoice instead.
 
 ▶ vehicle_image — Photograph(s) of the vehicle showing damage, taken during claim/survey.
-  LOOK FOR: Actual photograph of a vehicle (not a document scan), damage visible,
-  date/time overlay or timestamp watermark on the image.
-  NOT a document with text — if it has text headers/fields, it is probably something else.
+  IT IS: An actual PHOTOGRAPH of a physical vehicle — not a document scan.
+  LOOK FOR: Photo of a car/truck/bike, visible damage, date/time overlay or timestamp watermark.
+  IT IS NOT: A scanned text document. If it has text, headers, or form fields, it is NOT this.
 
 ▶ discharge_voucher — Discharge/satisfaction voucher signed by insured after claim settlement.
-  LOOK FOR: "Discharge Voucher", "Satisfaction Voucher", "Final Discharge", "Full & Final Settlement",
-  "No Claim Voucher", settlement amount, insured's signature, declaration of no further claims.
-  NOT a claim_form (discharge voucher is AFTER settlement; claim form is BEFORE/AT claim filing).
+  IT IS: A post-settlement document where the insured acknowledges receiving the claim amount.
+  LOOK FOR: "Discharge Voucher", "Satisfaction Voucher", "Final Discharge", "Full & Final
+  Settlement", "No Claim Voucher", settlement amount, insured's declaration of no further claims.
+  IT IS NOT: A claim_form (discharge is AFTER settlement; claim is BEFORE/AT filing).
 
 ▶ unknown — ONLY if the document does NOT match ANY of the above types.
   Use this as a last resort. Provide a short 2-4 word descriptive name.
+  EXAMPLES of unknown documents: Affidavit, Bank Statement, Cancelled Cheque, Voter ID,
+  NOC Letter, Consent Letter, Legal Notice, Ownership Transfer, Payment Receipt.
+  An AFFIDAVIT (sworn notarized statement) does not match any of the above types → classify
+  as unknown with name "Affidavit".
 
 ━━━ KEY NEGATIVE RULES ━━━
-• A government-issued IDENTITY CARD (driving_license, aadhar_card, pan_card) is NEVER a claim_form.
-• A claim_form is ALWAYS an insurance company form about reporting an accident — it asks questions.
-• An insurance_policy is ISSUED BY the insurer; a claim_form is FILLED BY the insured.
-• A discharge_voucher is signed AFTER settlement; a claim_form is filed BEFORE/AT claim time.
-• A police FIR / accident report → accident_document, NOT claim_form.
+• CLASSIFY BY WHAT THE DOCUMENT PHYSICALLY IS — not by what information it contains or references.
+• A document that MENTIONS an Aadhaar number is NOT automatically an aadhar_card.
+  Only the actual UIDAI-issued card with photo and QR code is an aadhar_card.
+• A document that MENTIONS a DL number is NOT automatically a driving_license.
+  Only the actual government-issued DL card with photo is a driving_license.
+• A document that MENTIONS a PAN number is NOT automatically a pan_card.
+  Only the actual Income Tax Dept card with photo is a pan_card.
+• A document that MENTIONS a policy number is NOT automatically an insurance_policy.
+  Only the actual policy schedule from the insurer is an insurance_policy.
+• A document that MENTIONS an accident is NOT automatically a claim_form.
+  Only the actual insurance company claim form (structured form with fields) is a claim_form.
+• An AFFIDAVIT is a sworn notarized statement — it is ALWAYS "unknown" with name "Affidavit",
+  even if it mentions Aadhaar, DL, policy, accident, or vehicle details.
+• An FIR / police report → accident_document, NOT claim_form.
 • A surveyor's damage assessment → survey_report, NOT repair_estimate.
 • A towing/crane/recovery bill → towing_bill, NEVER final_invoice.
 
