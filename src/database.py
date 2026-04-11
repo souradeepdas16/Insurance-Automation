@@ -169,11 +169,11 @@ def update_case_status(
 
 
 def reset_stuck_processing() -> int:
-    """Reset any cases left in 'processing' state (e.g. after a server crash)."""
+    """Reset any cases left in 'processing' or 'queued' state (e.g. after a server crash)."""
     with get_db() as conn:
         cur = conn.execute(
             "UPDATE cases SET status = 'failed', error_message = 'Server restarted during processing' "
-            "WHERE status = 'processing'",
+            "WHERE status IN ('processing', 'queued')",
         )
         return cur.rowcount
 

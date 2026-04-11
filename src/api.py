@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import os
+import queue
 import shutil
 import sys
 import threading
@@ -26,6 +27,9 @@ _log_lock = threading.Lock()
 # ── Per-case cancellation ─────────────────────────────────────────────────────
 # Maps case_id -> threading.Event; set() means "please stop"
 _cancel_events: dict[int, threading.Event] = {}
+
+# ── Processing queue (one-at-a-time) ──────────────────────────────────────────
+_processing_queue: queue.Queue[int] = queue.Queue()
 
 
 class _ThreadAwareCapture(io.TextIOBase):
@@ -98,7 +102,14 @@ def startup():
     init_db()
     n = reset_stuck_processing()
     if n:
-        print(f"  ⚠ Reset {n} case(s) stuck in 'processing' from a previous run.")
+        print(
+            f"  ⚠ Reset {n} case(s) stuck in 'processing'/'queued' from a previous run."
+        )
+    # Start the single processing worker thread
+    worker = threading.Thread(
+        target=_queue_worker, daemon=True, name="processing-worker"
+    )
+    worker.start()
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
@@ -218,8 +229,11 @@ async def api_upload_documents(case_id: int, files: list[UploadFile] = File(...)
 
 
 def _run_processing(case_id: int) -> None:
-    """Run the full processing pipeline in a background thread."""
+    """Run the full processing pipeline (called by the queue worker thread)."""
     from src.main import process_case_from_db  # lazy import to avoid circular
+
+    # Transition from queued to processing
+    update_case_status(case_id, "processing")
 
     tid = threading.get_ident()
     with _log_lock:
@@ -243,7 +257,33 @@ def _run_processing(case_id: int) -> None:
     finally:
         with _log_lock:
             _thread_case_map.pop(tid, None)
+            # Clean up partial line buffer for this thread
+            if isinstance(sys.stdout, _ThreadAwareCapture):
+                sys.stdout._pending.pop(tid, None)
         _cancel_events.pop(case_id, None)
+        # Free accumulated log lines for this case to release memory
+        with _log_lock:
+            _case_logs.pop(case_id, None)
+
+
+def _queue_worker() -> None:
+    """Background worker that processes one case at a time from the queue."""
+    while True:
+        case_id = _processing_queue.get()
+        try:
+            # Check if the case was cancelled while queued
+            cancel_event = _cancel_events.get(case_id)
+            if cancel_event and cancel_event.is_set():
+                update_case_status(case_id, "failed", "Processing stopped by user")
+                _cancel_events.pop(case_id, None)
+                with _log_lock:
+                    _case_logs.pop(case_id, None)
+                continue
+            _run_processing(case_id)
+        except Exception:
+            pass  # _run_processing handles its own errors
+        finally:
+            _processing_queue.task_done()
 
 
 @app.get("/api/cases/{case_id}/logs")
@@ -257,7 +297,7 @@ def api_get_logs(case_id: int, after: int = 0):
     return {
         "lines": lines[after:],
         "total": len(lines),
-        "done": case["status"] not in ("processing",),
+        "done": case["status"] not in ("processing", "queued"),
     }
 
 
@@ -266,14 +306,13 @@ def api_process_case(case_id: int):
     case = get_case(case_id)
     if not case:
         raise HTTPException(404, "Case not found")
-    if case["status"] == "processing":
-        raise HTTPException(400, "Case is already processing")
+    if case["status"] in ("processing", "queued"):
+        raise HTTPException(400, "Case is already processing or queued")
     if not case["documents"]:
         raise HTTPException(400, "No documents uploaded yet")
 
-    # Reset status to "processing" BEFORE spawning thread so the frontend
-    # poll never sees the stale "completed"/"failed" from a previous run.
-    update_case_status(case_id, "processing")
+    # Set status to "queued" and prepare log/cancel state
+    update_case_status(case_id, "queued")
     with _log_lock:
         _case_logs[case_id] = []
 
@@ -281,20 +320,20 @@ def api_process_case(case_id: int):
     cancel_event = threading.Event()
     _cancel_events[case_id] = cancel_event
 
-    thread = threading.Thread(target=_run_processing, args=(case_id,), daemon=True)
-    thread.start()
+    # Enqueue — the worker thread will pick it up
+    _processing_queue.put(case_id)
 
-    return {"ok": True, "status": "processing"}
+    return {"ok": True, "status": "queued"}
 
 
 @app.post("/api/cases/{case_id}/stop")
 def api_stop_case(case_id: int):
-    """Signal a running processing job to stop."""
+    """Signal a running or queued processing job to stop."""
     case = get_case(case_id)
     if not case:
         raise HTTPException(404, "Case not found")
-    if case["status"] != "processing":
-        raise HTTPException(400, "Case is not currently processing")
+    if case["status"] not in ("processing", "queued"):
+        raise HTTPException(400, "Case is not currently processing or queued")
 
     cancel_event = _cancel_events.get(case_id)
     if cancel_event:
@@ -350,7 +389,7 @@ def api_delete_document(case_id: int, doc_id: int):
     case = get_case(case_id)
     if not case:
         raise HTTPException(404, "Case not found")
-    if case["status"] == "processing":
+    if case["status"] in ("processing", "queued"):
         raise HTTPException(400, "Cannot delete documents while case is processing")
 
     doc = get_document_by_id(doc_id)

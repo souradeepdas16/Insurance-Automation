@@ -169,10 +169,14 @@ def pdf_pages_to_base64(file_path: str, max_dim: int = MAX_DIM) -> list[str]:
             # Render at 2x for readability, then resize down if needed
             pix = page.get_pixmap(dpi=200)
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            # Free the pixmap immediately — it holds raw pixel data in native memory
+            del pix
             img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
             buf = io.BytesIO()
             img.save(buf, format="JPEG", quality=85)
             pages_b64.append(base64.b64encode(buf.getvalue()).decode("ascii"))
+            img.close()
+            buf.close()
     return pages_b64
 
 

@@ -158,7 +158,7 @@ async function openCase(caseId) {
 		const c = await api(`/api/cases/${caseId}`);
 		renderCase(c);
 
-		if (c.status === "processing") {
+		if (c.status === "processing" || c.status === "queued") {
 			startPolling(caseId);
 		} else {
 			const pre = $("#console-output");
@@ -182,10 +182,12 @@ function renderCase(c) {
 
 	// ── Pipeline ──
 	const pipeline = $("#pipeline");
+	const isQueued = c.status === "queued";
 	const isProcessing = c.status === "processing";
+	const isActive = isQueued || isProcessing;
 	const isDone = c.status === "completed";
 	const isFailed = c.status === "failed";
-	pipeline.style.display = isProcessing || isDone || isFailed ? "" : "none";
+	pipeline.style.display = isActive || isDone || isFailed ? "" : "none";
 
 	// Reset pipeline steps
 	$$(".pipeline-step").forEach((s) => s.classList.remove("active", "done"));
@@ -201,7 +203,7 @@ function renderCase(c) {
 
 	// ── Upload card visibility ──
 	const uploadCard = $("#upload-card");
-	uploadCard.style.display = isProcessing ? "none" : "";
+	uploadCard.style.display = isActive ? "none" : "";
 
 	// ── Uploaded Documents ──
 	const uploadedList = $("#doc-uploaded-list");
@@ -213,7 +215,7 @@ function renderCase(c) {
 			.map((d) => {
 				const ext = extOf(d.original_name);
 				const iconClass = ["jpg", "jpeg", "png"].includes(ext) ? "img" : "pdf";
-				const showDelete = !isProcessing;
+				const showDelete = !isActive;
 				return `
 				<div class="doc-tile" data-doc-id="${d.id}">
 					<div class="doc-tile-icon ${iconClass}" data-url="/api/cases/${c.id}/documents/${d.id}" style="cursor:pointer">${getDocEmoji(ext)}</div>
@@ -270,7 +272,7 @@ function renderCase(c) {
 		classifiedList.innerHTML = uniqueClassified
 			.map((d) => {
 				const ext = extOf(d.classified_name);
-				const showDelete = !isProcessing;
+				const showDelete = !isActive;
 				return `
 				<div class="doc-tile" data-doc-id="${d.id}">
 					<div class="doc-tile-icon classified" data-url="/api/cases/${c.id}/classified/${encodeURIComponent(d.classified_name)}" style="cursor:pointer">&#10003;</div>
@@ -313,7 +315,7 @@ function renderCase(c) {
 	// ── Process button ──
 	const btnProcess = $("#btn-process");
 	const btnStop = $("#btn-stop");
-	if (isProcessing) {
+	if (isActive) {
 		btnProcess.style.display = "none";
 		btnStop.style.display = "";
 	} else {

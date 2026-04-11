@@ -330,6 +330,11 @@ body {
 	--fc-bg: #f3f4f6;
 	--fc-light: #f9fafb;
 }
+.folder-card.status-queued {
+	--fc: #6366f1;
+	--fc-bg: #e0e7ff;
+	--fc-light: #eef2ff;
+}
 .folder-card.status-processing {
 	--fc: #f59e0b;
 	--fc-bg: #fef3c7;
@@ -461,6 +466,11 @@ body {
 	color: #6b7280;
 }
 
+.status-badge.status-queued {
+	background: #e0e7ff;
+	color: #4338ca;
+	animation: pulse 1.5s ease-in-out infinite;
+}
 .status-badge.status-processing {
 	background: var(--warning-light);
 	color: #b45309;

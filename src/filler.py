@@ -613,4 +613,5 @@ def fill_excel(
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
     wb.save(output_path)
+    wb.close()
     print(f"  ✓ Excel saved: {output_path}")

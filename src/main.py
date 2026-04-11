@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import json
 import os
 import re
@@ -48,15 +49,15 @@ def _merge_files_to_pdf(file_paths: list[str], output_path: str) -> None:
     for fp in file_paths:
         ext = Path(fp).suffix.lower()
         if ext in IMAGE_EXTS:
-            img = Image.open(fp)
-            if img.mode != "RGB":
-                img = img.convert("RGB")
-            buf = io.BytesIO()
-            img.save(buf, format="PDF")
-            buf.seek(0)
-            reader = PdfReader(buf)
-            for page in reader.pages:
-                writer.add_page(page)
+            with Image.open(fp) as img:
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+                buf = io.BytesIO()
+                img.save(buf, format="PDF")
+                buf.seek(0)
+                reader = PdfReader(buf)
+                for page in reader.pages:
+                    writer.add_page(page)
         elif ext == ".pdf":
             reader = PdfReader(fp)
             for page in reader.pages:
@@ -64,6 +65,7 @@ def _merge_files_to_pdf(file_paths: list[str], output_path: str) -> None:
 
     with open(output_path, "wb") as f:
         writer.write(f)
+    writer.close()
 
 
 def _extract_pdf_pages(pdf_path: str, pages: list[int], output_path: str) -> None:
@@ -78,6 +80,7 @@ def _extract_pdf_pages(pdf_path: str, pages: list[int], output_path: str) -> Non
             writer.add_page(reader.pages[idx])
     with open(output_path, "wb") as f:
         writer.write(f)
+    writer.close()
 
 
 # Human-readable names for classified document types
@@ -434,6 +437,13 @@ def process_case_from_db(
         print(f"    JSON dump : {json_path}")
     except Exception as e:
         raise RuntimeError(f"Excel filling failed: {e}") from e
+    finally:
+        # Release large intermediate objects and force garbage collection
+        combined_results = None  # noqa: F841
+        grouped_data = None  # noqa: F841
+        classified_items = None  # noqa: F841
+        all_data = None  # noqa: F841
+        gc.collect()
 
 
 # ─── Files dropped directly in watch root ────────────────────────────────────
