@@ -149,8 +149,12 @@ MAX_PAGES_PER_CALL: int = int(os.environ.get("AI_MAX_PAGES_PER_CALL", "10"))
 
 # Reasoning/thinking budget — limits expensive thinking tokens on reasoning models (e.g. Gemini 2.5 Pro).
 # Extraction tasks need more thinking; classification/naming need very little.
-_REASONING_BUDGET_EXTRACT: int = int(os.environ.get("AI_REASONING_BUDGET_EXTRACT", "8192"))
-_REASONING_BUDGET_SIMPLE: int = int(os.environ.get("AI_REASONING_BUDGET_SIMPLE", "1024"))
+_REASONING_BUDGET_EXTRACT: int = int(
+    os.environ.get("AI_REASONING_BUDGET_EXTRACT", "8192")
+)
+_REASONING_BUDGET_SIMPLE: int = int(
+    os.environ.get("AI_REASONING_BUDGET_SIMPLE", "1024")
+)
 
 
 def _resize_image_to_base64(file_path: str, max_dim: int = MAX_DIM) -> str:
