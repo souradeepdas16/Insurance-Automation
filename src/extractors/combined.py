@@ -57,6 +57,7 @@ VALID_TYPES = (
     "aadhar_card",
     "pan_card",
     "discharge_voucher",
+    "kyc_form",
     "unknown",
 )
 
@@ -76,7 +77,7 @@ Step 1 — For EACH distinct document found, identify its type from this list:
 insurance_policy | registration_certificate | driving_license | repair_estimate |
 final_invoice | route_permit | fitness_certificate | accident_document |
 survey_report | claim_form | tax_report | labour_charges | towing_bill |
-aadhar_card | pan_card | discharge_voucher | unknown
+aadhar_card | pan_card | discharge_voucher | kyc_form | unknown
 
 ━━━ CRITICAL — HOW TO DISTINGUISH EACH DOCUMENT TYPE ━━━
 
@@ -206,6 +207,13 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   Settlement", "No Claim Voucher", settlement amount, insured's declaration of no further claims.
   IT IS NOT: A claim_form (discharge is AFTER settlement; claim is BEFORE/AT filing).
 
+▶ kyc_form — Know Your Customer form / KYC document / customer verification form.
+  IT IS: A KYC form used for identity/address verification, typically required by insurers.
+  LOOK FOR: "KYC", "Know Your Customer", "Customer Verification", "Identity Verification Form",
+  customer details fields (name, address, ID proof, photo, signature).
+  IT IS NOT: An individual ID card (aadhar_card, pan_card) — those are standalone ID documents.
+  A KYC form may reference Aadhaar/PAN numbers but is a SEPARATE verification form.
+
 ▶ unknown — ONLY if the document does NOT match ANY of the above types.
   Use this as a last resort. Provide a short 2-4 word descriptive name.
   EXAMPLES of unknown documents: Affidavit, Bank Statement, Cancelled Cheque, Voter ID,
@@ -297,6 +305,9 @@ pan_card (PAN card / income tax permanent account number card):
 
 discharge_voucher (discharge voucher / satisfaction voucher / final discharge / no-claim voucher):
 {"type":"discharge_voucher","pages":[1],"data":{}}
+
+kyc_form (KYC form / Know Your Customer form / customer verification form):
+{"type":"kyc_form","pages":[1],"data":{}}
 
 accident_document | survey_report | tax_report | labour_charges:
 {"type":"<detected_type>","pages":[1],"data":{}}

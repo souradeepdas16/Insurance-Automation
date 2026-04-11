@@ -155,5 +155,6 @@ DocumentType = Literal[
     "aadhar_card",
     "pan_card",
     "discharge_voucher",
+    "kyc_form",
     "unknown",
 ]

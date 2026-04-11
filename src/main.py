@@ -109,6 +109,7 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "aadhar_card": "Aadhar Card",
     "pan_card": "PAN Card",
     "discharge_voucher": "Discharge Voucher",
+    "kyc_form": "KYC Form",
     "unknown": "Extra Document",
 }
 
