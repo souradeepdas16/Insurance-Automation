@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import os
 import queue
@@ -204,20 +205,42 @@ async def api_upload_documents(case_id: int, files: list[UploadFile] = File(...)
     docs_dir = case_folder / "documents"
     docs_dir.mkdir(parents=True, exist_ok=True)
 
+    # Build a set of SHA-256 hashes for existing documents to detect duplicates
+    existing_hashes: set[str] = set()
+    for doc in get_documents_by_case(case_id):
+        fp = doc["file_path"]
+        if os.path.exists(fp):
+            existing_hashes.add(hashlib.sha256(Path(fp).read_bytes()).hexdigest())
+
     uploaded = []
+    skipped = []
     for f in files:
         ext = Path(f.filename).suffix.lower()
         if ext not in SUPPORTED_EXTS:
             continue
 
+        content = await f.read()
+
+        # Skip duplicate files
+        file_hash = hashlib.sha256(content).hexdigest()
+        if file_hash in existing_hashes:
+            skipped.append(f.filename)
+            continue
+        existing_hashes.add(file_hash)
+
         # Use unique prefix to avoid collisions
         safe_name = f"{uuid.uuid4().hex[:8]}_{f.filename}"
         file_path = docs_dir / safe_name
-        content = await f.read()
         file_path.write_bytes(content)
 
         doc = add_document(case_id, f.filename, str(file_path))
         uploaded.append(doc)
+
+    if not uploaded and skipped:
+        raise HTTPException(
+            400,
+            f"All files already exist in this case: {', '.join(skipped)}",
+        )
 
     if not uploaded:
         raise HTTPException(400, "No valid files uploaded (supported: jpg, png, pdf)")
