@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 
 from typing import get_args
@@ -71,8 +72,10 @@ IMPORTANT DISTINCTIONS:
    If the document is about towing charges, crane charges, or vehicle recovery → towing_bill.
    final_invoice is ONLY for workshop/dealer repair bills.
 
+The original filename is included in each label as a hint, but ALWAYS prioritise the actual document content over the filename for classification.
+
 Return a JSON object mapping each file label to its type, e.g.:
-{"file_1": "insurance_policy", "file_2": "registration_certificate", "file_3": "driving_license"}
+{"file_1 (Insurance Policy.pdf)": "insurance_policy", "file_2 (Towing_Bill.jpg)": "towing_bill"}
 
 Return ONLY the JSON object."""
 
@@ -140,16 +143,17 @@ def classify_documents_batch(
     if not file_paths:
         return {}
 
-    # Build labeled list: [("file_1", path), ("file_2", path), ...]
-    labels = [f"file_{i + 1}" for i in range(len(file_paths))]
+    # Build labeled list: [("file_1 (original_name.pdf)", path), ...]
+    labels = [f"file_{i + 1} ({os.path.basename(fp)})" for i, fp in enumerate(file_paths)]
     labeled = list(zip(labels, file_paths))
 
     data = vision_extract_json_labeled(labeled, BATCH_CLASSIFY_PROMPT)
 
     result: dict[str, DocumentType] = {}
     for i, file_path in enumerate(file_paths):
-        label = labels[i]
-        raw = data.get(label, "unknown")
+        label_full = f"file_{i + 1} ({os.path.basename(file_path)})"
+        label_short = f"file_{i + 1}"
+        raw = data.get(label_full) or data.get(label_short, "unknown")
         doc_type = re.sub(r"[^a-z_]", "", str(raw).lower().strip())
         if doc_type not in VALID_TYPES:
             print(

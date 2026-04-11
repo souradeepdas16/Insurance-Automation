@@ -408,11 +408,14 @@ def classify_and_extract_single(
     file_label = os.path.basename(file_path)
     ext = Path(file_path).suffix.lower()
 
-    # ── Images or small PDFs — single call ────────────────────────────────────
+    # Prepend the original filename to the prompt as a secondary hint
+    prompt_with_filename = f"Original filename (use as a hint only, always prioritise the actual document content for classification): \"{file_label}\"\n\n{PER_DOC_PROMPT}"
+
+    # ── Images or small PDFs — single call ────────────────────────────────────────
     if ext in IMAGE_EXTS:
         return _call_with_retry(
             lambda: vision_extract_json(
-                [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
+                [file_path], prompt_with_filename, max_output_tokens=_MAX_OUTPUT_TOKENS
             ),
             file_label,
             cancel_event,
@@ -426,7 +429,7 @@ def classify_and_extract_single(
         # Small PDF — single call (pass the file directly)
         return _call_with_retry(
             lambda: vision_extract_json(
-                [file_path], PER_DOC_PROMPT, max_output_tokens=_MAX_OUTPUT_TOKENS
+                [file_path], prompt_with_filename, max_output_tokens=_MAX_OUTPUT_TOKENS
             ),
             file_label,
             cancel_event,
