@@ -102,6 +102,9 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   vehicle class (LMV/HMV/MCWG), fuel type, maker's name, body type.
   IT IS NOT: Any document that merely mentions a registration number or vehicle details.
   An affidavit quoting a vehicle reg number is NOT an RC.
+  ★ A VAHAN portal "RC STATUS" printout (online verification page) is NOT a registration_certificate.
+    VAHAN printouts show "RC STATUS" header, VAHAN/National Register e-Services branding,
+    and sections like Validity, Insurance Details, Permit Details → classify as fitness_certificate.
 
 ▶ driving_license — The actual government-issued driving licence (DL) card.
   IT IS: A physical government ID CARD with the holder's photo, issued by a transport authority.
@@ -167,11 +170,15 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   permit number, permit holder name, route/area, validity period, RTO stamp.
   IT IS NOT: A fitness_certificate or registration_certificate.
 
-▶ fitness_certificate — The actual government certificate confirming a vehicle is roadworthy.
-  IT IS: A certificate issued by RTO/transport authority after vehicle inspection.
+▶ fitness_certificate — The actual government certificate confirming a vehicle is roadworthy,
+  OR a VAHAN portal "RC STATUS" printout showing vehicle fitness/registration validity.
+  IT IS: A certificate issued by RTO/transport authority after vehicle inspection,
+  OR an online VAHAN (National Register e-Services) RC Status page.
   LOOK FOR: "Fitness Certificate", "Certificate of Fitness", validity date ("Valid Upto"),
-  issued by RTO/transport authority, vehicle registration number.
+  OR "RC STATUS" header with VAHAN/parivahan.gov.in branding, Fitness/REGN validity,
+  PUCC validity, Insurance Details section, Permit Details section.
   IT IS NOT: A route_permit or registration_certificate.
+  ★ VAHAN RC Status printouts → fitness_certificate (NOT registration_certificate).
 
 ▶ accident_document — FIR, police report, or any official police/incident report about the accident.
   IT IS: An official document FROM THE POLICE or authorities about the accident.
