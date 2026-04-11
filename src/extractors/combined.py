@@ -409,7 +409,7 @@ def classify_and_extract_single(
     ext = Path(file_path).suffix.lower()
 
     # Prepend the original filename to the prompt as a secondary hint
-    prompt_with_filename = f"Original filename (use as a hint only, always prioritise the actual document content for classification): \"{file_label}\"\n\n{PER_DOC_PROMPT}"
+    prompt_with_filename = f'Original filename (use as a hint only, always prioritise the actual document content for classification): "{file_label}"\n\n{PER_DOC_PROMPT}'
 
     # ── Images or small PDFs — single call ────────────────────────────────────────
     if ext in IMAGE_EXTS:
