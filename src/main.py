@@ -22,7 +22,6 @@ PROJECT_ROOT = APP_DIR
 load_dotenv(APP_DIR / ".env")
 
 # pylint: disable=wrong-import-position
-from src.classifier import classify_document, name_unknown_document  # noqa: E402
 from src.extractors.combined import (  # noqa: E402
     build_all_extracted_data,
     classify_and_extract_all,
@@ -35,6 +34,14 @@ OUTPUT_DIR = PROJECT_ROOT / "output"
 SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".pdf"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 DEBOUNCE_SEC = 3.0
+
+_GENERIC_NAMES = {"document", "image", "unknown", "file", "paper"}
+
+
+def _sanitize_ai_name(raw: str) -> str:
+    """Clean an AI-generated document name for use as a filename."""
+    name = re.sub(r'[<>:"/\\|?*]', "", raw.strip().strip('"').strip("'"))[:60].strip()
+    return "" if not name or name.lower() in _GENERIC_NAMES else name
 
 
 def _merge_files_to_pdf(file_paths: list[str], output_path: str) -> None:
@@ -173,7 +180,11 @@ def process_case(
                 _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, "Extra Document")
                 _ext = os.path.splitext(_fp)[1].lower()
                 if _dt == "unknown":
-                    _ai_name = name_unknown_document(_fp)
+                    _ai_name = (
+                        _sanitize_ai_name(_res["data"].get("name", ""))
+                        if _res.get("data")
+                        else ""
+                    )
                     if _ai_name:
                         _display = _ai_name
                     elif _ext in IMAGE_EXTS:
@@ -360,7 +371,11 @@ def process_case_from_db(
                 named_items: dict[str, list[tuple[dict, list[int], dict, str]]] = {}
                 for doc, pages, extracted_data, fp in items:
                     ext = Path(fp).suffix.lower()
-                    ai_name = name_unknown_document(fp)
+                    ai_name = (
+                        _sanitize_ai_name(extracted_data.get("name", ""))
+                        if extracted_data
+                        else ""
+                    )
                     if ai_name:
                         d = ai_name
                     elif ext in IMAGE_EXTS:
@@ -469,7 +484,11 @@ def process_case_from_db(
                     ext = Path(fp).suffix.lower()
                     d = display
                     if doc_type == "unknown":
-                        ai_name = name_unknown_document(fp)
+                        ai_name = (
+                            _sanitize_ai_name(extracted_data.get("name", ""))
+                            if extracted_data
+                            else ""
+                        )
                         if ai_name:
                             d = ai_name
                         elif ext in IMAGE_EXTS:

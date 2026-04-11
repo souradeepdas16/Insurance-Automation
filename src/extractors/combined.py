@@ -150,8 +150,13 @@ pan_card (PAN card / income tax permanent account number card):
 discharge_voucher (discharge voucher / satisfaction voucher / final discharge / no-claim voucher):
 {"type":"discharge_voucher","pages":[1],"data":{}}
 
-accident_document | survey_report | tax_report | labour_charges | unknown:
+accident_document | survey_report | tax_report | labour_charges:
 {"type":"<detected_type>","pages":[1],"data":{}}
+
+unknown (document that does not match any type above):
+{"type":"unknown","pages":[1],"data":{"name":"Short Descriptive Name"}}
+• "name" = a short 2-4 word Title Case label describing the document (e.g. "Bank Statement", "Cancelled Cheque", "Damage Photos", "Voter ID Card", "NOC Letter").
+• Do NOT use generic names like "Document", "Image", "Paper", "File", "Unknown".
 
 ━━━ RULES ━━━
 • If multiple DIFFERENT document types are in the same file, return a separate entry for each.
