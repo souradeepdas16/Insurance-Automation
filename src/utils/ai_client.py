@@ -313,8 +313,97 @@ def _strip_json_fences(text: str) -> str:
     return text
 
 
+def _repair_json(raw: str) -> str:
+    """Attempt to repair common JSON issues from AI responses."""
+    # 1. Remove control characters (except \n, \r, \t which are valid in JSON strings
+    #    but should be escaped — we'll handle that below)
+    cleaned = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", raw)
+
+    # 2. Fix unescaped newlines/tabs inside JSON string values
+    #    Walk through and escape any literal newlines/tabs within strings
+    result: list[str] = []
+    in_string = False
+    i = 0
+    while i < len(cleaned):
+        ch = cleaned[i]
+        if ch == "\\" and in_string and i + 1 < len(cleaned):
+            result.append(ch)
+            result.append(cleaned[i + 1])
+            i += 2
+            continue
+        if ch == '"':
+            in_string = not in_string
+        if in_string and ch == "\n":
+            result.append("\\n")
+            i += 1
+            continue
+        if in_string and ch == "\r":
+            result.append("\\r")
+            i += 1
+            continue
+        if in_string and ch == "\t":
+            result.append("\\t")
+            i += 1
+            continue
+        result.append(ch)
+        i += 1
+    cleaned = "".join(result)
+
+    # 3. Remove trailing commas before } or ]
+    cleaned = _re.sub(r",\s*([}\]])", r"\1", cleaned)
+
+    return cleaned
+
+
+def _close_json(partial: str) -> str:
+    """Try to close an incomplete JSON structure by adding missing brackets/braces."""
+    # Count unclosed braces/brackets
+    stack: list[str] = []
+    in_str = False
+    i = 0
+    while i < len(partial):
+        ch = partial[i]
+        if ch == "\\" and in_str and i + 1 < len(partial):
+            i += 2
+            continue
+        if ch == '"':
+            in_str = not in_str
+        if not in_str:
+            if ch in ("{", "["):
+                stack.append(ch)
+            elif ch == "}" and stack and stack[-1] == "{":
+                stack.pop()
+            elif ch == "]" and stack and stack[-1] == "[":
+                stack.pop()
+        i += 1
+
+    # If we're inside an unclosed string, close it
+    if in_str:
+        partial += '"'
+
+    # Close any remaining open brackets/braces
+    for opener in reversed(stack):
+        partial += "]" if opener == "[" else "}"
+
+    return partial
+
+
 def _safe_json_loads(raw: str) -> Any:
-    """Parse JSON, recovering from 'Extra data' by truncating at the error position."""
+    """Parse JSON with repair attempts for malformed AI responses."""
+    # 1. Try direct parse
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+
+    # 2. Try repairing common issues (control chars, unescaped newlines, trailing commas)
+    repaired = _repair_json(raw)
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        pass
+
+    # 3. Handle "Extra data" — truncate at the first valid JSON boundary
     try:
         return json.loads(raw)
     except json.JSONDecodeError as exc:
@@ -324,7 +413,30 @@ def _safe_json_loads(raw: str) -> Any:
                 f"    ⚠ Extra data after valid JSON at char {exc.pos}, truncating and retrying…"
             )
             return json.loads(truncated)
-        raise
+
+    # 4. Try truncating the repaired JSON at the error position and closing the structure
+    try:
+        json.loads(repaired)
+    except json.JSONDecodeError as exc:
+        if exc.pos and exc.pos > 100:
+            # Truncate at the error position, back up to a safe boundary
+            truncated = repaired[: exc.pos]
+            # Strip trailing partial tokens (incomplete key/value)
+            truncated = _re.sub(r"[,:\s]+$", "", truncated)
+            # Remove a trailing partial string value (unclosed quote)
+            truncated = _re.sub(r',\s*"[^"]*$', "", truncated)
+            closed = _close_json(truncated)
+            try:
+                parsed = json.loads(closed)
+                print(
+                    f"    ⚠ Repaired malformed JSON (truncated at char {exc.pos} of {len(repaired)}, closed structure)"
+                )
+                return parsed
+            except json.JSONDecodeError:
+                pass
+
+    # 5. All repair attempts failed — raise the original error for diagnostics
+    return json.loads(raw)
 
 
 def vision_request(file_paths: list[str], prompt: str) -> str:
