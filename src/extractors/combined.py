@@ -72,16 +72,114 @@ final_invoice | route_permit | fitness_certificate | accident_document |
 survey_report | claim_form | tax_report | labour_charges | towing_bill |
 aadhar_card | pan_card | discharge_voucher | unknown
 
-CRITICAL — How to distinguish repair_estimate from final_invoice from towing_bill:
-• Check the document TITLE / HEADER first:
-  - "Estimate", "Quotation", "Service Quotation", "Proforma" → repair_estimate
-  - "Tax Invoice", "Invoice", "Bill", "Final Bill" → final_invoice (ONLY for workshop/dealer repair bills)
-  - "Towing", "Tow", "Crane", "Recovery", "Towing Bill", "Towing Charges" → towing_bill
-• repair_estimate may still show CGST/UGST columns — that does NOT make it an invoice.
-  The TITLE is the deciding factor.
-• A "Quotation No." or "Estimate No." field → repair_estimate.
-  A "GST Invc No." or "Invoice No." field → final_invoice.
-• A document about towing/crane/vehicle recovery charges is ALWAYS towing_bill, NEVER final_invoice.
+━━━ CRITICAL — HOW TO DISTINGUISH EACH DOCUMENT TYPE ━━━
+
+▶ insurance_policy — Vehicle insurance policy or cover note issued by an insurance company.
+  LOOK FOR: Insurance company logo/letterhead, "Policy Schedule", "Certificate of Insurance",
+  "Cover Note", policy number (e.g. POL-XXXX), IDV (Insured Declared Value), premium amount,
+  coverage period ("Period of Insurance"), insured's name, vehicle registration number.
+  NOT a claim_form (policy is issued BY insurer; claim form is filled BY insured TO insurer).
+
+▶ registration_certificate — Government-issued vehicle RC card (smart card or paper).
+  LOOK FOR: "Registration Certificate", "Form 23" header, State Transport Authority emblem,
+  registration number (e.g. PB-65-XX-1234), chassis number, engine number, owner name,
+  vehicle class (LMV/HMV/MCWG), fuel type, maker's name, body type.
+  Front side: owner details, registration number. Back side: address, hypothecation, fitness dates.
+  NOT a driving_license (RC is about a VEHICLE; DL is about a PERSON's driving authority).
+
+▶ driving_license — Government-issued driving licence (DL) identity card.
+  LOOK FOR: "DRIVING LICENCE" or "DRIVING LICENSE" header, "UNION OF INDIA" or state transport
+  authority logo, photograph of the holder, licence number (e.g. PB-6520130223269),
+  Date of Birth, vehicle class table (LMV/MCWG/HMV), "Date of Issue", "Valid Till".
+  It is a GOVERNMENT IDENTITY CARD with a photo — compact card/paper format.
+  NEVER a claim_form. NEVER an insurance_policy. A DL does NOT mention accidents or insurance.
+
+▶ aadhar_card — Indian government biometric identity card issued by UIDAI.
+  LOOK FOR: "UIDAI" logo, "Aadhaar" / "आधार" text, 12-digit Aadhaar number (XXXX XXXX XXXX),
+  "Unique Identification Authority of India", enrolment number, photograph, QR code.
+  It is a GOVERNMENT IDENTITY CARD — NOT a claim_form, NOT an insurance document.
+
+▶ pan_card — Income Tax PAN identity card.
+  LOOK FOR: "INCOME TAX DEPARTMENT" / "GOVT. OF INDIA", "Permanent Account Number",
+  10-character alphanumeric PAN (e.g. ABCDE1234F), photograph, signature, "NSDL"/"UTIITSL" logo.
+  It is a GOVERNMENT IDENTITY CARD — NOT a claim_form, NOT an insurance document.
+
+▶ claim_form — Insurance claim form / claim intimation form filled by the INSURED person
+  and submitted TO the insurance company to report an accident or loss.
+  LOOK FOR: "CLAIM FORM", "Claim Intimation", "Motor Claim Form", insurance company letterhead,
+  sections asking about: date of accident, place of accident, description of loss/damage,
+  driver details AT TIME OF ACCIDENT, policy number field, declaration/signature by insured.
+  It is a MULTI-SECTION FORM with questions to be answered — NOT an identity card, NOT a policy.
+  NEVER confuse with driving_license (DL is a govt ID card; claim form is an insurance form).
+  NEVER confuse with insurance_policy (policy is issued by insurer; claim form is filled by insured).
+
+▶ repair_estimate — Repair estimate / quotation / proforma from a garage or dealer.
+  LOOK FOR: Header says "Estimate", "Quotation", "Service Quotation", "Proforma".
+  Has "Quotation No." or "Estimate No." field. Lists parts with estimated prices.
+  May show CGST/UGST columns — that does NOT make it an invoice. The TITLE decides.
+  NOT a final_invoice (estimate is BEFORE repair; invoice is AFTER repair).
+
+▶ final_invoice — Final repair bill / tax invoice from workshop/dealer AFTER repair is done.
+  LOOK FOR: Header says "Tax Invoice", "Invoice", "Bill", "Final Bill".
+  Has "GST Invc No." or "Invoice No." field. Lists parts with final assessed prices + GST.
+  ONLY for workshop/dealer repair bills — NOT for towing charges.
+  NOT a repair_estimate (invoice is AFTER repair; estimate is BEFORE).
+
+▶ towing_bill — Bill for towing / crane / vehicle recovery charges.
+  LOOK FOR: "Towing", "Tow", "Crane", "Recovery", "Towing Bill", "Towing Charges",
+  "Vehicle Recovery", "Crane Charges" in header or body.
+  A document about towing/crane/vehicle recovery charges is ALWAYS towing_bill,
+  NEVER final_invoice, NEVER repair_estimate.
+
+▶ route_permit — Government-issued permit allowing a vehicle to ply on specific routes.
+  LOOK FOR: "Route Permit", "Goods Permit", "Passenger Permit", "National Permit",
+  permit number, permit holder name, route/area, validity period, RTO stamp.
+  NOT a fitness_certificate (route permit authorises routes; fitness certifies roadworthiness).
+
+▶ fitness_certificate — Government certificate confirming vehicle is roadworthy.
+  LOOK FOR: "Fitness Certificate", "Certificate of Fitness", validity date ("Valid Upto"),
+  issued by RTO/transport authority, vehicle registration number.
+  NOT a route_permit. NOT a registration_certificate.
+
+▶ accident_document — FIR, police report, or any official accident/incident report.
+  LOOK FOR: "FIR", "First Information Report", "Police Report", "Accident Report",
+  "General Diary", police station details, IO (Investigating Officer) name, FIR number.
+  NOT a claim_form (accident document is from POLICE; claim form is an INSURANCE form).
+
+▶ survey_report — Report prepared by a surveyor/assessor inspecting vehicle damage.
+  LOOK FOR: "Survey Report", "Surveyor Report", "Assessment Report", surveyor name & licence,
+  damage assessment details, photographs, recommended repair amounts.
+  NOT a repair_estimate (survey report is by an independent surveyor; estimate is from the garage).
+
+▶ tax_report — Tax-related report or tax receipt for the vehicle.
+  LOOK FOR: "Tax Report", "Road Tax", "Tax Receipt", "Token Tax", tax payment details.
+  NOT a final_invoice and NOT a pan_card.
+
+▶ labour_charges — Standalone labour charges document (separate from estimate/invoice).
+  LOOK FOR: Labour-only breakdown (denting, painting, welding, R&R charges) WITHOUT parts list.
+  If the document also has parts → it is likely a repair_estimate or final_invoice instead.
+
+▶ vehicle_image — Photograph(s) of the vehicle showing damage, taken during claim/survey.
+  LOOK FOR: Actual photograph of a vehicle (not a document scan), damage visible,
+  date/time overlay or timestamp watermark on the image.
+  NOT a document with text — if it has text headers/fields, it is probably something else.
+
+▶ discharge_voucher — Discharge/satisfaction voucher signed by insured after claim settlement.
+  LOOK FOR: "Discharge Voucher", "Satisfaction Voucher", "Final Discharge", "Full & Final Settlement",
+  "No Claim Voucher", settlement amount, insured's signature, declaration of no further claims.
+  NOT a claim_form (discharge voucher is AFTER settlement; claim form is BEFORE/AT claim filing).
+
+▶ unknown — ONLY if the document does NOT match ANY of the above types.
+  Use this as a last resort. Provide a short 2-4 word descriptive name.
+
+━━━ KEY NEGATIVE RULES ━━━
+• A government-issued IDENTITY CARD (driving_license, aadhar_card, pan_card) is NEVER a claim_form.
+• A claim_form is ALWAYS an insurance company form about reporting an accident — it asks questions.
+• An insurance_policy is ISSUED BY the insurer; a claim_form is FILLED BY the insured.
+• A discharge_voucher is signed AFTER settlement; a claim_form is filed BEFORE/AT claim time.
+• A police FIR / accident report → accident_document, NOT claim_form.
+• A surveyor's damage assessment → survey_report, NOT repair_estimate.
+• A towing/crane/recovery bill → towing_bill, NEVER final_invoice.
 
 Step 2 — Extract the relevant fields for each detected document type.
 Use "" for missing text fields, 0 for missing numeric fields.
