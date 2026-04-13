@@ -20,6 +20,7 @@
 			"G31": "make_year",
 			"G32": "body_type",
 			"G33": "vehicle_class",
+			"G34": "pre_accident_condition",
 			"G35": "laden_weight",
 			"G36": "unladen_weight",
 			"G42": "seating_capacity",
@@ -46,7 +47,8 @@
 		},
 		"workshop": {
 			"G68": "dealer_name",
-			"G69": "dealer_address"
+			"G69": "dealer_address",
+			"G70": "workshop_status"
 		},
 		"parts_table": {
 			"start_row": 100,
@@ -75,9 +77,32 @@
 			"G57": "date_of_accident",
 			"G58": "place_of_accident"
 		},
+		"fir": {
+			"G72": "fir_detail"
+		},
+		"injury": {
+			"G74": "injury_third_party"
+		},
+		"cause": {
+			"C78": "cause_of_accident"
+		},
+		"observations": {
+			"C81": "observations_text"
+		},
+		"main_damages": {
+			"C84": "main_damages_text"
+		},
+		"notes_section": {
+			"C87": "notes_text"
+		},
+		"salvage": {
+			"G180": "salvage_value"
+		},
 		"survey": {
 			"G61": "date_of_survey",
-			"G63": "place_of_survey"
+			"G62": "date_of_survey_time",
+			"G63": "spot_survey_report",
+			"G64": "person_present"
 		},
 		"labour_table": {
 			"start_row": 156,

@@ -148,8 +148,6 @@ async function openCase(caseId) {
 		logLineCount = 0;
 		const pre = $("#console-output");
 		if (pre) pre.textContent = "";
-		const consoleCard = $("#console-card");
-		if (consoleCard) consoleCard.style.display = "none";
 	}
 	currentCaseId = caseId;
 	showView("case");
@@ -353,8 +351,10 @@ function renderCase(c) {
 		loadExtractedData(c.id);
 	} else {
 		outputCard.style.display = "none";
-		$("#extracted-card").style.display = "none";
 	}
+
+	// Always load extracted data (shows all fields with empty values if no data yet)
+	loadExtractedData(c.id);
 
 	// ── Error ──
 	const errorCard = $("#error-card");
@@ -417,9 +417,7 @@ async function fetchLogs(caseId, isFinal) {
 
 function appendLogs(lines) {
 	const pre = $("#console-output");
-	const consoleCard = $("#console-card");
 	if (!pre) return;
-	consoleCard.style.display = "";
 	lines.forEach((line) => {
 		pre.textContent += line + "\n";
 	});
@@ -457,8 +455,6 @@ function resetConsole() {
 		statusEl.textContent = "Running...";
 		statusEl.className = "console-status running";
 	}
-	const consoleCard = $("#console-card");
-	if (consoleCard) consoleCard.style.display = "";
 }
 
 // ── Upload ───────────────────────────────────────────────────────────────────
@@ -766,91 +762,195 @@ $("#btn-save-model").addEventListener("click", async () => {
 
 // ── Extracted Data Display ────────────────────────────────────────────────────
 const SECTION_LABELS = {
-	insurance: { icon: "🛡️", title: "Insurance Policy" },
-	rc: { icon: "🚗", title: "Registration Certificate" },
-	dl: { icon: "🪪", title: "Driving License" },
-	estimate: { icon: "🔧", title: "Repair Estimate" },
+	insurance: { icon: "🛡️", title: "Insurers" },
+	rc: { icon: "🚗", title: "Vehicle Particulars" },
+	dl: { icon: "🪪", title: "Driver's Particulars" },
+	claim_form: { icon: "📝", title: "Accident History" },
+	vehicle_image: { icon: "📷", title: "Detail of Survey" },
+	workshop: { icon: "🏭", title: "Place of Survey" },
+	estimate: { icon: "🔧", title: "Detail of Assessment" },
 	invoice: { icon: "🧾", title: "Final Invoice" },
-	route_permit: { icon: "📋", title: "Route Permit" },
-	fitness_cert: { icon: "✅", title: "Fitness Certificate" },
 };
 
 const FIELD_LABELS = {
-	insurer_name: "Insurer",
-	insurer_address: "Insurer Address",
-	policy_number: "Policy No.",
-	policy_period: "Policy Period",
-	idv: "IDV (₹)",
-	insured_name: "Insured Name",
-	insured_address: "Insured Address",
-	contact_number: "Contact",
+	insurer_name: "Insurers",
+	insurer_address: "Address",
+	policy_number: "Cover Note/Policy No.",
+	policy_period: "Period",
+	idv: "IDV",
+	insured_name: "Insured",
+	insured_address: "Address",
+	contact_number: "Contact No.",
+	tp_policy_number: "TP Policy No.",
 	hpa_with: "HPA With",
-	registration_number: "Reg. No.",
-	date_of_reg_issue: "Reg. Issue Date",
-	date_of_reg_expiry: "Reg. Expiry",
+	registration_number: "Registration No.",
+	date_of_reg_issue: "Date of Registration Issue",
+	date_of_reg_expiry: "Date of Registration Expiry",
 	chassis_number: "Chassis No.",
 	engine_number: "Engine No.",
-	make_year: "Make/Year",
-	body_type: "Body Type",
-	vehicle_class: "Vehicle Class",
-	laden_weight: "Laden Weight",
+	make_year: "Make & Year of Manufacturer",
+	body_type: "Type of Body",
+	vehicle_class: "Class of Vehicle",
+	pre_accident_condition: "Pre-Accident Condition",
+	laden_weight: "Registered Laden Weight",
 	unladen_weight: "Unladen Weight",
-	seating_capacity: "Seats",
-	fuel_type: "Fuel",
+	seating_capacity: "Seating Capacity",
+	fuel_type: "Fuel Used",
 	colour: "Colour",
-	road_tax_paid_upto: "Road Tax Upto",
-	cubic_capacity: "CC",
-	driver_name: "Driver Name",
-	dob: "Date of Birth",
+	road_tax_paid_upto: "Road Tax Paid Upto",
+	registered_owner: "Name of Regd. Owner as per RC",
+	cubic_capacity: "Cubic Capacity",
+	fitness_valid_upto: "Fitness Cert Valid Upto",
+	permit_no: "Permit No.",
+	permit_valid_upto: "Valid Upto",
+	type_of_permit: "Type of Permit",
+	route_area: "Route/Area of Operation",
+	driver_name: "Name of Driver",
+	dob: "DOB",
 	address: "Address",
 	city_state: "City/State",
-	licence_number: "License No.",
-	alt_licence_number: "Alt License No.",
-	date_of_issue: "Issue Date",
+	licence_number: "Licence No.",
+	alt_licence_number: "Alt Licence No.",
+	date_of_issue: "Date of Issue",
 	valid_till: "Valid Till",
-	issuing_authority: "Authority",
-	licence_type: "License Type",
-	dealer_name: "Dealer",
-	dealer_address: "Dealer Address",
-	total_labour_estimated: "Total Labour (₹)",
-	permit_no: "Permit No.",
-	valid_upto: "Valid Upto",
-	type_of_permit: "Permit Type",
-	route_area: "Route/Area",
+	issuing_authority: "Issuing Authority",
+	licence_type: "Type of Licence",
+	date_of_accident: "Date of Accident",
+	place_of_accident: "Place of Accident",
+	cause_of_accident: "Cause and Nature of Accident",
+	fir_detail: "FIR Detail",
+	injury_third_party: "Injury/Third Party Loss",
+	date_of_survey: "Date of Allotment of Survey",
+	date_of_survey_time: "Date and Time of Survey",
+	spot_survey_report: "Date of Spot Survey Report Recd.",
+	person_present: "Person Present at the Time of Survey",
+	dealer_name: "Workshop",
+	dealer_address: "Address",
+	workshop_status: "Status",
+	total_labour_estimated: "Labour Estimated",
+	estimate_date: "Estimate Date",
+	estimate_number: "Estimate No.",
+	labour_assessed_total: "Labour Assessed Total",
+	invoice_number: "Invoice No.",
+	invoice_date: "Invoice Date",
+	total_amount: "Total Amount",
+	gst_amount: "GST Amount",
+};
+
+// Fields that belong to each section (used to always render all fields)
+const SECTION_FIELDS = {
+	insurance: ["insurer_name", "insurer_address", "policy_number", "policy_period", "idv", "insured_name", "insured_address", "contact_number", "hpa_with"],
+	rc: [
+		"registration_number",
+		"date_of_reg_issue",
+		"date_of_reg_expiry",
+		"chassis_number",
+		"engine_number",
+		"make_year",
+		"body_type",
+		"vehicle_class",
+		"pre_accident_condition",
+		"laden_weight",
+		"unladen_weight",
+		"fitness_valid_upto",
+		"permit_no",
+		"permit_valid_upto",
+		"type_of_permit",
+		"route_area",
+		"seating_capacity",
+		"road_tax_paid_upto",
+		"fuel_type",
+		"registered_owner",
+		"colour",
+		"cubic_capacity",
+	],
+	dl: [
+		"driver_name",
+		"dob",
+		"address",
+		"city_state",
+		"licence_number",
+		"alt_licence_number",
+		"date_of_issue",
+		"valid_till",
+		"issuing_authority",
+		"licence_type",
+	],
+	claim_form: ["date_of_accident", "place_of_accident", "cause_of_accident", "fir_detail", "injury_third_party"],
+	vehicle_image: ["date_of_survey", "date_of_survey_time", "spot_survey_report", "person_present"],
+	workshop: ["dealer_name", "dealer_address", "workshop_status"],
+	estimate: ["estimate_date", "estimate_number", "total_labour_estimated"],
+	invoice: ["invoice_number", "invoice_date", "labour_assessed_total", "total_amount", "gst_amount"],
 };
 
 async function loadExtractedData(caseId) {
-	const card = $("#extracted-card");
 	const body = $("#extracted-body");
+	let data = {};
 	try {
-		const data = await api(`/api/cases/${caseId}/extracted`);
-		let html = "";
-		for (const [key, meta] of Object.entries(SECTION_LABELS)) {
-			const section = data[key];
-			if (!section) continue;
-			html += renderSection(meta.icon, meta.title, section, key);
-		}
-		if (!html) {
-			card.style.display = "none";
-			return;
-		}
-		body.innerHTML = html;
-		card.style.display = "";
+		data = await api(`/api/cases/${caseId}/extracted`);
 	} catch {
-		card.style.display = "none";
+		/* no data yet — render empty */
 	}
+
+	// Merge hpa_with from RC into insurance section for display
+	if (data.rc && data.rc.hpa_with) {
+		data.insurance = data.insurance || {};
+		if (!data.insurance.hpa_with) data.insurance.hpa_with = data.rc.hpa_with;
+	}
+
+	// Merge fitness_cert and route_permit into rc section for display
+	if (data.fitness_cert) {
+		data.rc = data.rc || {};
+		data.rc.fitness_valid_upto = data.fitness_cert.valid_upto || "";
+	}
+	if (data.route_permit) {
+		data.rc = data.rc || {};
+		data.rc.permit_no = data.route_permit.permit_no || "";
+		data.rc.permit_valid_upto = data.route_permit.valid_upto || "";
+		data.rc.type_of_permit = data.route_permit.type_of_permit || "";
+		data.rc.route_area = data.route_permit.route_area || "";
+	}
+
+	// Build workshop section from estimate or invoice
+	const est = data.estimate || {};
+	const inv = data.invoice || {};
+	data.workshop = {
+		dealer_name: est.dealer_name || inv.dealer_name || "",
+		dealer_address: est.dealer_address || inv.dealer_address || "",
+		workshop_status: est.workshop_status || inv.workshop_status || "",
+	};
+
+	// Add pre_accident_condition default to rc display
+	if (data.rc) {
+		data.rc.pre_accident_condition = data.rc.pre_accident_condition || "Stated to be normal road worthy";
+	}
+
+	// Add survey defaults for display
+	data.vehicle_image = data.vehicle_image || {};
+	const surveyDate = data.vehicle_image.date_of_survey || "";
+	data.vehicle_image.date_of_survey_time = surveyDate;
+	data.vehicle_image.spot_survey_report = "Spot Survey not received.";
+	data.vehicle_image.person_present = "Repairer was present";
+
+	let html = "";
+	for (const [key, meta] of Object.entries(SECTION_LABELS)) {
+		const section = data[key] || {};
+		html += renderSection(meta.icon, meta.title, section, key);
+	}
+	body.innerHTML = html;
 }
 
 function renderSection(icon, title, data, sectionKey) {
 	let content = "";
 
-	// Render key-value fields (skip arrays)
-	const fields = Object.entries(data).filter(([k, v]) => !Array.isArray(v) && FIELD_LABELS[k]);
-	if (fields.length > 0) {
+	// Always render all defined fields for this section
+	const fieldKeys = SECTION_FIELDS[sectionKey] || [];
+	if (fieldKeys.length > 0) {
 		content += '<div class="ext-fields">';
-		for (const [k, v] of fields) {
+		for (const k of fieldKeys) {
+			const v = data[k];
 			const label = FIELD_LABELS[k] || k.replace(/_/g, " ");
-			const isEmpty = v === "" || v === null || v === undefined;
+			const isEmpty = v === "" || v === null || v === undefined || v === 0;
 			const displayVal = isEmpty ? "—" : typeof v === "number" ? v.toLocaleString("en-IN") : v;
 			const emptyClass = isEmpty ? " ext-value-empty" : "";
 			content += `<div class="ext-field"><span class="ext-label">${esc(label)}</span><span class="ext-value${emptyClass}">${esc(String(displayVal))}</span></div>`;
@@ -860,7 +960,7 @@ function renderSection(icon, title, data, sectionKey) {
 
 	// Render parts table (for estimate)
 	if (data.parts && data.parts.length > 0) {
-		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>#</th><th>Part Name</th><th>Est. Price (₹)</th><th>Type</th></tr></thead><tbody>`;
+		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>S.N.</th><th>Part Description</th><th>Estimated</th><th>Type</th></tr></thead><tbody>`;
 		for (const p of data.parts) {
 			content += `<tr><td>${p.sn || ""}</td><td>${esc(p.name)}</td><td class="num">${Number(p.estimated_price).toLocaleString("en-IN")}</td><td><span class="ext-cat ext-cat-${esc(p.category || "")}">${esc(p.category || "")}</span></td></tr>`;
 		}
@@ -869,7 +969,7 @@ function renderSection(icon, title, data, sectionKey) {
 
 	// Render labour table (for estimate)
 	if (data.labour && data.labour.length > 0) {
-		content += `<div class="ext-table-wrap"><h4 class="ext-subtitle">Labour Breakdown</h4><table class="ext-table"><thead><tr><th>#</th><th>Description</th><th>R/R (₹)</th><th>Denting (₹)</th><th>C/W (₹)</th><th>Painting (₹)</th></tr></thead><tbody>`;
+		content += `<div class="ext-table-wrap"><h4 class="ext-subtitle">Labour Detail</h4><table class="ext-table"><thead><tr><th>S.N.</th><th>Description</th><th>R/R</th><th>Denting</th><th>C/W</th><th>Painting</th></tr></thead><tbody>`;
 		for (const l of data.labour) {
 			content += `<tr><td>${l.sn || ""}</td><td>${esc(l.description)}</td><td class="num">${Number(l.rr).toLocaleString("en-IN")}</td><td class="num">${Number(l.denting).toLocaleString("en-IN")}</td><td class="num">${Number(l.cw).toLocaleString("en-IN")}</td><td class="num">${Number(l.painting).toLocaleString("en-IN")}</td></tr>`;
 		}
@@ -878,14 +978,12 @@ function renderSection(icon, title, data, sectionKey) {
 
 	// Render parts_assessed table (for invoice)
 	if (data.parts_assessed && data.parts_assessed.length > 0) {
-		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>#</th><th>Part Name</th><th>Assessed Price (₹)</th></tr></thead><tbody>`;
+		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>S.N.</th><th>Part Description</th><th>Assessed</th></tr></thead><tbody>`;
 		data.parts_assessed.forEach((p, i) => {
 			content += `<tr><td>${i + 1}</td><td>${esc(p.name)}</td><td class="num">${Number(p.assessed_price).toLocaleString("en-IN")}</td></tr>`;
 		});
 		content += "</tbody></table></div>";
 	}
-
-	if (!content) return "";
 
 	return `<div class="ext-section">
 		<div class="ext-section-header"><span class="ext-section-icon">${icon}</span><h3>${esc(title)}</h3></div>

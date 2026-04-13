@@ -273,7 +273,7 @@ driving_license (driving licence / DL):
 {"type":"driving_license","pages":[1],"data":{"driver_name":"","dob":"DD.MM.YYYY","address":"","city_state":"","licence_number":"","alt_licence_number":"","date_of_issue":"DD.MM.YYYY","valid_till":"DD.MM.YYYY","issuing_authority":"","licence_type":""}}
 
 repair_estimate (repair estimate / quotation / service quotation / proforma — header says "Estimate" or "Quotation"):
-{"type":"repair_estimate","pages":[1],"data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":""}}
+{"type":"repair_estimate","pages":[1],"data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
 • Extract ALL parts (up to 50+). category must be "metal", "plastic", or "glass":
   - metal: panels, brackets, bolts, hinges, sensors, structural parts, washers, nuts
   - plastic: bumpers, trim, claddings, spoilers, reflectors, foam
@@ -281,7 +281,7 @@ repair_estimate (repair estimate / quotation / service quotation / proforma — 
 • labour breakdown: rr=R/R (Remove/Refit), denting=Denting, cw=Cutting/Welding, painting=Painting
 
 final_invoice (final repair bill / tax invoice — header says "Tax Invoice" or "Invoice", has GST Invc No.):
-{"type":"final_invoice","pages":[1],"data":{"parts_assessed":[{"name":"Part Name","assessed_price":0.0}],"labour_assessed_total":0.0,"dealer_name":"","dealer_address":""}}
+{"type":"final_invoice","pages":[1],"data":{"parts_assessed":[{"name":"Part Name","assessed_price":0.0}],"labour_assessed_total":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
 • Extract ALL parts. Use base price before GST if GST is shown separately.
 
 route_permit (route permit / goods permit / passenger permit):
@@ -293,9 +293,12 @@ fitness_certificate (fitness certificate / vehicle fitness):
 • valid_upto = fitness certificate validity end date.
 
 claim_form (insurance claim form filled by insured / claim intimation form):
-{"type":"claim_form","pages":[1],"data":{"date_of_accident":"DD.MM.YYYY","place_of_accident":""}}
+{"type":"claim_form","pages":[1],"data":{"date_of_accident":"DD.MM.YYYY","place_of_accident":"","cause_of_accident":"brief description of how the accident happened","fir_detail":"FIR number and details, or Nil","injury_third_party":"injury or third party loss details, or Nil"}}
 • date_of_accident = date of accident/loss as mentioned in the claim form.
 • place_of_accident = place/location of accident/loss as mentioned in the claim form.
+• cause_of_accident = brief narrative of how the accident happened (what the insured stated).
+• fir_detail = FIR number/police station if mentioned, otherwise "Nil (As Per Claim Form)".
+• injury_third_party = any injury or third party loss mentioned, otherwise "Nil (As Per Claim Form)".
 
 vehicle_image (vehicle damage photos / claim photos / survey photos with visible date):
 {"type":"vehicle_image","pages":[1],"data":{"date_of_survey":"DD.MM.YYYY"}}
@@ -418,6 +421,7 @@ def _build_estimate(data: dict) -> EstimateData:
         dealer_address=data.get("dealer_address", ""),
         estimate_date=data.get("estimate_date", ""),
         estimate_number=data.get("estimate_number", ""),
+        workshop_status=data.get("workshop_status", ""),
     )
 
 
@@ -438,6 +442,7 @@ def _build_invoice(data: dict) -> InvoiceData:
         dealer_address=data.get("dealer_address", ""),
         total_amount=float(data.get("total_amount", 0)),
         gst_amount=float(data.get("gst_amount", 0)),
+        workshop_status=data.get("workshop_status", ""),
     )
 
 
@@ -461,6 +466,9 @@ def _build_claim_form(data: dict) -> ClaimFormData:
     return ClaimFormData(
         date_of_accident=data.get("date_of_accident", ""),
         place_of_accident=data.get("place_of_accident", ""),
+        cause_of_accident=data.get("cause_of_accident", ""),
+        fir_detail=data.get("fir_detail", ""),
+        injury_third_party=data.get("injury_third_party", ""),
     )
 
 

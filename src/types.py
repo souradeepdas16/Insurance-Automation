@@ -79,6 +79,7 @@ class EstimateData:
     dealer_address: str = ""
     estimate_date: str = ""
     estimate_number: str = ""
+    workshop_status: str = ""
 
 
 @dataclass
@@ -97,6 +98,7 @@ class InvoiceData:
     dealer_address: str = ""
     total_amount: float = 0.0
     gst_amount: float = 0.0
+    workshop_status: str = ""
 
 
 @dataclass
@@ -117,6 +119,9 @@ class FitnessCertData:
 class ClaimFormData:
     date_of_accident: str = ""
     place_of_accident: str = ""
+    cause_of_accident: str = ""
+    fir_detail: str = ""
+    injury_third_party: str = ""
 
 
 @dataclass

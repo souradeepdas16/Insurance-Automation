@@ -195,6 +195,8 @@ def _fill_rc(ws: Worksheet, data: RCData) -> None:
             _write_cell(
                 ws, cell, f"Fuel used: {data.fuel_type}" if data.fuel_type else ""
             )
+        elif field == "pre_accident_condition":
+            _write_cell(ws, cell, "Stated to be normal road worthy")
         elif field in ("cubic_capacity", "seating_capacity"):
             _write_cell(ws, cell, _to_num(data_dict.get(field, 0)))
         else:
@@ -235,26 +237,32 @@ def _fill_workshop(
     estimate: Optional[EstimateData],
     invoice: Optional[InvoiceData],
 ) -> None:
-    """Fill workshop / place of survey (G63, G64) from estimate or invoice."""
+    """Fill workshop / place of survey (G68, G69, G70) from estimate or invoice."""
     mapping = CELLMAP["sheet1"].get("workshop", {})
     if not mapping:
         return
     # Prefer estimate data; fall back to invoice
     dealer_name = ""
     dealer_address = ""
+    workshop_status = ""
     if estimate:
         dealer_name = estimate.dealer_name or ""
         dealer_address = estimate.dealer_address or ""
+        workshop_status = estimate.workshop_status or ""
     if not dealer_name and invoice:
         dealer_name = invoice.dealer_name or ""
     if not dealer_address and invoice:
         dealer_address = invoice.dealer_address or ""
+    if not workshop_status and invoice:
+        workshop_status = invoice.workshop_status or ""
 
     for cell, field in mapping.items():
         if field == "dealer_name":
             _write_cell(ws, cell, dealer_name)
         elif field == "dealer_address":
             _write_cell(ws, cell, dealer_address)
+        elif field == "workshop_status":
+            _write_cell(ws, cell, workshop_status)
 
 
 def _fill_accident(ws: Worksheet, data: ClaimFormData) -> None:
@@ -263,30 +271,100 @@ def _fill_accident(ws: Worksheet, data: ClaimFormData) -> None:
     for cell, field in mapping.items():
         _write_cell(ws, cell, data_dict.get(field, ""))
 
+    # FIR detail
+    fir_map = CELLMAP["sheet1"].get("fir", {})
+    for cell, field in fir_map.items():
+        if field == "fir_detail":
+            _write_cell(ws, cell, data.fir_detail or "Nil (As Per Claim Form)")
+
+    # Injury / third party loss
+    injury_map = CELLMAP["sheet1"].get("injury", {})
+    for cell, field in injury_map.items():
+        if field == "injury_third_party":
+            _write_cell(ws, cell, data.injury_third_party or "Nil (As Per Claim Form)")
+
+    # Cause and nature of accident
+    cause_map = CELLMAP["sheet1"].get("cause", {})
+    for cell, field in cause_map.items():
+        if field == "cause_of_accident":
+            cause = data.cause_of_accident or ""
+            if cause:
+                _write_cell(ws, cell, f'" {cause} "')
+
+
+def _fill_report_sections(
+    ws: Worksheet,
+    all_data: "AllExtractedData",
+    row_offset: int = 0,
+) -> None:
+    """Fill observations, main damages, notes, and salvage value."""
+    insurer_name = ""
+    if all_data.insurance:
+        insurer_name = all_data.insurance.insurer_name or ""
+
+    # Observations/Comments (C81)
+    obs_map = CELLMAP["sheet1"].get("observations", {})
+    for cell, field in obs_map.items():
+        if field == "observations_text" and insurer_name:
+            text = (
+                f"As per the instructions of {insurer_name}. "
+                "I visited the Repairer's workshop. The Vehicle was carefully inspected, "
+                "its damages were noted and photographs taken. The Photographs in the "
+                "Under Repair Condition were also taken. The damages are commensurate "
+                "with the cause and nature of accident."
+            )
+            _write_cell(ws, _offset_cell(cell, row_offset), text)
+
+    # Main Damages (C84) — auto-generated from parts list
+    damages_map = CELLMAP["sheet1"].get("main_damages", {})
+    for cell, field in damages_map.items():
+        if (
+            field == "main_damages_text"
+            and all_data.estimate
+            and all_data.estimate.parts
+        ):
+            part_names = [p.name for p in all_data.estimate.parts[:8] if p.name]
+            if part_names:
+                text = ", ".join(part_names) + ", etc,etc."
+                _write_cell(ws, _offset_cell(cell, row_offset), text)
+
+    # Notes (C87) — first note is allotment text
+    notes_map = CELLMAP["sheet1"].get("notes_section", {})
+    for cell, field in notes_map.items():
+        if field == "notes_text" and insurer_name:
+            _write_cell(
+                ws,
+                _offset_cell(cell, row_offset),
+                _build_allotment_text(insurer_name),
+            )
+
+    # Salvage value (G180) — default 0
+    salvage_map = CELLMAP["sheet1"].get("salvage", {})
+    for cell, field in salvage_map.items():
+        if field == "salvage_value":
+            _write_cell(ws, _offset_cell(cell, row_offset), 0)
+
 
 def _fill_survey(
     ws: Worksheet,
     vehicle_image: Optional[VehicleImageData],
-    estimate: Optional[EstimateData],
-    invoice: Optional[InvoiceData],
 ) -> None:
-    """Fill survey details: date from vehicle image, place from estimate dealer address."""
+    """Fill survey details: dates from vehicle image, defaults for spot survey and person present."""
     mapping = CELLMAP["sheet1"].get("survey", {})
     if not mapping:
         return
     date_of_survey = ""
     if vehicle_image:
         date_of_survey = vehicle_image.date_of_survey or ""
-    place_of_survey = ""
-    if estimate:
-        place_of_survey = estimate.dealer_address or ""
-    if not place_of_survey and invoice:
-        place_of_survey = invoice.dealer_address or ""
     for cell, field in mapping.items():
         if field == "date_of_survey":
             _write_cell(ws, cell, date_of_survey)
-        elif field == "place_of_survey":
-            _write_cell(ws, cell, place_of_survey)
+        elif field == "date_of_survey_time":
+            _write_cell(ws, cell, date_of_survey)
+        elif field == "spot_survey_report":
+            _write_cell(ws, cell, "Spot Survey not received.")
+        elif field == "person_present":
+            _write_cell(ws, cell, "Repairer was present")
 
 
 def _match_parts_ai(
@@ -567,8 +645,8 @@ def fill_excel(
     if all_data.claim_form:
         _fill_accident(ws1, all_data.claim_form)
 
-    # Fill survey details: date from vehicle image, place from estimate
-    _fill_survey(ws1, all_data.vehicle_image, all_data.estimate, all_data.invoice)
+    # Fill survey details: date from vehicle image, defaults for spot survey
+    _fill_survey(ws1, all_data.vehicle_image)
 
     # Fill estimate AFTER insurance/rc/dl — parts insertion shifts rows below,
     # but all insurance/rc/dl cells are above the insertion point.
@@ -577,13 +655,21 @@ def fill_excel(
         row_offset = _fill_parts_table(ws1, all_data.estimate, all_data.invoice)
         _fill_labour_table(ws1, all_data.estimate, row_offset)
 
+    # Fill report sections (observations, main damages, notes, salvage)
+    # These are below the parts table so they need the row_offset.
+    _fill_report_sections(ws1, all_data, row_offset)
+
     if ref_number:
         ref = f"SK/2025-26/OICL/{ref_number}"
         _write_cell(ws1, "C8", ref)
 
     # ── NA fill: write "NA" to every static mapped cell still empty ──
-    _na_skip_sections = ("parts_table", "labour_table", "rc_date_serial")
-    _na_skip_fields = ("insurer_allotment_text", "fuel_type_label")
+    _na_skip_sections = ("parts_table", "labour_table", "rc_date_serial", "salvage")
+    _na_skip_fields = (
+        "insurer_allotment_text",
+        "fuel_type_label",
+        "pre_accident_condition",
+    )
     for section_key, section in CELLMAP.get("sheet1", {}).items():
         if section_key in _na_skip_sections:
             continue
