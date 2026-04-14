@@ -48,6 +48,8 @@ class DLData:  # pylint: disable=too-many-instance-attributes
     alt_licence_number: str = ""
     date_of_issue: str = ""
     valid_till: str = ""
+    valid_till_nt: str = ""
+    valid_till_transport: str = ""
     issuing_authority: str = ""
     licence_type: str = ""
 
@@ -108,6 +110,8 @@ class RoutePermitData:
     valid_upto: str = ""
     type_of_permit: str = ""
     route_area: str = ""
+    permit_no_auth: str = ""
+    valid_upto_auth: str = ""
 
 
 @dataclass
@@ -122,6 +126,22 @@ class ClaimFormData:
     cause_of_accident: str = ""
     fir_detail: str = ""
     injury_third_party: str = ""
+
+
+@dataclass
+class AccidentDocData:
+    fir_no: str = ""
+    fir_date: str = ""
+    police_station: str = ""
+
+
+@dataclass
+class SurveyReportData:
+    report_no: str = ""
+    report_date: str = ""
+    surveyor_name: str = ""
+    surveyor_phone: str = ""
+    surveyor_city: str = ""
 
 
 @dataclass
@@ -140,6 +160,8 @@ class AllExtractedData:
     fitness_cert: Optional[FitnessCertData] = None
     claim_form: Optional[ClaimFormData] = None
     vehicle_image: Optional[VehicleImageData] = None
+    accident_doc: Optional[AccidentDocData] = None
+    survey_report: Optional[SurveyReportData] = None
 
 
 DocumentType = Literal[

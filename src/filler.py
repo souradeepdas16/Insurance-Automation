@@ -27,6 +27,7 @@ PatternFill.__init__ = _patternfill_init_patched
 
 from src.paths import APP_DIR, BUNDLE_DIR
 from src.types import (
+    AccidentDocData,
     AllExtractedData,
     ClaimFormData,
     DLData,
@@ -37,6 +38,7 @@ from src.types import (
     InvoicePart,
     RCData,
     RoutePermitData,
+    SurveyReportData,
     VehicleImageData,
 )
 
@@ -197,6 +199,10 @@ def _fill_rc(ws: Worksheet, data: RCData) -> None:
             )
         elif field == "pre_accident_condition":
             _write_cell(ws, cell, "Stated to be normal road worthy")
+        elif field == "road_tax_paid_upto":
+            # Fallback to "OTT" (One Time Tax) if road tax info is empty
+            val = data.road_tax_paid_upto or "OTT"
+            _write_cell(ws, cell, val)
         elif field in ("cubic_capacity", "seating_capacity"):
             _write_cell(ws, cell, _to_num(data_dict.get(field, 0)))
         else:
@@ -215,14 +221,34 @@ def _fill_dl(ws: Worksheet, data: DLData) -> None:
     mapping = CELLMAP["sheet1"]["dl"]
     data_dict = asdict(data)
     for cell, field in mapping.items():
-        _write_cell(ws, cell, data_dict.get(field, ""))
+        if field == "valid_till":
+            # Combine NT and Transport validity dates if available
+            parts = []
+            if data.valid_till_nt:
+                parts.append(f"NT: {data.valid_till_nt}")
+            if data.valid_till_transport:
+                parts.append(f"Trans: {data.valid_till_transport}")
+            if parts:
+                _write_cell(ws, cell, ", ".join(parts))
+            else:
+                _write_cell(ws, cell, data.valid_till or "")
+        else:
+            _write_cell(ws, cell, data_dict.get(field, ""))
 
 
-def _fill_fitness_cert(ws: Worksheet, data: FitnessCertData) -> None:
+def _fill_fitness_cert(
+    ws: Worksheet, data: Optional[FitnessCertData], rc: Optional[RCData]
+) -> None:
     mapping = CELLMAP["sheet1"].get("fitness_cert", {})
-    data_dict = asdict(data)
+    valid_upto = ""
+    if data and data.valid_upto:
+        valid_upto = data.valid_upto
+    elif rc and rc.date_of_reg_expiry:
+        # Fallback: use RC registration expiry if fitness cert is missing
+        valid_upto = rc.date_of_reg_expiry
     for cell, field in mapping.items():
-        _write_cell(ws, cell, data_dict.get(field, ""))
+        if field == "valid_upto":
+            _write_cell(ws, cell, valid_upto)
 
 
 def _fill_route_permit(ws: Worksheet, data: RoutePermitData) -> None:
@@ -265,29 +291,45 @@ def _fill_workshop(
             _write_cell(ws, cell, workshop_status)
 
 
-def _fill_accident(ws: Worksheet, data: ClaimFormData) -> None:
-    mapping = CELLMAP["sheet1"].get("accident", {})
-    data_dict = asdict(data)
-    for cell, field in mapping.items():
-        _write_cell(ws, cell, data_dict.get(field, ""))
+def _fill_accident(
+    ws: Worksheet,
+    data: Optional[ClaimFormData],
+    accident_doc: Optional[AccidentDocData],
+) -> None:
+    if data:
+        mapping = CELLMAP["sheet1"].get("accident", {})
+        data_dict = asdict(data)
+        for cell, field in mapping.items():
+            _write_cell(ws, cell, data_dict.get(field, ""))
 
-    # FIR detail
+    # FIR detail — prefer structured accident_document, fall back to claim form text
     fir_map = CELLMAP["sheet1"].get("fir", {})
     for cell, field in fir_map.items():
         if field == "fir_detail":
-            _write_cell(ws, cell, data.fir_detail or "Nil (As Per Claim Form)")
+            fir_text = ""
+            if accident_doc and accident_doc.fir_no:
+                parts = [accident_doc.fir_no]
+                if accident_doc.fir_date:
+                    parts.append(f"dt. {accident_doc.fir_date}")
+                if accident_doc.police_station:
+                    parts.append(f"of {accident_doc.police_station}")
+                fir_text = " ".join(parts)
+            elif data and data.fir_detail:
+                fir_text = data.fir_detail
+            _write_cell(ws, cell, fir_text or "Nil (As Per Claim Form)")
 
     # Injury / third party loss
     injury_map = CELLMAP["sheet1"].get("injury", {})
     for cell, field in injury_map.items():
         if field == "injury_third_party":
-            _write_cell(ws, cell, data.injury_third_party or "Nil (As Per Claim Form)")
+            val = (data.injury_third_party if data else "") or "Nil (As Per Claim Form)"
+            _write_cell(ws, cell, val)
 
     # Cause and nature of accident
     cause_map = CELLMAP["sheet1"].get("cause", {})
     for cell, field in cause_map.items():
         if field == "cause_of_accident":
-            cause = data.cause_of_accident or ""
+            cause = (data.cause_of_accident if data else "") or ""
             if cause:
                 _write_cell(ws, cell, f'" {cause} "')
 
@@ -348,23 +390,41 @@ def _fill_report_sections(
 def _fill_survey(
     ws: Worksheet,
     vehicle_image: Optional[VehicleImageData],
+    survey_report: Optional[SurveyReportData],
 ) -> None:
-    """Fill survey details: dates from vehicle image, defaults for spot survey and person present."""
+    """Fill survey details: dates from vehicle image, spot survey from survey report."""
     mapping = CELLMAP["sheet1"].get("survey", {})
     if not mapping:
         return
     date_of_survey = ""
     if vehicle_image:
         date_of_survey = vehicle_image.date_of_survey or ""
+
+    # Build spot survey text from survey report data
+    spot_text = "Spot Survey not received."
+    if survey_report and survey_report.report_no:
+        parts = [survey_report.report_no]
+        if survey_report.report_date:
+            parts.append(f"dt. {survey_report.report_date}")
+        if survey_report.surveyor_name:
+            parts.append(f"of {survey_report.surveyor_name}")
+        if survey_report.surveyor_phone:
+            parts.append(f"ph. {survey_report.surveyor_phone}")
+        if survey_report.surveyor_city:
+            parts.append(survey_report.surveyor_city)
+        spot_text = "---".join(parts)
+
+    person_present = "Repairer was present"
+
     for cell, field in mapping.items():
         if field == "date_of_survey":
             _write_cell(ws, cell, date_of_survey)
         elif field == "date_of_survey_time":
             _write_cell(ws, cell, date_of_survey)
         elif field == "spot_survey_report":
-            _write_cell(ws, cell, "Spot Survey not received.")
+            _write_cell(ws, cell, spot_text)
         elif field == "person_present":
-            _write_cell(ws, cell, "Repairer was present")
+            _write_cell(ws, cell, person_present)
 
 
 def _match_parts_ai(
@@ -632,8 +692,8 @@ def fill_excel(
     if all_data.dl:
         _fill_dl(ws1, all_data.dl)
 
-    if all_data.fitness_cert:
-        _fill_fitness_cert(ws1, all_data.fitness_cert)
+    if all_data.fitness_cert or all_data.rc:
+        _fill_fitness_cert(ws1, all_data.fitness_cert, all_data.rc)
 
     if all_data.route_permit:
         _fill_route_permit(ws1, all_data.route_permit)
@@ -641,12 +701,11 @@ def fill_excel(
     # Fill workshop / place of survey from estimate or invoice
     _fill_workshop(ws1, all_data.estimate, all_data.invoice)
 
-    # Fill accident details from claim form
-    if all_data.claim_form:
-        _fill_accident(ws1, all_data.claim_form)
+    # Fill accident details from claim form and accident document
+    _fill_accident(ws1, all_data.claim_form, all_data.accident_doc)
 
-    # Fill survey details: date from vehicle image, defaults for spot survey
-    _fill_survey(ws1, all_data.vehicle_image)
+    # Fill survey details: date from vehicle image, spot survey from survey report
+    _fill_survey(ws1, all_data.vehicle_image, all_data.survey_report)
 
     # Fill estimate AFTER insurance/rc/dl — parts insertion shifts rows below,
     # but all insurance/rc/dl cells are above the insertion point.

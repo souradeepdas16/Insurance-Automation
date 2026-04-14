@@ -208,6 +208,19 @@ function renderCase(c) {
 	const uploadedCount = $("#uploaded-count");
 	const docs = c.documents || [];
 	uploadedCount.textContent = docs.length;
+
+	// Set uploaded ZIP download link
+	const btnUploadedZip = $("#btn-download-uploaded-zip");
+	if (btnUploadedZip) {
+		if (docs.length > 0) {
+			btnUploadedZip.href = `/api/cases/${c.id}/documents/download/zip`;
+			btnUploadedZip.setAttribute("download", "");
+			btnUploadedZip.style.display = "";
+		} else {
+			btnUploadedZip.style.display = "none";
+		}
+	}
+
 	if (docs.length > 0) {
 		uploadedList.innerHTML = docs
 			.map((d) => {
@@ -801,8 +814,10 @@ const FIELD_LABELS = {
 	registered_owner: "Name of Regd. Owner as per RC",
 	cubic_capacity: "Cubic Capacity",
 	fitness_valid_upto: "Fitness Cert Valid Upto",
-	permit_no: "Permit No.",
-	permit_valid_upto: "Valid Upto",
+	permit_no: "Permit No. (Part A)",
+	permit_valid_upto: "Valid Upto (Part A)",
+	permit_no_auth: "Permit No. (Authorization)",
+	permit_valid_upto_auth: "Valid Upto (Authorization)",
 	type_of_permit: "Type of Permit",
 	route_area: "Route/Area of Operation",
 	driver_name: "Name of Driver",
@@ -813,16 +828,25 @@ const FIELD_LABELS = {
 	alt_licence_number: "Alt Licence No.",
 	date_of_issue: "Date of Issue",
 	valid_till: "Valid Till",
+	valid_till_nt: "Valid Till (NT)",
+	valid_till_transport: "Valid Till (Transport)",
 	issuing_authority: "Issuing Authority",
 	licence_type: "Type of Licence",
 	date_of_accident: "Date of Accident",
 	place_of_accident: "Place of Accident",
 	cause_of_accident: "Cause and Nature of Accident",
-	fir_detail: "FIR Detail",
+	fir_detail: "FIR/DDR/GD Detail",
+	fir_no: "FIR/DDR/GD No.",
+	fir_date: "FIR Date",
+	police_station: "Police Station",
 	injury_third_party: "Injury/Third Party Loss",
 	date_of_survey: "Date of Allotment of Survey",
 	date_of_survey_time: "Date and Time of Survey",
-	spot_survey_report: "Date of Spot Survey Report Recd.",
+	spot_survey_report: "Spot Survey Report",
+	survey_report_no: "Survey Report No.",
+	surveyor_name: "Surveyor Name",
+	surveyor_phone: "Surveyor Phone",
+	surveyor_city: "Surveyor City",
 	person_present: "Person Present at the Time of Survey",
 	dealer_name: "Workshop",
 	dealer_address: "Address",
@@ -855,6 +879,8 @@ const SECTION_FIELDS = {
 		"fitness_valid_upto",
 		"permit_no",
 		"permit_valid_upto",
+		"permit_no_auth",
+		"permit_valid_upto_auth",
 		"type_of_permit",
 		"route_area",
 		"seating_capacity",
@@ -873,11 +899,22 @@ const SECTION_FIELDS = {
 		"alt_licence_number",
 		"date_of_issue",
 		"valid_till",
+		"valid_till_nt",
+		"valid_till_transport",
 		"issuing_authority",
 		"licence_type",
 	],
-	claim_form: ["date_of_accident", "place_of_accident", "cause_of_accident", "fir_detail", "injury_third_party"],
-	vehicle_image: ["date_of_survey", "date_of_survey_time", "spot_survey_report", "person_present"],
+	claim_form: ["date_of_accident", "place_of_accident", "cause_of_accident", "fir_detail", "fir_no", "fir_date", "police_station", "injury_third_party"],
+	vehicle_image: [
+		"date_of_survey",
+		"date_of_survey_time",
+		"spot_survey_report",
+		"survey_report_no",
+		"surveyor_name",
+		"surveyor_phone",
+		"surveyor_city",
+		"person_present",
+	],
 	workshop: ["dealer_name", "dealer_address", "workshop_status"],
 	estimate: ["estimate_date", "estimate_number", "total_labour_estimated"],
 	invoice: ["invoice_number", "invoice_date", "labour_assessed_total", "total_amount", "gst_amount"],
@@ -902,13 +939,23 @@ async function loadExtractedData(caseId) {
 	if (data.fitness_cert) {
 		data.rc = data.rc || {};
 		data.rc.fitness_valid_upto = data.fitness_cert.valid_upto || "";
+	} else if (data.rc && data.rc.date_of_reg_expiry) {
+		// Fallback: use RC expiry date if no fitness cert
+		data.rc.fitness_valid_upto = data.rc.date_of_reg_expiry;
 	}
 	if (data.route_permit) {
 		data.rc = data.rc || {};
 		data.rc.permit_no = data.route_permit.permit_no || "";
 		data.rc.permit_valid_upto = data.route_permit.valid_upto || "";
+		data.rc.permit_no_auth = data.route_permit.permit_no_auth || "";
+		data.rc.permit_valid_upto_auth = data.route_permit.valid_upto_auth || "";
 		data.rc.type_of_permit = data.route_permit.type_of_permit || "";
 		data.rc.route_area = data.route_permit.route_area || "";
+	}
+
+	// Road tax "OTT" fallback
+	if (data.rc && !data.rc.road_tax_paid_upto) {
+		data.rc.road_tax_paid_upto = "OTT";
 	}
 
 	// Build workshop section from estimate or invoice
@@ -925,12 +972,43 @@ async function loadExtractedData(caseId) {
 		data.rc.pre_accident_condition = data.rc.pre_accident_condition || "Stated to be normal road worthy";
 	}
 
+	// Merge accident_doc fields into claim_form
+	if (data.accident_doc) {
+		data.claim_form = data.claim_form || {};
+		data.claim_form.fir_no = data.accident_doc.fir_no || "";
+		data.claim_form.fir_date = data.accident_doc.fir_date || "";
+		data.claim_form.police_station = data.accident_doc.police_station || "";
+	}
+
 	// Add survey defaults for display
 	data.vehicle_image = data.vehicle_image || {};
 	const surveyDate = data.vehicle_image.date_of_survey || "";
 	data.vehicle_image.date_of_survey_time = surveyDate;
-	data.vehicle_image.spot_survey_report = "Spot Survey not received.";
 	data.vehicle_image.person_present = "Repairer was present";
+
+	// Merge survey_report into vehicle_image section
+	if (data.survey_report) {
+		data.vehicle_image.survey_report_no = data.survey_report.report_no || "";
+		data.vehicle_image.surveyor_name = data.survey_report.surveyor_name || "";
+		data.vehicle_image.surveyor_phone = data.survey_report.surveyor_phone || "";
+		data.vehicle_image.surveyor_city = data.survey_report.surveyor_city || "";
+		const sr = data.survey_report;
+		if (sr.report_no || sr.surveyor_name) {
+			data.vehicle_image.spot_survey_report = [
+				sr.report_no,
+				sr.report_date ? "dt. " + sr.report_date : "",
+				sr.surveyor_name,
+				sr.surveyor_phone,
+				sr.surveyor_city,
+			]
+				.filter(Boolean)
+				.join(" / ");
+		} else {
+			data.vehicle_image.spot_survey_report = "Spot Survey not received.";
+		}
+	} else {
+		data.vehicle_image.spot_survey_report = "Spot Survey not received.";
+	}
 
 	let html = "";
 	for (const [key, meta] of Object.entries(SECTION_LABELS)) {

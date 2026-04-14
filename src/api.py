@@ -463,6 +463,42 @@ def api_get_extracted_data(case_id: int):
     return data
 
 
+@app.get("/api/cases/{case_id}/documents/download/zip")
+def api_download_uploaded_zip(case_id: int):
+    """Download all uploaded documents for a case as a ZIP archive."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+
+    docs = get_documents_by_case(case_id)
+    if not docs:
+        raise HTTPException(404, "No uploaded documents found")
+
+    case_folder = Path(case["folder_path"])
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for doc in docs:
+            fp = Path(doc["file_path"])
+            if not fp.exists() or not fp.is_file():
+                continue
+            # Security: ensure file is inside the case folder
+            if not fp.resolve().is_relative_to(case_folder.resolve()):
+                continue
+            zf.write(fp, doc["original_name"])
+    buf.seek(0)
+
+    safe_name = "".join(
+        c if c.isalnum() or c in (" ", "-", "_") else "_" for c in case["name"]
+    )
+    filename = f"{safe_name}_uploaded.zip"
+
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @app.get("/api/cases/{case_id}/classified/{filename}")
 def api_serve_classified(case_id: int, filename: str):
     """Serve a classified document inline for in-browser viewing."""

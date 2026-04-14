@@ -16,6 +16,7 @@ class ProcessingCancelledError(Exception):
 
 
 from src.types import (
+    AccidentDocData,
     AllExtractedData,
     ClaimFormData,
     DLData,
@@ -28,6 +29,7 @@ from src.types import (
     LabourItem,
     RCData,
     RoutePermitData,
+    SurveyReportData,
     VehicleImageData,
 )
 from src.utils.ai_client import (
@@ -270,7 +272,11 @@ registration_certificate (vehicle RC / registration certificate):
 • hpa_with: name of the bank or financier shown in the Hypothecation/HPA field; use "" if not present.
 
 driving_license (driving licence / DL):
-{"type":"driving_license","pages":[1],"data":{"driver_name":"","dob":"DD.MM.YYYY","address":"","city_state":"","licence_number":"","alt_licence_number":"","date_of_issue":"DD.MM.YYYY","valid_till":"DD.MM.YYYY","issuing_authority":"","licence_type":""}}
+{"type":"driving_license","pages":[1],"data":{"driver_name":"","dob":"DD.MM.YYYY","address":"","city_state":"","licence_number":"","alt_licence_number":"","date_of_issue":"DD.MM.YYYY","valid_till":"DD.MM.YYYY","valid_till_nt":"DD.MM.YYYY","valid_till_transport":"DD.MM.YYYY","issuing_authority":"","licence_type":""}}
+• valid_till = the overall/primary validity date shown on the DL.
+• valid_till_nt = validity date for Non-Transport (NT) vehicle classes (LMV, MCWG, etc.). Look in the vehicle class table on the back of the DL. Use "" if not found.
+• valid_till_transport = validity date for Transport (T) vehicle classes (HMV, HTV, Trans, etc.). Look in the vehicle class table on the back of the DL. Use "" if not found.
+• licence_type = all vehicle classes listed on the DL separated by hyphens (e.g. "LMV-MCWG" or "LMV-HMV-TRANS").
 
 repair_estimate (repair estimate / quotation / service quotation / proforma — header says "Estimate" or "Quotation"):
 {"type":"repair_estimate","pages":[1],"data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
@@ -285,8 +291,10 @@ final_invoice (final repair bill / tax invoice — header says "Tax Invoice" or 
 • Extract ALL parts. Use base price before GST if GST is shown separately.
 
 route_permit (route permit / goods permit / passenger permit):
-{"type":"route_permit","pages":[1],"data":{"permit_no":"","permit_holder_name":"","valid_upto":"DD.MM.YYYY","type_of_permit":"","route_area":""}}
-• valid_upto = permit validity end date. type_of_permit = service type (e.g. Goods Service). route_area = region/route covered.
+{"type":"route_permit","pages":[1],"data":{"permit_no":"","permit_holder_name":"","valid_upto":"DD.MM.YYYY","type_of_permit":"","route_area":"","permit_no_auth":"","valid_upto_auth":"DD.MM.YYYY"}}
+• permit_no = Part A permit number. valid_upto = Part A validity end date.
+• permit_no_auth = Authorization permit number. valid_upto_auth = Authorization validity end date. Use "" if not present.
+• type_of_permit = service type (e.g. Goods Service, All India Tourist Permit). route_area = region/route covered.
 
 fitness_certificate (fitness certificate / vehicle fitness):
 {"type":"fitness_certificate","pages":[1],"data":{"valid_upto":"DD.MM.YYYY"}}
@@ -319,7 +327,15 @@ discharge_voucher (discharge voucher / satisfaction voucher / final discharge / 
 kyc_form (KYC form / Know Your Customer form / customer verification form):
 {"type":"kyc_form","pages":[1],"data":{}}
 
-accident_document | survey_report | tax_report | labour_charges:
+accident_document (FIR / police report / DDR / GD entry about the accident):
+{"type":"accident_document","pages":[1],"data":{"fir_no":"","fir_date":"DD.MM.YYYY","police_station":""}}
+• fir_no = FIR/DDR/GD number. fir_date = date filed. police_station = name of police station.
+
+survey_report (surveyor's assessment report):
+{"type":"survey_report","pages":[1],"data":{"report_no":"","report_date":"DD.MM.YYYY","surveyor_name":"","surveyor_phone":"","surveyor_city":""}}
+• report_no = survey report number. report_date = date of report. surveyor_name = name of surveyor. surveyor_phone = phone number. surveyor_city = city.
+
+tax_report | labour_charges:
 {"type":"<detected_type>","pages":[1],"data":{}}
 
 unknown (document that does not match any type above):
@@ -453,6 +469,8 @@ def _build_route_permit(data: dict) -> RoutePermitData:
         valid_upto=data.get("valid_upto", "") or data.get("validity_to_date", ""),
         type_of_permit=data.get("type_of_permit", "") or data.get("service_type", ""),
         route_area=data.get("route_area", "") or data.get("region_covered", ""),
+        permit_no_auth=data.get("permit_no_auth", ""),
+        valid_upto_auth=data.get("valid_upto_auth", ""),
     )
 
 
@@ -475,6 +493,24 @@ def _build_claim_form(data: dict) -> ClaimFormData:
 def _build_vehicle_image(data: dict) -> VehicleImageData:
     return VehicleImageData(
         date_of_survey=data.get("date_of_survey", ""),
+    )
+
+
+def _build_accident_doc(data: dict) -> AccidentDocData:
+    return AccidentDocData(
+        fir_no=data.get("fir_no", ""),
+        fir_date=data.get("fir_date", ""),
+        police_station=data.get("police_station", ""),
+    )
+
+
+def _build_survey_report(data: dict) -> SurveyReportData:
+    return SurveyReportData(
+        report_no=data.get("report_no", ""),
+        report_date=data.get("report_date", ""),
+        surveyor_name=data.get("surveyor_name", ""),
+        surveyor_phone=data.get("surveyor_phone", ""),
+        surveyor_city=data.get("surveyor_city", ""),
     )
 
 
@@ -519,6 +555,16 @@ def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData
     if "vehicle_image" in grouped:
         all_data.vehicle_image = _build_vehicle_image(
             _merge_simple(grouped["vehicle_image"])
+        )
+
+    if "accident_document" in grouped:
+        all_data.accident_doc = _build_accident_doc(
+            _merge_simple(grouped["accident_document"])
+        )
+
+    if "survey_report" in grouped:
+        all_data.survey_report = _build_survey_report(
+            _merge_simple(grouped["survey_report"])
         )
 
     return all_data
