@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Insurance Automation</title>
-		<link rel="stylesheet" href="style.css?v=10" />
+		<link rel="stylesheet" id="main-css" />
 	</head>
 	<body>
 		<!-- Sidebar -->
@@ -363,6 +363,13 @@
 		<!-- Toast -->
 		<div class="toast-container" id="toast-container"></div>
 
-		<script src="app.js?v=10"></script>
+		<script>
+			document.getElementById("main-css").href = "style.css?t=" + Date.now();
+		</script>
+		<script>
+			var s = document.createElement("script");
+			s.src = "app.js?t=" + Date.now();
+			document.body.appendChild(s);
+		</script>
 	</body>
 </html>
