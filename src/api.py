@@ -13,10 +13,11 @@ import uuid
 import zipfile
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # ── Per-case log capture ──────────────────────────────────────────────────────
 # Maps case_id -> list of log lines (in-memory, cleared on new run)
@@ -89,6 +90,18 @@ STATIC_DIR = BUNDLE_DIR / "static"
 SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".pdf"}
 
 app = FastAPI(title="Insurance Automation", version="1.0.0")
+
+
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+
+app.add_middleware(NoCacheMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
