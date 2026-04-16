@@ -180,14 +180,15 @@ def process_case(
     # ── Step 2: Build AllExtractedData ────────────────────────────────────────
     all_data = build_all_extracted_data(grouped_data)
 
-    # ── Step 3: Fill Excel ────────────────────────────────────────────────────
-    print("  Step 3: Filling Excel template...")
+    # ── Step 3: Fill Excel & save extracted JSON ─────────────────────────────
+    print("  Step 3: Saving extracted data...")
+
+    # ── Excel fill ──
     output_path = str(OUTPUT_DIR / f"{case_name}.xlsx")
+    ref_match = re.match(r"^(\d+)", case_name)
+    fill_excel(all_data, output_path, ref_match.group(1) if ref_match else None)
 
     try:
-        ref_match = re.match(r"^(\d+)", case_name)
-        fill_excel(all_data, output_path, ref_match.group(1) if ref_match else None)
-
         json_path = str(OUTPUT_DIR / f"{case_name}_extracted.json")
         with open(json_path, "w", encoding="utf-8") as jf:
             json.dump(asdict(all_data), jf, indent=2, ensure_ascii=False)
@@ -237,10 +238,10 @@ def process_case(
         print(
             f"    Labour    : {len(all_data.estimate.labour) if all_data.estimate else 0}"
         )
-        print(f"    Output    : {output_path}")
+
         print(f"    JSON dump : {json_path}")
     except Exception as e:  # pylint: disable=broad-except
-        print(f"  ✗ Excel filling failed: {e}")
+        print(f"  ✗ Saving extracted data failed: {e}")
 
 
 # ─── DB-backed processing (used by web UI) ───────────────────────────────────
@@ -567,19 +568,19 @@ def process_case_from_db(
     print("  Step 2: Building extracted data...")
     all_data = build_all_extracted_data(grouped_data)
 
-    # ── Step 3: Save extracted JSON (Excel fill commented out) ────────────────
+    # ── Step 3: Fill Excel & save extracted JSON ─────────────────────────────
     if cancel_event and cancel_event.is_set():
         return
     output_dir = case_folder / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # # ── Excel fill (disabled) ──
-    # output_path = str(output_dir / f"{case_name}.xlsx")
-    # try:
-    #     ref_match = re.match(r"^(\d+)", case_name)
-    #     fill_excel(all_data, output_path, ref_match.group(1) if ref_match else None)
-    # except Exception as e:
-    #     raise RuntimeError(f"Excel filling failed: {e}") from e
+    # ── Excel fill ──
+    output_path = str(output_dir / f"{case_name}.xlsx")
+    try:
+        ref_match = re.match(r"^(\d+)", case_name)
+        fill_excel(all_data, output_path, ref_match.group(1) if ref_match else None)
+    except Exception as e:
+        raise RuntimeError(f"Excel filling failed: {e}") from e
 
     try:
         json_path = str(output_dir / f"{case_name}_extracted.json")
