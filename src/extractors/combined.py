@@ -690,7 +690,9 @@ def classify_and_extract_single(
         page_offset = chunk_start  # 0-based offset for this chunk
 
         # Render only this chunk's pages (not the whole PDF)
-        chunk_b64 = pdf_pages_to_base64(file_path, start_page=chunk_start, end_page=chunk_end)
+        chunk_b64 = pdf_pages_to_base64(
+            file_path, start_page=chunk_start, end_page=chunk_end
+        )
 
         chunk_label = f"{file_label} pages {chunk_start + 1}-{chunk_end}"
         print(f"      → Calling API for {chunk_label}")
