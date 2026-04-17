@@ -46,7 +46,7 @@ if __name__ == "__main__":
         import uvicorn
 
         print("Starting Insurance Automation server at http://localhost:8000")
-        uvicorn.run("src.api:app", host="0.0.0.0", port=8000, reload=True)
+        uvicorn.run("src.api:app", host="0.0.0.0", port=8000, reload=False)
     else:
         from src.main import main
 
