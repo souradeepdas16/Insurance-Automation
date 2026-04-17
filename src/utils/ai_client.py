@@ -85,18 +85,28 @@ def _resize_image_to_base64(file_path: str, max_dim: int = MAX_DIM) -> str:
         return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def pdf_pages_to_base64(file_path: str, max_dim: int = MAX_DIM) -> list[str]:
-    """Render each PDF page to a JPEG base64 string using PyMuPDF."""
+def pdf_pages_to_base64(
+    file_path: str,
+    max_dim: int = MAX_DIM,
+    start_page: int = 0,
+    end_page: int | None = None,
+) -> list[str]:
+    """Render PDF pages to JPEG base64 strings using PyMuPDF.
+
+    Args:
+        start_page: 0-based first page index (inclusive).
+        end_page:   0-based last page index (exclusive). None = all pages.
+    """
     import gc
     import fitz  # PyMuPDF
 
     pages_b64: list[str] = []
     with fitz.open(file_path) as doc:
-        for page in doc:
-            # Render at 2x for readability, then resize down if needed
+        stop = end_page if end_page is not None else len(doc)
+        for i in range(start_page, min(stop, len(doc))):
+            page = doc[i]
             pix = page.get_pixmap(dpi=150)
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            # Free the pixmap immediately — it holds raw pixel data in native memory
             del pix
             img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
             buf = io.BytesIO()

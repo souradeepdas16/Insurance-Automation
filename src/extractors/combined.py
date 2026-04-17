@@ -658,12 +658,14 @@ def classify_and_extract_single(
             cancel_event,
         )
 
-    # ── PDF — render pages, then decide if chunking is needed ─────────────────
-    all_pages_b64 = pdf_pages_to_base64(file_path)
-    total_pages = len(all_pages_b64)
+    # ── PDF — get page count WITHOUT rendering (saves memory) ─────────────────
+    import fitz as _fitz
+
+    with _fitz.open(file_path) as _doc:
+        total_pages = len(_doc)
 
     if total_pages <= MAX_PAGES_PER_CALL:
-        # Small PDF — single call (pass the file directly)
+        # Small PDF — single call (renders pages once inside vision_extract_json)
         return _call_with_retry(
             lambda: vision_extract_json(
                 [file_path], prompt_with_filename, max_output_tokens=_MAX_OUTPUT_TOKENS
@@ -672,7 +674,9 @@ def classify_and_extract_single(
             cancel_event,
         )
 
-    # ── Large PDF — chunk pages and make multiple calls ───────────────────────
+    # ── Large PDF — render ONE chunk at a time to limit memory ────────────────
+    import gc as _gc
+
     print(
         f"    📄 {file_label}: {total_pages} pages → splitting into chunks of {MAX_PAGES_PER_CALL}"
     )
@@ -683,8 +687,10 @@ def classify_and_extract_single(
             raise ProcessingCancelledError("Processing stopped by user")
 
         chunk_end = min(chunk_start + MAX_PAGES_PER_CALL, total_pages)
-        chunk_b64 = all_pages_b64[chunk_start:chunk_end]
         page_offset = chunk_start  # 0-based offset for this chunk
+
+        # Render only this chunk's pages (not the whole PDF)
+        chunk_b64 = pdf_pages_to_base64(file_path, start_page=chunk_start, end_page=chunk_end)
 
         chunk_label = f"{file_label} pages {chunk_start + 1}-{chunk_end}"
         print(f"      → Calling API for {chunk_label}")
@@ -706,6 +712,10 @@ def classify_and_extract_single(
             doc["pages"] = [p + page_offset for p in doc.get("pages", [1])]
 
         all_results.extend(chunk_results)
+
+        # Free chunk memory before rendering next chunk
+        del chunk_b64
+        _gc.collect()
 
     # ── Merge documents that span chunk boundaries ────────────────────────────
     # If the same doc type appears at the end of one chunk and start of the next,
@@ -746,7 +756,7 @@ def classify_and_extract_all(
     """
     results: dict[str, list[dict[str, Any]]] = {}
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
+    with ThreadPoolExecutor(max_workers=1) as pool:
         future_to_path = {
             pool.submit(classify_and_extract_single, fp, cancel_event): fp
             for fp in file_paths
