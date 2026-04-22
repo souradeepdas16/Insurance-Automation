@@ -319,7 +319,7 @@ function renderCase(c) {
 					<div class="doc-tile-icon classified" data-url="/api/cases/${c.id}/classified/${encodeURIComponent(d.classified_name)}" style="cursor:pointer">&#10003;</div>
 					<div class="doc-tile-info doc-tile-clickable" data-url="/api/cases/${c.id}/classified/${encodeURIComponent(d.classified_name)}" style="cursor:pointer">
 						<div class="doc-tile-name" title="${esc(d.classified_name)}">${esc(d.classified_name)}</div>
-						${d.doc_type ? `<span class="doc-tile-badge">${esc(d.doc_type)}</span>` : ""}
+						${d.doc_type && d.doc_type !== "unknown" ? `<span class="doc-tile-badge">${esc(d.doc_type)}</span>` : ""}
 						<div class="doc-tile-type">click to open</div>
 					</div>
 					${

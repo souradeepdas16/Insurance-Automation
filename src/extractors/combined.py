@@ -547,10 +547,12 @@ form_64vb (Form 64VB tax clearance for vehicle transfer):
 
 unknown (document that does not match any type above):
 {"type":"unknown","pages":[1],"data":{"name":"Short Descriptive Name"}}
-• "name" = a short 2-4 word Title Case label describing the document (e.g. "Bank Statement", "Damage Photos", "Voter ID Card", "NOC Letter").
+• "name" = a short 2-4 word Title Case label describing the document. This name will be used as the FILE NAME, so make it accurate and descriptive.
 • ALWAYS read the form heading / title / letterhead at the top of the document and use it as the name.
+• If there is no clear heading, describe what the document IS based on its content (e.g. "Bank Statement", "Voter ID Card", "NOC Letter", "Consent Form", "Authorization Letter", "Ownership Transfer", "Vehicle Photos").
 • Every document has SOME identifiable heading, title, or purpose — find it and use it. There is NO excuse for a generic name.
-• Do NOT use generic names like "Document", "Image", "Paper", "File", "Unknown", "Extra Document", "Extra Image", "Miscellaneous", "Other".
+• Do NOT use generic names like "Document", "Image", "Paper", "File", "Unknown", "Unclassified", "Extra Document", "Extra Image", "Miscellaneous", "Other", "Scanned Document", "Scanned Image".
+• The name MUST clearly identify what the document is about — it will be the only label shown to the user.
 
 ━━━ RULES ━━━
 • If multiple DIFFERENT document types are in the same file, return a separate entry for each.

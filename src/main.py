@@ -218,7 +218,6 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "medical_record": "Medical Record",
     "partnership_deed": "Partnership Deed",
     "form_64vb": "Form 64VB",
-    "unknown": "Unclassified",
 }
 
 # Track processing state
@@ -287,7 +286,7 @@ def process_case(
         for _fp, _doc_list in combined_results.items():
             for _res in _doc_list:
                 _dt = _res["type"]
-                _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, "Extra Document")
+                _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, _dt.replace(\"_\", \" \").title())
                 if _dt == "unknown":
                     _ai_name = (
                         _sanitize_ai_name(_res["data"].get("name", ""))
@@ -296,6 +295,10 @@ def process_case(
                     )
                     if _ai_name:
                         _display = _ai_name
+                    else:
+                        # Derive a name from the original filename
+                        _orig = Path(_fp).stem
+                        _display = re.sub(r'[_\-]+', ' ', _orig).strip().title() or "Document"
                 _type_seen[_dt] = _type_seen.get(_dt, 0) + 1
                 _cnt = _type_seen[_dt]
                 _stem = _display if _cnt == 1 else f"{_display} ({_cnt})"
@@ -455,7 +458,7 @@ def process_case_from_db(
             )
 
     for doc_type, items in type_to_items.items():
-        display = DOC_TYPE_DISPLAY_NAMES.get(doc_type, "Extra Document")
+        display = DOC_TYPE_DISPLAY_NAMES.get(doc_type, doc_type.replace("_", " ").title())
 
         if len(items) > 1 and doc_type != "unknown":
             # Multiple entries of same type (could be from different files or same split file)
@@ -520,7 +523,8 @@ def process_case_from_db(
                     if ai_name:
                         d = ai_name
                     else:
-                        d = display
+                        # Derive name from original filename
+                        d = re.sub(r'[_\-]+', ' ', Path(fp).stem).strip().title() or "Document"
                     named_items.setdefault(d, []).append(
                         (doc, pages, extracted_data, fp)
                     )
@@ -628,6 +632,11 @@ def process_case_from_db(
                         )
                         if ai_name:
                             d = ai_name
+                        else:
+                            # Derive name from original filename
+                            d = re.sub(r'[_\\-]+', ' ', Path(fp).stem).strip().title() or "Document"
+                    if not d:
+                        d = re.sub(r'[_\\-]+', ' ', Path(fp).stem).strip().title() or "Document"
                     _name_count[d] = _name_count.get(d, 0) + 1
                     cnt = _name_count[d]
                     new_name = f"{d}.pdf" if cnt == 1 else f"{d} ({cnt}).pdf"
