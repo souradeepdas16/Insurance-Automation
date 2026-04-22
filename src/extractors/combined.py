@@ -49,7 +49,7 @@ VALID_TYPES = (
     "final_invoice",
     "route_permit",
     "fitness_certificate",
-    "accident_document",
+    "police_report",
     "survey_report",
     "claim_form",
     "tax_report",
@@ -60,6 +60,17 @@ VALID_TYPES = (
     "pan_card",
     "discharge_voucher",
     "kyc_form",
+    "cancelled_cheque",
+    "ncb_certificate",
+    "pre_inspection_report",
+    "gst_registration",
+    "affidavit",
+    "self_statement",
+    "payment_receipt",
+    "weigh_slip",
+    "medical_record",
+    "partnership_deed",
+    "form_64vb",
     "unknown",
 )
 
@@ -77,9 +88,12 @@ Never guess a second type — only report what you can actually see.
 
 Step 1 — For EACH distinct document found, identify its type from this list:
 insurance_policy | registration_certificate | driving_license | repair_estimate |
-final_invoice | route_permit | fitness_certificate | accident_document |
+final_invoice | route_permit | fitness_certificate | police_report |
 survey_report | claim_form | tax_report | labour_charges | towing_bill |
-aadhar_card | pan_card | discharge_voucher | kyc_form | unknown
+aadhar_card | pan_card | discharge_voucher | kyc_form |
+cancelled_cheque | ncb_certificate | pre_inspection_report | gst_registration |
+affidavit | self_statement | payment_receipt |
+weigh_slip | medical_record | partnership_deed | form_64vb | unknown
 
 ━━━ CRITICAL — HOW TO DISTINGUISH EACH DOCUMENT TYPE ━━━
 
@@ -133,17 +147,34 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   IT IS NOT: Any document that mentions a PAN number. A bank form or affidavit quoting a PAN
   number is NOT a pan_card.
 
-▶ claim_form — The actual insurance claim form / claim intimation form — a PRINTED FORM with
-  BLANK FIELDS or SECTIONS TO BE FILLED by the insured and submitted to the insurance company.
-  IT IS: A structured form (often pre-printed by the insurance company) with labeled sections
-  like "Date of Accident", "Place of Accident", "Description of Loss", "Driver Details",
-  "Policy Number", checkboxes, and a declaration section. Usually has insurance company branding.
-  LOOK FOR: "CLAIM FORM" / "Claim Intimation" / "Motor Claim Form" as the title,
-  insurance company letterhead/logo, structured fields/boxes to fill in, tabular layout.
-  IT IS NOT: An affidavit, a letter, a sworn statement, or any narrative document that
-  merely describes an accident. If the document header says "AFFIDAVIT" — it is NOT a claim_form.
+▶ claim_form — The actual INSURANCE CLAIM FORM / claim intimation form issued by an insurance
+  company — a PRINTED FORM with BLANK FIELDS or SECTIONS to be filled by the insured.
+  IT IS: A structured pre-printed form FROM AN INSURANCE COMPANY with labeled sections
+  specifically about an insurance claim for vehicle damage / loss.
+  LOOK FOR (TITLE on page 1): "MOTOR CLAIM FORM", "Claim Intimation Form", "Motor Vehicle
+  Claim Form", "Motor OD Claim Form", "Motor Accident Claim Form", "Claim Form".
+  LOOK FOR (SECTIONS — may span multiple pages):
+    • INSURED section — insured's name, address, policy number
+    • THE INSURED VEHICLE section — make, model, engine no., chassis no., reg. no.,
+      questions like "Was the vehicle in proper working condition?"
+    • DRIVER AT THE TIME OF ACCIDENT section — driver's name, age, address, DL details,
+      "Was the licence temporary/permanent?", "Has he been charged by police?"
+    • ACCIDENT / LOSS DETAILS section — date of accident, time, place, speed,
+      "Give a short description of the accident", nature of damage
+    • DECLARATION / SIGNATURE section — insured's declaration and signature
+    • Insurance company branding / letterhead (e.g. United India, New India, ICICI Lombard,
+      Bajaj Allianz, HDFC ERGO, National Insurance, Oriental Insurance, IFFCO Tokio, etc.)
+  MULTI-PAGE: Claim forms are usually 2-5 pages. ALL continuation pages of the same claim
+  form must be grouped under ONE claim_form entry with all page numbers (e.g. [1,2,3,4]).
+  Even if later pages lack the "CLAIM FORM" title, they belong to the same form if they
+  continue the sections above (e.g. page 2 has "Driver Details", page 3 has "Declaration").
+  IT IS NOT: A hospital / medical admission form (those have "ADMISSION", "PATIENT NAME",
+  "WARD", "MRD No.", "Consultant", hospital branding — NOT insurance company branding).
+  IT IS NOT: An affidavit, a letter, a sworn statement, or any narrative document.
   IT IS NOT: A driving license, Aadhaar card, PAN card, or any identity document.
-  IT IS NOT: An FIR or police report (those are accident_document).
+  IT IS NOT: An FIR or police report (those are police_report).
+  IT IS NOT: A survey report (those are from a surveyor, not a form filled by the insured).
+  IT IS NOT: A discharge voucher (those are signed AFTER claim settlement).
 
 ▶ repair_estimate — Repair estimate / quotation / proforma from a garage or dealer.
   IT IS: A workshop/dealer document listing parts and labour with ESTIMATED prices BEFORE repair.
@@ -182,7 +213,7 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   IT IS NOT: A route_permit or registration_certificate.
   ★ VAHAN RC Status printouts → fitness_certificate (NOT registration_certificate).
 
-▶ accident_document — FIR, police report, or any official police/incident report about the accident.
+▶ police_report — FIR, police report, or any official police/incident report about the accident.
   IT IS: An official document FROM THE POLICE or authorities about the accident.
   LOOK FOR: "FIR", "First Information Report", "Police Report", "Accident Report",
   "General Diary", "DDR", police station name, IO (Investigating Officer) name, FIR number.
@@ -223,12 +254,82 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   IT IS NOT: An individual ID card (aadhar_card, pan_card) — those are standalone ID documents.
   A KYC form may reference Aadhaar/PAN numbers but is a SEPARATE verification form.
 
+▶ cancelled_cheque — A cancelled cheque from a bank account.
+  IT IS: A physical bank cheque with "CANCELLED" written across it, used for bank verification.
+  LOOK FOR: "CANCELLED" written across the cheque, bank name, IFSC code, MICR code,
+  account number, cheque number, bank branch details.
+  IT IS NOT: A payment receipt or bank statement.
+
+▶ ncb_certificate — No Claim Bonus (NCB) certificate / confirmation from an insurer.
+  IT IS: A letter or certificate from an insurance company confirming the insured's NCB entitlement.
+  LOOK FOR: "No Claim Bonus", "NCB", "NCB Certificate", "NCB Confirmation", "NCB Declaration",
+  NCB percentage, previous policy details, claim-free years, insurer letterhead.
+  IT IS NOT: An insurance_policy (NCB cert confirms bonus entitlement; policy is the full coverage doc).
+
+▶ pre_inspection_report — Pre-insurance inspection report of the vehicle.
+  IT IS: An inspection report done BEFORE issuing or renewing an insurance policy.
+  LOOK FOR: "Pre-Inspection", "Pre-Insurance Survey", "Break-In Inspection", "Pre-Insp",
+  vehicle condition assessment, photographs of vehicle before insurance, inspector details.
+  IT IS NOT: A survey_report (survey is AFTER accident; pre-inspection is BEFORE insurance).
+
+▶ gst_registration — GST registration certificate issued by the tax authority.
+  IT IS: A certificate of registration under the Goods and Services Tax Act.
+  LOOK FOR: "Certificate of Registration", "GST", "GSTIN", "Goods and Services Tax",
+  GSTIN number (e.g. 06AABCU9603R1ZM), trade name, legal name, date of registration,
+  principal place of business, government of India emblem.
+  IT IS NOT: A tax_report (GST registration is the certificate; tax report is a payment/filing doc).
+
+▶ affidavit — A sworn notarized statement / affidavit (general or third-party).
+  IT IS: A sworn written statement on stamp paper, signed before a notary or magistrate.
+  LOOK FOR: "AFFIDAVIT", "SWORN STATEMENT", "I hereby solemnly affirm", stamp paper,
+  notary seal/stamp, "Before the Notary", oath/declaration text, deponent's signature.
+  Also includes TP (third-party) affidavits — any affidavit about third-party damage,
+  injury, or liability is also classified as affidavit.
+  IT IS NOT: A claim_form, police_report, self_statement, or any specific document type above.
+
+▶ self_statement — Self-statement or personal declaration by the insured about the incident.
+  IT IS: A written statement by the insured describing the accident/incident in their own words.
+  LOOK FOR: "Self Statement", "Statement", "Personal Statement", "My Statement",
+  narrative description of accident by the insured, handwritten or typed on plain paper,
+  insured's signature, may mention "I was driving..." or similar first-person account.
+  IT IS NOT: An affidavit (no notary/stamp paper) or a claim_form (not an insurance company form).
+
+▶ payment_receipt — Payment receipt or acknowledgment for any payment made.
+  IT IS: A receipt confirming payment has been made or received.
+  LOOK FOR: "Payment Receipt", "Receipt", "Acknowledgment", "Money Receipt", amount paid,
+  payment date, received from/by, payment mode (cash/cheque/online), receipt number.
+  IT IS NOT: A final_invoice (invoice is a bill; receipt is proof of payment).
+
+▶ weigh_slip — Weigh slip, goods receipt (GR), or load challan for commercial vehicles.
+  IT IS: A document recording the weight of goods/vehicle at a weighbridge, or a goods receipt/load challan.
+  LOOK FOR: "Weigh Slip", "Weighment Slip", "Weigh Bridge", "Goods Receipt", "GR",
+  "Load Challan", "Goods Invoice", gross weight, tare weight, net weight, vehicle number,
+  commodity/goods description, weighbridge name.
+  IT IS NOT: A final_invoice or repair_estimate.
+
+▶ medical_record — Medical record, report, or certificate related to the driver or injured party.
+  IT IS: A medical document from a hospital or doctor about injury/fitness of the driver or third party.
+  LOOK FOR: "Medical Record", "Medical Report", "Medical Certificate", "Fitness Certificate" (medical),
+  "Discharge Summary", "OPD Record", doctor's name, hospital name, patient details,
+  diagnosis, treatment details, injury description.
+  IT IS NOT: A claim_form or fitness_certificate (which is for VEHICLE fitness, not human medical fitness).
+
+▶ partnership_deed — Partnership deed or firm registration document.
+  IT IS: A legal document establishing a business partnership, relevant when the insured is a firm.
+  LOOK FOR: "Partnership Deed", "Deed of Partnership", "Partnership Agreement",
+  partner names, firm name, terms of partnership, notarized, registered.
+  IT IS NOT: An affidavit or any identity document.
+
+▶ form_64vb — Form 64VB (tax clearance certificate for vehicle transfer).
+  IT IS: A form under the Income Tax Act for obtaining a no-objection certificate for vehicle transfer.
+  LOOK FOR: "Form 64VB", "Form No. 64VB", "64VB", Income Tax Act reference,
+  vehicle transfer details, seller/buyer details, tax clearance.
+  IT IS NOT: A tax_report or registration_certificate.
+
 ▶ unknown — ONLY if the document does NOT match ANY of the above types.
   Use this as a last resort. Provide a short 2-4 word descriptive name.
-  EXAMPLES of unknown documents: Affidavit, Bank Statement, Cancelled Cheque, Voter ID,
-  NOC Letter, Consent Letter, Legal Notice, Ownership Transfer, Payment Receipt.
-  An AFFIDAVIT (sworn notarized statement) does not match any of the above types → classify
-  as unknown with name "Affidavit".
+  EXAMPLES of unknown documents: Bank Statement, Voter ID,
+  NOC Letter, Consent Letter, Legal Notice, Ownership Transfer.
 
 ━━━ KEY NEGATIVE RULES ━━━
 • CLASSIFY BY WHAT THE DOCUMENT PHYSICALLY IS — not by what information it contains or references.
@@ -242,11 +343,23 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   Only the actual policy schedule from the insurer is an insurance_policy.
 • A document that MENTIONS an accident is NOT automatically a claim_form.
   Only the actual insurance company claim form (structured form with fields) is a claim_form.
-• An AFFIDAVIT is a sworn notarized statement — it is ALWAYS "unknown" with name "Affidavit",
-  even if it mentions Aadhaar, DL, policy, accident, or vehicle details.
-• An FIR / police report → accident_document, NOT claim_form.
+• An AFFIDAVIT is a sworn notarized statement (including TP affidavits) → classify as "affidavit". NOT "unknown".
+• An FIR / police report → police_report, NOT claim_form.
 • A surveyor's damage assessment → survey_report, NOT repair_estimate.
 • A towing/crane/recovery bill → towing_bill, NEVER final_invoice.
+• A cancelled cheque → cancelled_cheque, NOT "unknown".
+• An NCB letter/certificate → ncb_certificate, NOT insurance_policy.
+• A pre-inspection report → pre_inspection_report, NOT survey_report.
+• A GST registration certificate → gst_registration, NOT tax_report.
+• A self-statement by the insured → self_statement, NOT affidavit (no stamp paper/notary).
+• A payment receipt → payment_receipt, NOT final_invoice.
+• A weigh slip / GR / load challan → weigh_slip, NOT "unknown".
+• A medical record/report → medical_record, NOT claim_form.
+• A partnership deed → partnership_deed, NOT "unknown".
+• A Form 64VB → form_64vb, NOT tax_report.
+• A hospital / medical admission form (with "ADMISSION", "PATIENT", "WARD", hospital name)
+  is a medical_record.
+• A claim_form is ALWAYS from an INSURANCE COMPANY, never from a hospital or police station.
 
 Step 2 — Extract the relevant fields for each detected document type.
 Use "" for missing text fields, 0 for missing numeric fields.
@@ -301,7 +414,8 @@ fitness_certificate (fitness certificate / vehicle fitness):
 • valid_upto = fitness certificate validity end date.
 
 claim_form (insurance claim form filled by insured / claim intimation form):
-{"type":"claim_form","pages":[1],"data":{"date_of_accident":"DD.MM.YYYY","place_of_accident":"","cause_of_accident":"brief description of how the accident happened","fir_detail":"FIR number and details, or Nil","injury_third_party":"injury or third party loss details, or Nil"}}
+{"type":"claim_form","pages":[1,2,3],"data":{"date_of_accident":"DD.MM.YYYY","place_of_accident":"","cause_of_accident":"brief description of how the accident happened","fir_detail":"FIR number and details, or Nil","injury_third_party":"injury or third party loss details, or Nil"}}
+• Claim forms are usually 2-5 pages. Group ALL pages into ONE entry (e.g. "pages":[1,2,3,4]).
 • date_of_accident = date of accident/loss as mentioned in the claim form.
 • place_of_accident = place/location of accident/loss as mentioned in the claim form.
 • cause_of_accident = brief narrative of how the accident happened (what the insured stated).
@@ -327,8 +441,8 @@ discharge_voucher (discharge voucher / satisfaction voucher / final discharge / 
 kyc_form (KYC form / Know Your Customer form / customer verification form):
 {"type":"kyc_form","pages":[1],"data":{}}
 
-accident_document (FIR / police report / DDR / GD entry about the accident):
-{"type":"accident_document","pages":[1],"data":{"fir_no":"","fir_date":"DD.MM.YYYY","police_station":""}}
+police_report (FIR / police report / DDR / GD entry about the accident):
+{"type":"police_report","pages":[1],"data":{"fir_no":"","fir_date":"DD.MM.YYYY","police_station":""}}
 • fir_no = FIR/DDR/GD number. fir_date = date filed. police_station = name of police station.
 
 survey_report (surveyor's assessment report):
@@ -338,10 +452,45 @@ survey_report (surveyor's assessment report):
 tax_report | labour_charges:
 {"type":"<detected_type>","pages":[1],"data":{}}
 
+cancelled_cheque (cancelled cheque for bank verification):
+{"type":"cancelled_cheque","pages":[1],"data":{}}
+
+ncb_certificate (No Claim Bonus certificate / NCB confirmation):
+{"type":"ncb_certificate","pages":[1],"data":{}}
+
+pre_inspection_report (pre-insurance inspection report):
+{"type":"pre_inspection_report","pages":[1],"data":{}}
+
+gst_registration (GST registration certificate):
+{"type":"gst_registration","pages":[1],"data":{}}
+
+affidavit (sworn notarized statement / affidavit including TP affidavits):
+{"type":"affidavit","pages":[1],"data":{}}
+
+self_statement (self-statement / personal declaration by insured):
+{"type":"self_statement","pages":[1],"data":{}}
+
+payment_receipt (payment receipt / money receipt):
+{"type":"payment_receipt","pages":[1],"data":{}}
+
+weigh_slip (weigh slip / goods receipt / load challan):
+{"type":"weigh_slip","pages":[1],"data":{}}
+
+medical_record (medical record / report / certificate):
+{"type":"medical_record","pages":[1],"data":{}}
+
+partnership_deed (partnership deed / firm registration):
+{"type":"partnership_deed","pages":[1],"data":{}}
+
+form_64vb (Form 64VB tax clearance for vehicle transfer):
+{"type":"form_64vb","pages":[1],"data":{}}
+
 unknown (document that does not match any type above):
 {"type":"unknown","pages":[1],"data":{"name":"Short Descriptive Name"}}
-• "name" = a short 2-4 word Title Case label describing the document (e.g. "Bank Statement", "Cancelled Cheque", "Damage Photos", "Voter ID Card", "NOC Letter").
-• Do NOT use generic names like "Document", "Image", "Paper", "File", "Unknown".
+• "name" = a short 2-4 word Title Case label describing the document (e.g. "Bank Statement", "Damage Photos", "Voter ID Card", "NOC Letter").
+• ALWAYS read the form heading / title / letterhead at the top of the document and use it as the name.
+• Every document has SOME identifiable heading, title, or purpose — find it and use it. There is NO excuse for a generic name.
+• Do NOT use generic names like "Document", "Image", "Paper", "File", "Unknown", "Extra Document", "Extra Image", "Miscellaneous", "Other".
 
 ━━━ RULES ━━━
 • If multiple DIFFERENT document types are in the same file, return a separate entry for each.
@@ -557,9 +706,9 @@ def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData
             _merge_simple(grouped["vehicle_image"])
         )
 
-    if "accident_document" in grouped:
+    if "police_report" in grouped:
         all_data.accident_doc = _build_accident_doc(
-            _merge_simple(grouped["accident_document"])
+            _merge_simple(grouped["police_report"])
         )
 
     if "survey_report" in grouped:

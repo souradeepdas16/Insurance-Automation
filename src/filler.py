@@ -302,7 +302,7 @@ def _fill_accident(
         for cell, field in mapping.items():
             _write_cell(ws, cell, data_dict.get(field, ""))
 
-    # FIR detail — prefer structured accident_document, fall back to claim form text
+    # FIR detail — prefer structured police_report, fall back to claim form text
     fir_map = CELLMAP["sheet1"].get("fir", {})
     for cell, field in fir_map.items():
         if field == "fir_detail":

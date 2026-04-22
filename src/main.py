@@ -35,13 +35,10 @@ SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".pdf"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 DEBOUNCE_SEC = 3.0
 
-_GENERIC_NAMES = {"document", "image", "unknown", "file", "paper"}
-
 
 def _sanitize_ai_name(raw: str) -> str:
     """Clean an AI-generated document name for use as a filename."""
-    name = re.sub(r'[<>:"/\\|?*]', "", raw.strip().strip('"').strip("'"))[:60].strip()
-    return "" if not name or name.lower() in _GENERIC_NAMES else name
+    return re.sub(r'[<>:"/\\|?*]', "", raw.strip().strip('"').strip("'"))[:60].strip()
 
 
 def _merge_files_to_pdf(
@@ -118,7 +115,7 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "final_invoice": "Final Invoice",
     "route_permit": "Route Permit",
     "fitness_certificate": "Fitness Certificate",
-    "accident_document": "Accident Document",
+    "police_report": "Police Report",
     "survey_report": "Survey Report",
     "claim_form": "Claim Form",
     "tax_report": "Tax Report",
@@ -129,7 +126,18 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "pan_card": "PAN Card",
     "discharge_voucher": "Discharge Voucher",
     "kyc_form": "KYC Form",
-    "unknown": "Extra Document",
+    "cancelled_cheque": "Cancelled Cheque",
+    "ncb_certificate": "NCB Certificate",
+    "pre_inspection_report": "Pre-Inspection Report",
+    "gst_registration": "GST Registration",
+    "affidavit": "Affidavit",
+    "self_statement": "Self Statement",
+    "payment_receipt": "Payment Receipt",
+    "weigh_slip": "Weigh Slip",
+    "medical_record": "Medical Record",
+    "partnership_deed": "Partnership Deed",
+    "form_64vb": "Form 64VB",
+    "unknown": "Unclassified",
 }
 
 # Track processing state
@@ -199,7 +207,6 @@ def process_case(
             for _res in _doc_list:
                 _dt = _res["type"]
                 _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, "Extra Document")
-                _ext = os.path.splitext(_fp)[1].lower()
                 if _dt == "unknown":
                     _ai_name = (
                         _sanitize_ai_name(_res["data"].get("name", ""))
@@ -208,8 +215,6 @@ def process_case(
                     )
                     if _ai_name:
                         _display = _ai_name
-                    elif _ext in IMAGE_EXTS:
-                        _display = "Extra Image"
                 _type_seen[_dt] = _type_seen.get(_dt, 0) + 1
                 _cnt = _type_seen[_dt]
                 _stem = _display if _cnt == 1 else f"{_display} ({_cnt})"
@@ -403,8 +408,6 @@ def process_case_from_db(
                     )
                     if ai_name:
                         d = ai_name
-                    elif ext in IMAGE_EXTS:
-                        d = "Extra Image"
                     else:
                         d = display
                     named_items.setdefault(d, []).append(
@@ -518,8 +521,6 @@ def process_case_from_db(
                         )
                         if ai_name:
                             d = ai_name
-                        elif ext in IMAGE_EXTS:
-                            d = "Extra Image"
                     _name_count[d] = _name_count.get(d, 0) + 1
                     cnt = _name_count[d]
                     new_name = f"{d}.pdf" if cnt == 1 else f"{d} ({cnt}).pdf"
