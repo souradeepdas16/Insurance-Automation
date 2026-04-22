@@ -24,10 +24,13 @@ from src.types import (
     EstimatePart,
     FitnessCertData,
     InvoiceData,
+    InvoiceLabourItem,
     InvoicePart,
     InsuranceData,
     LabourItem,
+    MotorSurveyReportData,
     RCData,
+    RcStatusData,
     RoutePermitData,
     SurveyReportData,
     VehicleImageData,
@@ -51,6 +54,7 @@ VALID_TYPES = (
     "fitness_certificate",
     "police_report",
     "survey_report",
+    "motor_survey_report",
     "claim_form",
     "tax_report",
     "labour_charges",
@@ -63,6 +67,7 @@ VALID_TYPES = (
     "cancelled_cheque",
     "ncb_certificate",
     "pre_inspection_report",
+    "rc_status",
     "gst_registration",
     "affidavit",
     "self_statement",
@@ -89,15 +94,21 @@ Never guess a second type — only report what you can actually see.
 Step 1 — For EACH distinct document found, identify its type from this list:
 insurance_policy | registration_certificate | driving_license | repair_estimate |
 final_invoice | route_permit | fitness_certificate | police_report |
-survey_report | claim_form | tax_report | labour_charges | towing_bill |
+survey_report | motor_survey_report | claim_form | tax_report | labour_charges | towing_bill |
 aadhar_card | pan_card | discharge_voucher | kyc_form |
-cancelled_cheque | ncb_certificate | pre_inspection_report | gst_registration |
+cancelled_cheque | ncb_certificate | pre_inspection_report | rc_status | gst_registration |
 affidavit | self_statement | payment_receipt |
 weigh_slip | medical_record | partnership_deed | form_64vb | unknown
 
 ━━━ CRITICAL — HOW TO DISTINGUISH EACH DOCUMENT TYPE ━━━
 
 ★★★ FUNDAMENTAL RULE ★★★
+FIRST, read the HEADING / TITLE of the document (the prominent text at the top of the page).
+The heading tells you WHAT the document IS. Only after identifying the heading should you
+look at the body content for confirmation. Do NOT let body content override the heading.
+Example: A page titled "MOTOR SURVEY REPORT" is a motor_survey_report — even if its body lists
+vehicle registration details, insurance particulars, etc. Those details are just reference data.
+
 Classify a document by WHAT IT PHYSICALLY IS — not by what it MENTIONS or REFERS TO.
 Many documents reference other documents' details (e.g. an affidavit may quote an Aadhaar
 number, a DL number, a policy number, and an accident — but it is still just an AFFIDAVIT,
@@ -121,6 +132,11 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   ★ A VAHAN portal "RC STATUS" printout (online verification page) is NOT a registration_certificate.
     VAHAN printouts show "RC STATUS" header, VAHAN/National Register e-Services branding,
     and sections like Validity, Insurance Details, Permit Details → classify as fitness_certificate.
+  ★ A MOTOR SURVEY REPORT / SPOT SURVEY REPORT listing vehicle particulars (registration no,
+    chassis, engine no, etc.) is NOT a registration_certificate — it is a motor_survey_report.
+    Survey reports are prepared by a Surveyor & Loss Assessor and contain "MOTOR SURVEY REPORT"
+    or "SURVEY REPORT" in their header. They list vehicle details for REFERENCE, but the document
+    itself is a surveyor's report, not the government-issued RC card.
 
 ▶ driving_license — The actual government-issued driving licence (DL) card.
   IT IS: A physical government ID CARD with the holder's photo, issued by a transport authority.
@@ -203,15 +219,21 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   permit number, permit holder name, route/area, validity period, RTO stamp.
   IT IS NOT: A fitness_certificate or registration_certificate.
 
-▶ fitness_certificate — The actual government certificate confirming a vehicle is roadworthy,
-  OR a VAHAN portal "RC STATUS" printout showing vehicle fitness/registration validity.
-  IT IS: A certificate issued by RTO/transport authority after vehicle inspection,
-  OR an online VAHAN (National Register e-Services) RC Status page.
+▶ fitness_certificate — The actual government certificate confirming a vehicle is roadworthy.
+  IT IS: A certificate issued by RTO/transport authority after vehicle inspection.
   LOOK FOR: "Fitness Certificate", "Certificate of Fitness", validity date ("Valid Upto"),
-  OR "RC STATUS" header with VAHAN/parivahan.gov.in branding, Fitness/REGN validity,
-  PUCC validity, Insurance Details section, Permit Details section.
+  RTO stamp, vehicle details, inspection result.
   IT IS NOT: A route_permit or registration_certificate.
-  ★ VAHAN RC Status printouts → fitness_certificate (NOT registration_certificate).
+  IT IS NOT: A VAHAN portal "RC STATUS" printout — that is rc_status (see below).
+
+▶ rc_status — A VAHAN portal "RC STATUS" printout (online verification page from parivahan.gov.in).
+  IT IS: An online printout from the VAHAN / National Register e-Services portal showing RC details.
+  LOOK FOR: "RC STATUS" header, VAHAN/parivahan.gov.in branding, "National Register e-Services",
+  Fitness/REGN validity, PUCC validity, Insurance Details section, Permit Details section,
+  owner details, vehicle class, fuel type, registration authority info.
+  ★ This is NOT a registration_certificate — it is an online status printout.
+  IT IS NOT: A fitness_certificate (physical certificate from RTO).
+  IT IS NOT: A registration_certificate (physical RC card).
 
 ▶ police_report — FIR, police report, or any official police/incident report about the accident.
   IT IS: An official document FROM THE POLICE or authorities about the accident.
@@ -220,11 +242,24 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   IT IS NOT: A claim_form (FIR is from POLICE; claim form is an INSURANCE company form).
   IT IS NOT: An affidavit (an affidavit is a sworn personal statement, not a police report).
 
-▶ survey_report — Report prepared by a surveyor/assessor inspecting vehicle damage.
+▶ survey_report — A DETAILED survey/assessment report by a licensed surveyor, typically multi-page
+  with damage assessment, photographs, recommended repair amounts, and final assessment.
   IT IS: A professional assessment report by a licensed surveyor appointed by the insurer.
-  LOOK FOR: "Survey Report", "Surveyor Report", "Assessment Report", surveyor name & licence,
-  damage assessment details, photographs, recommended repair amounts.
-  IT IS NOT: A repair_estimate (survey report is by an independent surveyor; estimate is from the garage).
+  LOOK FOR: "Survey Report", "Surveyor Report", "Assessment Report", "Final Survey Report",
+  surveyor name & licence, damage assessment details, photographs, recommended repair amounts,
+  multiple sections covering insurance particulars, vehicle particulars, damage details, and assessment.
+  IT IS NOT: A repair_estimate. IT IS NOT: A motor_survey_report (see below).
+
+▶ motor_survey_report — A SPOT / INITIAL motor survey report, typically 1-2 pages, done at the
+  scene or at first inspection. Often titled "MOTOR SURVEY REPORT" or "MOTOR SURVEY REPORT SPOT".
+  IT IS: A brief spot survey form filled by a surveyor at the initial vehicle inspection.
+  LOOK FOR: "MOTOR SURVEY REPORT", "MOTOR SURVEY REPORT SPOT", "Spot Survey",
+  surveyor name & licence, "Surveyor & Loss Assessor", vehicle particulars (Reg No, Chassis,
+  Engine), insurance particulars, "PHYSICALLY VERIFIED" stamp, "Form 24" reference.
+  ★ If the heading says "MOTOR SURVEY REPORT" or "MOTOR SURVEY REPORT SPOT", classify as
+    motor_survey_report — NOT as registration_certificate, NOT as survey_report.
+  IT IS NOT: A registration_certificate (even though it lists vehicle reg details).
+  IT IS NOT: A survey_report (survey_report is the detailed final report; this is the spot form).
 
 ▶ tax_report — Tax-related report or receipt for the vehicle (road tax, token tax).
   IT IS: A tax payment document or receipt from a government authority.
@@ -345,7 +380,10 @@ Always ask: "What TYPE of document am I looking at?" — not "What information d
   Only the actual insurance company claim form (structured form with fields) is a claim_form.
 • An AFFIDAVIT is a sworn notarized statement (including TP affidavits) → classify as "affidavit". NOT "unknown".
 • An FIR / police report → police_report, NOT claim_form.
-• A surveyor's damage assessment → survey_report, NOT repair_estimate.
+• A surveyor's detailed damage assessment → survey_report, NOT repair_estimate.
+• A Motor Survey Report / Spot Survey Report → motor_survey_report, NOT registration_certificate, NOT survey_report.
+  Even if it lists vehicle particulars (reg no, chassis, engine no), it is the SURVEYOR'S spot report.
+• A VAHAN portal "RC STATUS" printout → rc_status, NOT registration_certificate, NOT fitness_certificate.
 • A towing/crane/recovery bill → towing_bill, NEVER final_invoice.
 • A cancelled cheque → cancelled_cheque, NOT "unknown".
 • An NCB letter/certificate → ncb_certificate, NOT insurance_policy.
@@ -392,16 +430,30 @@ driving_license (driving licence / DL):
 • licence_type = all vehicle classes listed on the DL separated by hyphens (e.g. "LMV-MCWG" or "LMV-HMV-TRANS").
 
 repair_estimate (repair estimate / quotation / service quotation / proforma — header says "Estimate" or "Quotation"):
-{"type":"repair_estimate","pages":[1],"data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
-• Extract ALL parts (up to 50+). category must be "metal", "plastic", or "glass":
+{"type":"repair_estimate","pages":[1],"data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","estimated_price":0.0,"rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
+• The estimate has TWO sections: "Labour charges" and "Parts charges". Extract them SEPARATELY.
+• parts = ONLY items from the "Parts charges" section. Use base price before GST.
+• labour = ONLY items from the "Labour charges" section. Use base price (Labour/Unit Price) before GST.
+• Do NOT mix labour items into parts or vice versa.
+• For each part, category must be "metal", "plastic", or "glass":
   - metal: panels, brackets, bolts, hinges, sensors, structural parts, washers, nuts
   - plastic: bumpers, trim, claddings, spoilers, reflectors, foam
   - glass: windshield, window glass, mirror glass, headlamp glass, tail lamp lens
-• labour breakdown: rr=R/R (Remove/Refit), denting=Denting, cw=Cutting/Welding, painting=Painting
+• For each labour item: estimated_price = the Labour/Unit Price amount.
+  Also categorize into rr/denting/cw/painting columns based on the operation type:
+  - Paint / PR → painting column
+  - Replacement / R/R → rr column
+  - BR / Body Repair / Denting → denting column
+  - C/W / Cutting / Welding → cw column
+  Set the matching column to the estimated_price value; leave others as 0.
 
 final_invoice (final repair bill / tax invoice — header says "Tax Invoice" or "Invoice", has GST Invc No.):
-{"type":"final_invoice","pages":[1],"data":{"parts_assessed":[{"name":"Part Name","assessed_price":0.0}],"labour_assessed_total":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
-• Extract ALL parts. Use base price before GST if GST is shown separately.
+{"type":"final_invoice","pages":[1],"data":{"parts_assessed":[{"name":"Part Name","assessed_price":0.0}],"labour_assessed":[{"description":"Labour description","assessed_price":0.0}],"labour_assessed_total":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
+• The invoice has TWO sections: "Labour charges" and "Parts charges". Extract them SEPARATELY.
+• parts_assessed = ONLY items from the "Parts charges" section. Use base price before GST.
+• labour_assessed = ONLY items from the "Labour charges" section. Use base price before GST.
+• labour_assessed_total = sum of all labour assessed prices.
+• Do NOT mix labour items into parts_assessed or vice versa.
 
 route_permit (route permit / goods permit / passenger permit):
 {"type":"route_permit","pages":[1],"data":{"permit_no":"","permit_holder_name":"","valid_upto":"DD.MM.YYYY","type_of_permit":"","route_area":"","permit_no_auth":"","valid_upto_auth":"DD.MM.YYYY"}}
@@ -445,9 +497,13 @@ police_report (FIR / police report / DDR / GD entry about the accident):
 {"type":"police_report","pages":[1],"data":{"fir_no":"","fir_date":"DD.MM.YYYY","police_station":""}}
 • fir_no = FIR/DDR/GD number. fir_date = date filed. police_station = name of police station.
 
-survey_report (surveyor's assessment report):
+survey_report (surveyor's detailed assessment report):
 {"type":"survey_report","pages":[1],"data":{"report_no":"","report_date":"DD.MM.YYYY","surveyor_name":"","surveyor_phone":"","surveyor_city":""}}
 • report_no = survey report number. report_date = date of report. surveyor_name = name of surveyor. surveyor_phone = phone number. surveyor_city = city.
+
+motor_survey_report (motor survey report / spot survey report):
+{"type":"motor_survey_report","pages":[1],"data":{"report_no":"","report_date":"DD.MM.YYYY","surveyor_name":"","surveyor_phone":"","surveyor_city":""}}
+• Same fields as survey_report. report_no = reference/report number. surveyor_name = surveyor & loss assessor name.
 
 tax_report | labour_charges:
 {"type":"<detected_type>","pages":[1],"data":{}}
@@ -460,6 +516,10 @@ ncb_certificate (No Claim Bonus certificate / NCB confirmation):
 
 pre_inspection_report (pre-insurance inspection report):
 {"type":"pre_inspection_report","pages":[1],"data":{}}
+
+rc_status (VAHAN portal RC STATUS printout):
+{"type":"rc_status","pages":[1],"data":{"valid_upto":"DD.MM.YYYY"}}
+• valid_upto = registration/fitness validity date from the printout.
 
 gst_registration (GST registration certificate):
 {"type":"gst_registration","pages":[1],"data":{}}
@@ -571,6 +631,7 @@ def _build_estimate(data: dict) -> EstimateData:
         LabourItem(
             sn=i + 1,
             description=lv.get("description", ""),
+            estimated_price=float(lv.get("estimated_price", 0)),
             rr=float(lv.get("rr", 0)),
             denting=float(lv.get("denting", 0)),
             cw=float(lv.get("cw", 0)),
@@ -598,8 +659,16 @@ def _build_invoice(data: dict) -> InvoiceData:
         )
         for p in data.get("parts_assessed", [])
     ]
+    labour = [
+        InvoiceLabourItem(
+            description=l.get("description", ""),
+            assessed_price=float(l.get("assessed_price", 0)),
+        )
+        for l in data.get("labour_assessed", [])
+    ]
     return InvoiceData(
         parts_assessed=parts,
+        labour_assessed=labour,
         labour_assessed_total=float(data.get("labour_assessed_total", 0)),
         invoice_number=data.get("invoice_number", ""),
         invoice_date=data.get("invoice_date", ""),
@@ -663,6 +732,22 @@ def _build_survey_report(data: dict) -> SurveyReportData:
     )
 
 
+def _build_motor_survey_report(data: dict) -> MotorSurveyReportData:
+    return MotorSurveyReportData(
+        report_no=data.get("report_no", ""),
+        report_date=data.get("report_date", ""),
+        surveyor_name=data.get("surveyor_name", ""),
+        surveyor_phone=data.get("surveyor_phone", ""),
+        surveyor_city=data.get("surveyor_city", ""),
+    )
+
+
+def _build_rc_status(data: dict) -> RcStatusData:
+    return RcStatusData(
+        valid_upto=data.get("valid_upto", ""),
+    )
+
+
 def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData:
     """Assemble AllExtractedData by merging per-doc results grouped by type.
 
@@ -715,6 +800,14 @@ def build_all_extracted_data(grouped: dict[str, list[dict]]) -> AllExtractedData
         all_data.survey_report = _build_survey_report(
             _merge_simple(grouped["survey_report"])
         )
+
+    if "motor_survey_report" in grouped:
+        all_data.motor_survey_report = _build_motor_survey_report(
+            _merge_simple(grouped["motor_survey_report"])
+        )
+
+    if "rc_status" in grouped:
+        all_data.rc_status = _build_rc_status(_merge_simple(grouped["rc_status"]))
 
     return all_data
 

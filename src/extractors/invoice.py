@@ -21,18 +21,19 @@ The document may have multiple pages provided as separate images.
 
 This invoice represents the ACTUAL parts replaced and labour done (which may differ from the original estimate).
 
-Extract:
-1. PARTS: Every part in the invoice with its name and final billed price.
-2. LABOUR: The total labour amount billed.
+Extract every line item from the invoice. For each item, determine whether it is a PART or LABOUR.
 
 Respond with ONLY this JSON structure (no trailing commas, no comments, no extra text):
-{"parts_assessed":[{"name":"Part Name","assessed_price":1234.56}],"labour_assessed_total":12345.67,"invoice_number":"Number","invoice_date":"DD.MM.YYYY","dealer_name":"Name","dealer_address":"Address","total_amount":12345.67,"gst_amount":1234.56}
+{"items":[{"name":"Item Name","price":1234.56,"type":"part"}],"invoice_number":"Number","invoice_date":"DD.MM.YYYY","dealer_name":"Name","dealer_address":"Address","total_amount":12345.67,"gst_amount":1234.56}
 
 Rules:
-- Extract ALL parts from the invoice.
+- Extract ALL line items from the invoice.
 - Prices must be plain numbers (no commas, no currency symbols).
 - If prices include GST, extract base price (before GST).
-- IMPORTANT: Items whose description contains words like paint, painting, remove, removal, refit, refitting, replace, replacement, R/R, denting, C/W are LABOUR items, NOT parts. Do NOT include them in the parts list.
+- For each item, set "type" to "part" or "labour".
+- SECTION-BASED classification: If the invoice has sections/headings like "Labour Charges", "Labour Details", "Labour", "Service Charges", "Repair Charges", "Job Charges" etc., then ALL items listed under that section are LABOUR regardless of their individual names. Similarly items under "Parts", "Spare Parts", "Parts Replaced" sections are PARTS.
+- KEYWORD-BASED classification: Even outside a labour section, items whose description contains words like paint, painting, remove, removal, refit, refitting, replace, replacement, R/R, denting, C/W, cutting, welding are LABOUR items.
+- When both section heading and keywords conflict, the SECTION heading takes priority.
 - Output MUST be valid JSON. No trailing commas. No markdown. No explanation."""
 )
 
@@ -40,18 +41,32 @@ Rules:
 def extract_invoice(file_paths: list[str]) -> InvoiceData:
     data = vision_extract_json(file_paths, PROMPT, max_output_tokens=16384)
     parts = []
-    labour_from_parts = 0.0  # cost of items filtered out of parts (labour-like)
-    for p in data.get("parts_assessed", []):
-        if _LABOUR_KEYWORDS_RE.search(p.get("name", "")):
-            labour_from_parts += float(p.get("assessed_price", 0))
+    total_labour = 0.0
+
+    for item in data.get("items", []):
+        name = item.get("name", "")
+        price = float(item.get("price", 0))
+        item_type = item.get("type", "part").lower().strip()
+
+        # Trust AI's section-based classification first;
+        # fall back to keyword check for items tagged as "part"
+        is_labour = item_type == "labour" or _LABOUR_KEYWORDS_RE.search(name)
+
+        if is_labour:
+            total_labour += price
         else:
-            parts.append(
-                InvoicePart(
-                    name=p.get("name", ""),
-                    assessed_price=float(p.get("assessed_price", 0)),
-                )
-            )
-    total_labour = float(data.get("labour_assessed_total", 0)) + labour_from_parts
+            parts.append(InvoicePart(name=name, assessed_price=price))
+
+    # Backward-compat: also accept old format if AI returns it
+    for p in data.get("parts_assessed", []):
+        name = p.get("name", "")
+        price = float(p.get("assessed_price", 0))
+        if _LABOUR_KEYWORDS_RE.search(name):
+            total_labour += price
+        else:
+            parts.append(InvoicePart(name=name, assessed_price=price))
+    total_labour += float(data.get("labour_assessed_total", 0))
+
     return InvoiceData(
         parts_assessed=parts,
         labour_assessed_total=total_labour,

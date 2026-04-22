@@ -109,12 +109,15 @@
 			"max_slots": 5,
 			"cols": {
 				"C": "description",
+				"E": "estimated_price",
 				"F": "rr",
 				"G": "denting",
 				"H": "cw",
-				"I": "painting"
+				"I": "painting",
+				"J": "assessed"
 			},
-			"total_estimated_cell": "I154"
+			"total_estimated_cell": "I154",
+			"total_assessed_cell": "J161"
 		}
 	}
 }

@@ -751,6 +751,42 @@ body {
 	margin-top: 3px;
 }
 
+/* ── Classify Only / Drag-and-Drop ────────────────────────────────────────── */
+.classify-only-hint {
+	color: var(--text-muted);
+	font-size: 12px;
+	padding: 0 16px 4px;
+}
+
+.classify-only-drop {
+	min-height: 48px;
+	border: 2px dashed var(--border);
+	border-radius: 10px;
+	margin: 8px 12px 12px;
+	padding: 8px;
+	transition:
+		border-color 0.2s,
+		background 0.2s;
+}
+
+.classify-only-drop.drag-over,
+.doc-grid.drag-over {
+	border-color: var(--primary);
+	background: var(--primary-light);
+}
+
+.doc-tile.dragging {
+	opacity: 0.4;
+}
+
+.doc-tile[draggable="true"] {
+	cursor: grab;
+}
+
+.doc-tile[draggable="true"]:active {
+	cursor: grabbing;
+}
+
 /* ── Output List ──────────────────────────────────────────────────────────── */
 .output-list {
 	display: flex;
@@ -1350,6 +1386,115 @@ body {
 .ext-cat-glass {
 	background: #d1fae5;
 	color: #047857;
+}
+
+/* ── Inline editing ───────────────────────────────────────────────────────── */
+.ext-edit-hint {
+	color: var(--text-muted);
+	font-size: 12px;
+	padding: 0 18px 6px;
+}
+
+.ext-value[data-section] {
+	cursor: text;
+	border-radius: 4px;
+	padding: 2px 4px;
+	margin: -2px -4px;
+	transition: background 0.15s;
+}
+
+.ext-value[data-section]:hover {
+	background: var(--primary-light);
+}
+
+.ext-inline-input {
+	font: inherit;
+	font-size: 13.5px;
+	font-weight: 500;
+	color: var(--text);
+	background: var(--surface);
+	border: 2px solid var(--primary);
+	border-radius: 4px;
+	padding: 2px 6px;
+	width: 100%;
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.15);
+}
+
+td[data-editable] {
+	cursor: text;
+	transition: background 0.15s;
+}
+
+td[data-editable]:hover {
+	background: var(--primary-light);
+}
+
+td .ext-inline-input {
+	font-size: 12.5px;
+	padding: 2px 4px;
+	width: 100%;
+	min-width: 60px;
+}
+
+/* ── Category cells (click-to-set) ────────────────────────────────────────── */
+.cat-cell {
+	text-align: center !important;
+	cursor: pointer;
+	user-select: none;
+	font-size: 14px;
+	transition: background 0.15s;
+	width: 70px;
+	min-width: 70px;
+}
+
+.cat-cell:hover {
+	background: var(--primary-light);
+}
+
+.cat-cell.cat-active {
+	font-weight: 700;
+}
+
+.cat-cell[data-category="metal"].cat-active {
+	color: #1d4ed8;
+	background: #dbeafe;
+}
+
+.cat-cell[data-category="plastic"].cat-active {
+	color: #be185d;
+	background: #fce7f3;
+}
+
+.cat-cell[data-category="glass"].cat-active {
+	color: #047857;
+	background: #d1fae5;
+}
+
+.cat-drop-header {
+	text-align: center !important;
+	width: 70px;
+	min-width: 70px;
+}
+
+/* ── Save button ──────────────────────────────────────────────────────────── */
+.btn-save-extracted {
+	font-size: 13px;
+	padding: 6px 16px;
+}
+
+.btn-save-extracted.dirty {
+	animation: pulse-save 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-save {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 rgba(79, 140, 255, 0.4);
+	}
+	50% {
+		box-shadow: 0 0 0 6px rgba(79, 140, 255, 0);
+	}
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */

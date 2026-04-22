@@ -35,8 +35,11 @@ from src.types import (
     FitnessCertData,
     InsuranceData,
     InvoiceData,
+    InvoiceLabourItem,
     InvoicePart,
+    MotorSurveyReportData,
     RCData,
+    RcStatusData,
     RoutePermitData,
     SurveyReportData,
     VehicleImageData,
@@ -237,12 +240,17 @@ def _fill_dl(ws: Worksheet, data: DLData) -> None:
 
 
 def _fill_fitness_cert(
-    ws: Worksheet, data: Optional[FitnessCertData], rc: Optional[RCData]
+    ws: Worksheet,
+    data: Optional[FitnessCertData],
+    rc: Optional[RCData],
+    rc_status: Optional[RcStatusData] = None,
 ) -> None:
     mapping = CELLMAP["sheet1"].get("fitness_cert", {})
     valid_upto = ""
     if data and data.valid_upto:
         valid_upto = data.valid_upto
+    elif rc_status and rc_status.valid_upto:
+        valid_upto = rc_status.valid_upto
     elif rc and rc.date_of_reg_expiry:
         # Fallback: use RC registration expiry if fitness cert is missing
         valid_upto = rc.date_of_reg_expiry
@@ -391,6 +399,7 @@ def _fill_survey(
     ws: Worksheet,
     vehicle_image: Optional[VehicleImageData],
     survey_report: Optional[SurveyReportData],
+    motor_survey_report: Optional[MotorSurveyReportData] = None,
 ) -> None:
     """Fill survey details: dates from vehicle image, spot survey from survey report."""
     mapping = CELLMAP["sheet1"].get("survey", {})
@@ -400,18 +409,19 @@ def _fill_survey(
     if vehicle_image:
         date_of_survey = vehicle_image.date_of_survey or ""
 
-    # Build spot survey text from survey report data
+    # Build spot survey text from motor_survey_report (preferred) or survey_report
     spot_text = "Spot Survey not received."
-    if survey_report and survey_report.report_no:
-        parts = [survey_report.report_no]
-        if survey_report.report_date:
-            parts.append(f"dt. {survey_report.report_date}")
-        if survey_report.surveyor_name:
-            parts.append(f"of {survey_report.surveyor_name}")
-        if survey_report.surveyor_phone:
-            parts.append(f"ph. {survey_report.surveyor_phone}")
-        if survey_report.surveyor_city:
-            parts.append(survey_report.surveyor_city)
+    sr = motor_survey_report or survey_report
+    if sr and sr.report_no:
+        parts = [sr.report_no]
+        if sr.report_date:
+            parts.append(f"dt. {sr.report_date}")
+        if sr.surveyor_name:
+            parts.append(f"of {sr.surveyor_name}")
+        if sr.surveyor_phone:
+            parts.append(f"ph. {sr.surveyor_phone}")
+        if sr.surveyor_city:
+            parts.append(sr.surveyor_city)
         spot_text = "---".join(parts)
 
     person_present = "Repairer was present"
@@ -636,10 +646,40 @@ def _fill_labour_table(
     ws: Worksheet,
     estimate: EstimateData,
     row_offset: int = 0,
+    invoice: Optional[InvoiceData] = None,
 ) -> None:
     cfg = CELLMAP["sheet1"]["labour_table"]
     start_row: int = cfg["start_row"] + row_offset
     labour = estimate.labour or []
+
+    # Match invoice labour items to estimate labour by description (simple fuzzy)
+    inv_labour: list[InvoiceLabourItem] = (
+        list(invoice.labour_assessed) if invoice and invoice.labour_assessed else []
+    )
+    labour_match: dict[int, int] = {}
+    if inv_labour and labour:
+        used: set[int] = set()
+        for i, est_item in enumerate(labour):
+            est_desc = est_item.description.lower().strip()
+            best_j = -1
+            best_score = 0.0
+            for j, inv_item in enumerate(inv_labour):
+                if j in used:
+                    continue
+                inv_desc = inv_item.description.lower().strip()
+                # Simple word overlap matching
+                est_words = set(est_desc.split())
+                inv_words = set(inv_desc.split())
+                if not est_words or not inv_words:
+                    continue
+                overlap = len(est_words & inv_words)
+                score = overlap / max(len(est_words), len(inv_words))
+                if score > best_score and score >= 0.3:
+                    best_score = score
+                    best_j = j
+            if best_j >= 0:
+                labour_match[i] = best_j
+                used.add(best_j)
 
     for i, item in enumerate(labour):
         row = start_row + i
@@ -652,6 +692,10 @@ def _fill_labour_table(
         c_cell.border = copy(b_cell.border)
         c_cell.alignment = copy(b_cell.alignment)
 
+        # Write estimated price
+        if _to_num(item.estimated_price):
+            _write_cell(ws, f"E{row}", _to_num(item.estimated_price))
+
         # Only write non-zero labour values (leave cell empty for 0)
         if _to_num(item.rr):
             _write_cell(ws, f"F{row}", _to_num(item.rr))
@@ -662,6 +706,12 @@ def _fill_labour_table(
         if _to_num(item.painting):
             _write_cell(ws, f"I{row}", _to_num(item.painting))
 
+        # Write matched assessed price
+        if i in labour_match:
+            assessed = _to_num(inv_labour[labour_match[i]].assessed_price)
+            if assessed:
+                _write_cell(ws, f"J{row}", assessed)
+
     if estimate.total_labour_estimated:
         est_cell = cfg.get("total_estimated_cell")
         if est_cell:
@@ -669,6 +719,16 @@ def _fill_labour_table(
                 ws,
                 _offset_cell(est_cell, row_offset),
                 _to_num(estimate.total_labour_estimated),
+            )
+
+    # Write invoice labour assessed total
+    if invoice and invoice.labour_assessed_total:
+        assessed_cell = cfg.get("total_assessed_cell")
+        if assessed_cell:
+            _write_cell(
+                ws,
+                _offset_cell(assessed_cell, row_offset),
+                _to_num(invoice.labour_assessed_total),
             )
 
 
@@ -692,8 +752,8 @@ def fill_excel(
     if all_data.dl:
         _fill_dl(ws1, all_data.dl)
 
-    if all_data.fitness_cert or all_data.rc:
-        _fill_fitness_cert(ws1, all_data.fitness_cert, all_data.rc)
+    if all_data.fitness_cert or all_data.rc or all_data.rc_status:
+        _fill_fitness_cert(ws1, all_data.fitness_cert, all_data.rc, all_data.rc_status)
 
     if all_data.route_permit:
         _fill_route_permit(ws1, all_data.route_permit)
@@ -705,14 +765,19 @@ def fill_excel(
     _fill_accident(ws1, all_data.claim_form, all_data.accident_doc)
 
     # Fill survey details: date from vehicle image, spot survey from survey report
-    _fill_survey(ws1, all_data.vehicle_image, all_data.survey_report)
+    _fill_survey(
+        ws1,
+        all_data.vehicle_image,
+        all_data.survey_report,
+        all_data.motor_survey_report,
+    )
 
     # Fill estimate AFTER insurance/rc/dl — parts insertion shifts rows below,
     # but all insurance/rc/dl cells are above the insertion point.
     row_offset = 0
     if all_data.estimate:
         row_offset = _fill_parts_table(ws1, all_data.estimate, all_data.invoice)
-        _fill_labour_table(ws1, all_data.estimate, row_offset)
+        _fill_labour_table(ws1, all_data.estimate, row_offset, all_data.invoice)
 
     # Fill report sections (observations, main damages, notes, salvage)
     # These are below the parts table so they need the row_offset.

@@ -81,6 +81,7 @@ from src.database import (
     get_document_by_id,
     get_documents_by_case,
     reset_stuck_processing,
+    set_document_exclusion,
 )
 
 from src.paths import APP_DIR, BUNDLE_DIR
@@ -455,6 +456,24 @@ def api_delete_document(case_id: int, doc_id: int):
     return {"ok": True}
 
 
+@app.patch("/api/cases/{case_id}/documents/{doc_id}/exclude")
+def api_toggle_document_exclusion(case_id: int, doc_id: int, body: dict):
+    """Toggle whether a document is excluded from data extraction / Excel filling."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+    if case["status"] in ("processing", "queued"):
+        raise HTTPException(400, "Cannot modify documents while case is processing")
+
+    doc = get_document_by_id(doc_id)
+    if not doc or doc["case_id"] != case_id:
+        raise HTTPException(404, "Document not found")
+
+    exclude = bool(body.get("exclude", False))
+    set_document_exclusion(doc_id, exclude)
+    return {"ok": True, "exclude": exclude}
+
+
 @app.get("/api/cases/{case_id}/extracted")
 def api_get_extracted_data(case_id: int):
     """Return the extracted JSON data for a completed case."""
@@ -474,6 +493,42 @@ def api_get_extracted_data(case_id: int):
 
     data = _json.loads(json_path.read_text(encoding="utf-8"))
     return data
+
+
+@app.put("/api/cases/{case_id}/extracted")
+def api_update_extracted_data(case_id: int, body: dict):
+    """Update the extracted JSON data after user edits, and re-generate Excel."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(404, "Case not found")
+
+    case_folder = Path(case["folder_path"])
+    case_name = case["name"]
+    json_path = case_folder / "output" / f"{case_name}_extracted.json"
+    if not json_path.exists():
+        raise HTTPException(404, "No extracted data to update")
+
+    import json as _json
+
+    json_path.write_text(
+        _json.dumps(body, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+    # Re-generate Excel from updated data
+    try:
+        import re as _re
+        from src.filler import fill_excel
+        from src.types import AllExtractedData
+
+        all_data = AllExtractedData.from_dict(body)
+        output_path = str(case_folder / "output" / f"{case_name}.xlsx")
+        ref_match = _re.match(r"^(\d+)", case_name)
+        fill_excel(all_data, output_path, ref_match.group(1) if ref_match else None)
+    except Exception as e:
+        # Save succeeded but Excel regeneration failed — still return OK
+        return {"ok": True, "warning": f"Data saved but Excel regeneration failed: {e}"}
+
+    return {"ok": True}
 
 
 @app.get("/api/cases/{case_id}/documents/download/zip")

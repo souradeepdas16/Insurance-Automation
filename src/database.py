@@ -62,6 +62,8 @@ def init_db() -> None:
                 classified_name TEXT,
                 doc_type        TEXT,
                 file_path       TEXT    NOT NULL,
+                exclude_from_extraction INTEGER NOT NULL DEFAULT 0,
+                is_split        INTEGER NOT NULL DEFAULT 0,
                 created_at      TEXT    NOT NULL,
                 FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
             );
@@ -76,6 +78,19 @@ def init_db() -> None:
             "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
             ("cases_folder", str(APP_DIR / "cases")),
         )
+
+        # Migrate: add exclude_from_extraction column if missing (older DBs)
+        cols = [
+            row[1] for row in conn.execute("PRAGMA table_info(documents)").fetchall()
+        ]
+        if "exclude_from_extraction" not in cols:
+            conn.execute(
+                "ALTER TABLE documents ADD COLUMN exclude_from_extraction INTEGER NOT NULL DEFAULT 0"
+            )
+        if "is_split" not in cols:
+            conn.execute(
+                "ALTER TABLE documents ADD COLUMN is_split INTEGER NOT NULL DEFAULT 0"
+            )
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
@@ -225,10 +240,34 @@ def update_document_classification(
         )
 
 
+def add_split_document(
+    case_id: int,
+    original_name: str,
+    file_path: str,
+    doc_type: str,
+    classified_name: str,
+) -> int:
+    """Create an additional document record for a split-classified source file.
+    These records are marked with is_split=1 so they can be cleaned up on re-run."""
+    now = datetime.now(timezone.utc).isoformat()
+    with get_db() as conn:
+        cur = conn.execute(
+            "INSERT INTO documents "
+            "(case_id, original_name, file_path, doc_type, classified_name, is_split, created_at) "
+            "VALUES (?, ?, ?, ?, ?, 1, ?)",
+            (case_id, original_name, file_path, doc_type, classified_name, now),
+        )
+        return cur.lastrowid
+
+
 def reset_document_classifications(case_id: int) -> None:
     """Clear doc_type and classified_name for all documents of a case,
-    so a re-run starts from a clean state."""
+    and remove any split document records, so a re-run starts from a clean state."""
     with get_db() as conn:
+        conn.execute(
+            "DELETE FROM documents WHERE case_id = ? AND is_split = 1",
+            (case_id,),
+        )
         conn.execute(
             "UPDATE documents SET doc_type = NULL, classified_name = NULL WHERE case_id = ?",
             (case_id,),
@@ -240,3 +279,12 @@ def delete_document(doc_id: int) -> bool:
     with get_db() as conn:
         cur = conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
         return cur.rowcount > 0
+
+
+def set_document_exclusion(doc_id: int, exclude: bool) -> None:
+    """Mark a document as excluded from (or included in) data extraction."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE documents SET exclude_from_extraction = ? WHERE id = ?",
+            (1 if exclude else 0, doc_id),
+        )

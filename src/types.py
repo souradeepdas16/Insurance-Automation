@@ -66,6 +66,7 @@ class EstimatePart:
 class LabourItem:
     sn: int = 0
     description: str = ""
+    estimated_price: float = 0.0
     rr: float = 0.0
     denting: float = 0.0
     cw: float = 0.0
@@ -91,8 +92,15 @@ class InvoicePart:
 
 
 @dataclass
+class InvoiceLabourItem:
+    description: str = ""
+    assessed_price: float = 0.0
+
+
+@dataclass
 class InvoiceData:
     parts_assessed: list[InvoicePart] = field(default_factory=list)
+    labour_assessed: list[InvoiceLabourItem] = field(default_factory=list)
     labour_assessed_total: float = 0.0
     invoice_number: str = ""
     invoice_date: str = ""
@@ -145,6 +153,20 @@ class SurveyReportData:
 
 
 @dataclass
+class MotorSurveyReportData:
+    report_no: str = ""
+    report_date: str = ""
+    surveyor_name: str = ""
+    surveyor_phone: str = ""
+    surveyor_city: str = ""
+
+
+@dataclass
+class RcStatusData:
+    valid_upto: str = ""
+
+
+@dataclass
 class VehicleImageData:
     date_of_survey: str = ""
 
@@ -162,6 +184,69 @@ class AllExtractedData:
     vehicle_image: Optional[VehicleImageData] = None
     accident_doc: Optional[AccidentDocData] = None
     survey_report: Optional[SurveyReportData] = None
+    motor_survey_report: Optional[MotorSurveyReportData] = None
+    rc_status: Optional[RcStatusData] = None
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "AllExtractedData":
+        def _build(klass, val):
+            if val is None:
+                return None
+            return klass(
+                **{k: v for k, v in val.items() if k in klass.__dataclass_fields__}
+            )
+
+        est_dict = d.get("estimate")
+        estimate = None
+        if est_dict:
+            parts = [EstimatePart(**p) for p in est_dict.pop("parts", [])]
+            labour = [LabourItem(**l) for l in est_dict.pop("labour", [])]
+            estimate = EstimateData(
+                parts=parts,
+                labour=labour,
+                **{
+                    k: v
+                    for k, v in est_dict.items()
+                    if k in EstimateData.__dataclass_fields__
+                },
+            )
+
+        inv_dict = d.get("invoice")
+        invoice = None
+        if inv_dict:
+            parts_assessed = [
+                InvoicePart(**p) for p in inv_dict.pop("parts_assessed", [])
+            ]
+            labour_assessed = [
+                InvoiceLabourItem(**l) for l in inv_dict.pop("labour_assessed", [])
+            ]
+            invoice = InvoiceData(
+                parts_assessed=parts_assessed,
+                labour_assessed=labour_assessed,
+                **{
+                    k: v
+                    for k, v in inv_dict.items()
+                    if k in InvoiceData.__dataclass_fields__
+                },
+            )
+
+        return cls(
+            insurance=_build(InsuranceData, d.get("insurance")),
+            rc=_build(RCData, d.get("rc")),
+            dl=_build(DLData, d.get("dl")),
+            estimate=estimate,
+            invoice=invoice,
+            route_permit=_build(RoutePermitData, d.get("route_permit")),
+            fitness_cert=_build(FitnessCertData, d.get("fitness_cert")),
+            claim_form=_build(ClaimFormData, d.get("claim_form")),
+            vehicle_image=_build(VehicleImageData, d.get("vehicle_image")),
+            accident_doc=_build(AccidentDocData, d.get("accident_doc")),
+            survey_report=_build(SurveyReportData, d.get("survey_report")),
+            motor_survey_report=_build(
+                MotorSurveyReportData, d.get("motor_survey_report")
+            ),
+            rc_status=_build(RcStatusData, d.get("rc_status")),
+        )
 
 
 DocumentType = Literal[
@@ -174,6 +259,7 @@ DocumentType = Literal[
     "fitness_certificate",
     "police_report",
     "survey_report",
+    "motor_survey_report",
     "claim_form",
     "tax_report",
     "labour_charges",
@@ -186,6 +272,7 @@ DocumentType = Literal[
     "cancelled_cheque",
     "ncb_certificate",
     "pre_inspection_report",
+    "rc_status",
     "gst_registration",
     "affidavit",
     "self_statement",

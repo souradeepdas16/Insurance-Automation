@@ -76,7 +76,10 @@ MAX_PAGES_PER_CALL: int = int(os.environ.get("AI_MAX_PAGES_PER_CALL", "10"))
 
 def _resize_image_to_base64(file_path: str, max_dim: int = MAX_DIM) -> str:
     """Open an image, resize if needed, return base64 JPEG string."""
+    from PIL import ImageOps
+
     with Image.open(file_path) as img:
+        img = ImageOps.exif_transpose(img)  # fix phone camera rotation
         img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")

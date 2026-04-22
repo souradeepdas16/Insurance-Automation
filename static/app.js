@@ -203,10 +203,14 @@ function renderCase(c) {
 	const uploadCard = $("#upload-card");
 	uploadCard.style.display = isActive ? "none" : "";
 
+	// ── Split docs into included and excluded ──
+	const allDocs = c.documents || [];
+	const docs = allDocs.filter((d) => !d.exclude_from_extraction);
+	const excludedDocs = allDocs.filter((d) => d.exclude_from_extraction);
+
 	// ── Uploaded Documents ──
 	const uploadedList = $("#doc-uploaded-list");
 	const uploadedCount = $("#uploaded-count");
-	const docs = c.documents || [];
 	uploadedCount.textContent = docs.length;
 
 	// Set uploaded ZIP download link
@@ -228,7 +232,7 @@ function renderCase(c) {
 				const iconClass = ["jpg", "jpeg", "png"].includes(ext) ? "img" : "pdf";
 				const showDelete = !isActive;
 				return `
-				<div class="doc-tile" data-doc-id="${d.id}">
+				<div class="doc-tile" data-doc-id="${d.id}" draggable="${!isActive}" title="Drag to 'Exclude from Excel' to skip data filling">
 					<div class="doc-tile-icon ${iconClass}" data-url="/api/cases/${c.id}/documents/${d.id}" style="cursor:pointer">${getDocEmoji(ext)}</div>
 					<div class="doc-tile-info doc-tile-clickable" data-url="/api/cases/${c.id}/documents/${d.id}" style="cursor:pointer">
 						<div class="doc-tile-name" title="${esc(d.original_name)}">${esc(d.original_name)}</div>
@@ -244,24 +248,50 @@ function renderCase(c) {
 				</div>`;
 			})
 			.join("");
-		uploadedList.querySelectorAll(".doc-tile-clickable, .doc-tile-icon[data-url]").forEach((el) => {
-			el.addEventListener("click", () => window.open(el.dataset.url, "_blank"));
-		});
-		uploadedList.querySelectorAll(".btn-delete-doc").forEach((btn) => {
-			btn.addEventListener("click", (e) => {
-				e.stopPropagation();
-				deleteDocument(c.id, parseInt(btn.dataset.docId));
-			});
-		});
+		setupDocTileEvents(uploadedList, c.id, isActive);
 	} else {
 		uploadedList.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 0">No documents uploaded yet</p>';
 	}
+
+	// ── Classify Only (Excluded from Excel) ──
+	const classifyOnlyCard = $("#docs-classify-only-card");
+	const classifyOnlyList = $("#doc-classify-only-list");
+	const classifyOnlyCount = $("#classify-only-count");
+	classifyOnlyCount.textContent = excludedDocs.length;
+	classifyOnlyCard.style.display = isActive ? "none" : "";
+
+	if (excludedDocs.length > 0) {
+		classifyOnlyList.innerHTML = excludedDocs
+			.map((d) => {
+				const ext = extOf(d.original_name);
+				const iconClass = ["jpg", "jpeg", "png"].includes(ext) ? "img" : "pdf";
+				return `
+				<div class="doc-tile" data-doc-id="${d.id}" draggable="true" title="Drag back to Uploaded to include in Excel">
+					<div class="doc-tile-icon ${iconClass}" data-url="/api/cases/${c.id}/documents/${d.id}" style="cursor:pointer">${getDocEmoji(ext)}</div>
+					<div class="doc-tile-info doc-tile-clickable" data-url="/api/cases/${c.id}/documents/${d.id}" style="cursor:pointer">
+						<div class="doc-tile-name" title="${esc(d.original_name)}">${esc(d.original_name)}</div>
+						<div class="doc-tile-type">${ext.toUpperCase()} &mdash; excluded from Excel</div>
+					</div>
+					<button class="btn-delete-doc" data-doc-id="${d.id}" title="Delete document">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+					</button>
+				</div>`;
+			})
+			.join("");
+		setupDocTileEvents(classifyOnlyList, c.id, false);
+	} else {
+		classifyOnlyList.innerHTML =
+			'<p style="color:var(--text-muted);font-size:13px;padding:8px 0">Drag documents here — they won\'t be used for Excel filling</p>';
+	}
+
+	// Set up drag-and-drop between uploaded and classify-only zones
+	setupExclusionDragDrop(c.id, isActive);
 
 	// ── Classified Documents ──
 	const classifiedCard = $("#docs-classified-card");
 	const classifiedList = $("#doc-classified-list");
 	const classifiedCount = $("#classified-count");
-	const classified = docs.filter((d) => d.classified_name);
+	const classified = allDocs.filter((d) => d.classified_name);
 	// Deduplicate by classified_name (multiple source docs may merge into one classified file)
 	const seenClassified = new Set();
 	const uniqueClassified = classified.filter((d) => {
@@ -1016,6 +1046,23 @@ async function loadExtractedData(caseId) {
 		html += renderSection(meta.icon, meta.title, section, key);
 	}
 	body.innerHTML = html;
+
+	// Store current extracted data for editing
+	body._extractedData = data;
+	body._caseId = caseId;
+
+	// Attach double-click-to-edit on all value cells
+	body.querySelectorAll(".ext-value[data-section][data-field]").forEach(setupFieldEdit);
+
+	// Attach double-click-to-edit on all table cells
+	body.querySelectorAll(".ext-table td[data-editable]").forEach(setupCellEdit);
+
+	// Setup category drag-and-drop for estimate parts
+	setupCategoryDrag(body);
+
+	// Show save button if data exists
+	const saveBtn = $("#btn-save-extracted");
+	if (saveBtn) saveBtn.style.display = Object.keys(data).length > 0 ? "" : "none";
 }
 
 function renderSection(icon, title, data, sectionKey) {
@@ -1031,16 +1078,27 @@ function renderSection(icon, title, data, sectionKey) {
 			const isEmpty = v === "" || v === null || v === undefined || v === 0;
 			const displayVal = isEmpty ? "—" : typeof v === "number" ? v.toLocaleString("en-IN") : v;
 			const emptyClass = isEmpty ? " ext-value-empty" : "";
-			content += `<div class="ext-field"><span class="ext-label">${esc(label)}</span><span class="ext-value${emptyClass}">${esc(String(displayVal))}</span></div>`;
+			content += `<div class="ext-field"><span class="ext-label">${esc(label)}</span><span class="ext-value${emptyClass}" data-section="${esc(sectionKey)}" data-field="${esc(k)}" title="Double-click to edit">${esc(String(displayVal))}</span></div>`;
 		}
 		content += "</div>";
 	}
 
 	// Render parts table (for estimate)
 	if (data.parts && data.parts.length > 0) {
-		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>S.N.</th><th>Part Description</th><th>Estimated</th><th>Type</th></tr></thead><tbody>`;
-		for (const p of data.parts) {
-			content += `<tr><td>${p.sn || ""}</td><td>${esc(p.name)}</td><td class="num">${Number(p.estimated_price).toLocaleString("en-IN")}</td><td><span class="ext-cat ext-cat-${esc(p.category || "")}">${esc(p.category || "")}</span></td></tr>`;
+		const categories = ["metal", "plastic", "glass"];
+		const catHeaders = categories
+			.map((c) => `<th class="cat-drop-header" data-category="${c}"><span class="ext-cat ext-cat-${c}">${c}</span></th>`)
+			.join("");
+		content += `<div class="ext-table-wrap"><table class="ext-table ext-parts-table"><thead><tr><th>S.N.</th><th>Part Description</th><th>Estimated</th>${catHeaders}</tr></thead><tbody>`;
+		for (let i = 0; i < data.parts.length; i++) {
+			const p = data.parts[i];
+			const catCells = categories
+				.map((c) => {
+					const isActive = (p.category || "").toLowerCase() === c;
+					return `<td class="cat-cell ${isActive ? "cat-active" : ""}" data-section="estimate" data-part-idx="${i}" data-category="${c}" title="Click to set category">${isActive ? "●" : ""}</td>`;
+				})
+				.join("");
+			content += `<tr><td>${p.sn || ""}</td><td data-editable data-section="estimate" data-list="parts" data-idx="${i}" data-prop="name">${esc(p.name)}</td><td class="num" data-editable data-section="estimate" data-list="parts" data-idx="${i}" data-prop="estimated_price">${Number(p.estimated_price).toLocaleString("en-IN")}</td>${catCells}</tr>`;
 		}
 		content += "</tbody></table></div>";
 	}
@@ -1048,8 +1106,9 @@ function renderSection(icon, title, data, sectionKey) {
 	// Render labour table (for estimate)
 	if (data.labour && data.labour.length > 0) {
 		content += `<div class="ext-table-wrap"><h4 class="ext-subtitle">Labour Detail</h4><table class="ext-table"><thead><tr><th>S.N.</th><th>Description</th><th>R/R</th><th>Denting</th><th>C/W</th><th>Painting</th></tr></thead><tbody>`;
-		for (const l of data.labour) {
-			content += `<tr><td>${l.sn || ""}</td><td>${esc(l.description)}</td><td class="num">${Number(l.rr).toLocaleString("en-IN")}</td><td class="num">${Number(l.denting).toLocaleString("en-IN")}</td><td class="num">${Number(l.cw).toLocaleString("en-IN")}</td><td class="num">${Number(l.painting).toLocaleString("en-IN")}</td></tr>`;
+		for (let i = 0; i < data.labour.length; i++) {
+			const l = data.labour[i];
+			content += `<tr><td>${l.sn || ""}</td><td data-editable data-section="estimate" data-list="labour" data-idx="${i}" data-prop="description">${esc(l.description)}</td><td class="num" data-editable data-section="estimate" data-list="labour" data-idx="${i}" data-prop="rr">${Number(l.rr).toLocaleString("en-IN")}</td><td class="num" data-editable data-section="estimate" data-list="labour" data-idx="${i}" data-prop="denting">${Number(l.denting).toLocaleString("en-IN")}</td><td class="num" data-editable data-section="estimate" data-list="labour" data-idx="${i}" data-prop="cw">${Number(l.cw).toLocaleString("en-IN")}</td><td class="num" data-editable data-section="estimate" data-list="labour" data-idx="${i}" data-prop="painting">${Number(l.painting).toLocaleString("en-IN")}</td></tr>`;
 		}
 		content += "</tbody></table></div>";
 	}
@@ -1058,7 +1117,7 @@ function renderSection(icon, title, data, sectionKey) {
 	if (data.parts_assessed && data.parts_assessed.length > 0) {
 		content += `<div class="ext-table-wrap"><table class="ext-table"><thead><tr><th>S.N.</th><th>Part Description</th><th>Assessed</th></tr></thead><tbody>`;
 		data.parts_assessed.forEach((p, i) => {
-			content += `<tr><td>${i + 1}</td><td>${esc(p.name)}</td><td class="num">${Number(p.assessed_price).toLocaleString("en-IN")}</td></tr>`;
+			content += `<tr><td>${i + 1}</td><td data-editable data-section="invoice" data-list="parts_assessed" data-idx="${i}" data-prop="name">${esc(p.name)}</td><td class="num" data-editable data-section="invoice" data-list="parts_assessed" data-idx="${i}" data-prop="assessed_price">${Number(p.assessed_price).toLocaleString("en-IN")}</td></tr>`;
 		});
 		content += "</tbody></table></div>";
 	}
@@ -1067,6 +1126,171 @@ function renderSection(icon, title, data, sectionKey) {
 		<div class="ext-section-header"><span class="ext-section-icon">${icon}</span><h3>${esc(title)}</h3></div>
 		${content}
 	</div>`;
+}
+
+// ── Inline Editing (double-click) ────────────────────────────────────────────
+
+function _getExtractedData() {
+	return $("#extracted-body")._extractedData;
+}
+
+function _markDirty() {
+	const btn = $("#btn-save-extracted");
+	if (btn) {
+		btn.style.display = "";
+		btn.classList.add("dirty");
+		btn.textContent = "Save Changes";
+	}
+}
+
+function setupFieldEdit(el) {
+	el.addEventListener("dblclick", () => {
+		if (el.querySelector("input")) return; // already editing
+		const section = el.dataset.section;
+		const field = el.dataset.field;
+		const data = _getExtractedData();
+		const currentVal = (data[section] && data[section][field]) ?? "";
+		const rawVal = currentVal === 0 ? "0" : String(currentVal);
+		const displayWasDash = el.textContent.trim() === "—";
+
+		const input = document.createElement("input");
+		input.type = "text";
+		input.className = "ext-inline-input";
+		input.value = displayWasDash ? "" : rawVal;
+		el.textContent = "";
+		el.appendChild(input);
+		input.focus();
+		input.select();
+
+		const commit = () => {
+			const newVal = input.value.trim();
+			if (!data[section]) data[section] = {};
+			data[section][field] = newVal;
+			el.textContent = newVal || "—";
+			el.classList.toggle("ext-value-empty", !newVal);
+			_markDirty();
+		};
+
+		input.addEventListener("blur", commit);
+		input.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				input.blur();
+			}
+			if (e.key === "Escape") {
+				el.textContent = displayWasDash ? "—" : rawVal;
+			}
+		});
+	});
+}
+
+function setupCellEdit(td) {
+	td.addEventListener("dblclick", () => {
+		if (td.querySelector("input")) return;
+		const section = td.dataset.section;
+		const list = td.dataset.list;
+		const idx = parseInt(td.dataset.idx);
+		const prop = td.dataset.prop;
+		const data = _getExtractedData();
+		const item = data[section][list][idx];
+		const currentVal = item[prop] ?? "";
+		const rawVal = String(currentVal);
+		const isNum = td.classList.contains("num");
+
+		const input = document.createElement("input");
+		input.type = isNum ? "number" : "text";
+		input.className = "ext-inline-input";
+		input.value = rawVal;
+		if (isNum) input.step = "0.01";
+		td.textContent = "";
+		td.appendChild(input);
+		input.focus();
+		input.select();
+
+		const commit = () => {
+			let newVal = input.value.trim();
+			if (isNum) {
+				newVal = parseFloat(newVal) || 0;
+				item[prop] = newVal;
+				td.textContent = Number(newVal).toLocaleString("en-IN");
+			} else {
+				item[prop] = newVal;
+				td.textContent = newVal;
+			}
+			_markDirty();
+		};
+
+		input.addEventListener("blur", commit);
+		input.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				input.blur();
+			}
+			if (e.key === "Escape") {
+				td.textContent = isNum ? Number(currentVal).toLocaleString("en-IN") : rawVal;
+			}
+		});
+	});
+}
+
+// ── Category click-to-set for estimate parts ─────────────────────────────────
+
+function setupCategoryDrag(body) {
+	body.querySelectorAll(".cat-cell").forEach((cell) => {
+		cell.addEventListener("click", () => {
+			const data = _getExtractedData();
+			const idx = parseInt(cell.dataset.partIdx);
+			const newCat = cell.dataset.category;
+			const part = data.estimate.parts[idx];
+			// Toggle: click same category again to clear it
+			const oldCat = (part.category || "").toLowerCase();
+			part.category = oldCat === newCat ? "" : newCat;
+
+			// Update all cells in same row
+			const row = cell.closest("tr");
+			row.querySelectorAll(".cat-cell").forEach((c) => {
+				const isCat = c.dataset.category === part.category;
+				c.classList.toggle("cat-active", isCat);
+				c.textContent = isCat ? "●" : "";
+			});
+			_markDirty();
+		});
+	});
+}
+
+// ── Save extracted data ──────────────────────────────────────────────────────
+
+async function saveExtractedData() {
+	const body = $("#extracted-body");
+	const data = body._extractedData;
+	const caseId = body._caseId;
+	if (!caseId || !data) return;
+
+	const btn = $("#btn-save-extracted");
+	btn.disabled = true;
+	btn.textContent = "Saving...";
+	try {
+		const result = await api(`/api/cases/${caseId}/extracted`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(data),
+		});
+		btn.classList.remove("dirty");
+		btn.textContent = "Saved ✓";
+		if (result.warning) {
+			toast(result.warning, "error");
+		} else {
+			toast("Changes saved & Excel regenerated", "success");
+		}
+		setTimeout(() => {
+			btn.textContent = "Save Changes";
+			btn.disabled = false;
+		}, 2000);
+	} catch (err) {
+		toast(err.message, "error");
+		btn.textContent = "Save Changes";
+		btn.disabled = false;
+	}
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -1092,6 +1316,73 @@ function formatDate(iso) {
 	if (!iso) return "";
 	const d = new Date(iso);
 	return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+// ── Shared doc tile event setup ──────────────────────────────────────────────
+function setupDocTileEvents(container, caseId, isActive) {
+	container.querySelectorAll(".doc-tile-clickable, .doc-tile-icon[data-url]").forEach((el) => {
+		el.addEventListener("click", () => window.open(el.dataset.url, "_blank"));
+	});
+	container.querySelectorAll(".btn-delete-doc").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			deleteDocument(caseId, parseInt(btn.dataset.docId));
+		});
+	});
+	// Drag start for doc tiles
+	container.querySelectorAll(".doc-tile[draggable='true']").forEach((tile) => {
+		tile.addEventListener("dragstart", (e) => {
+			e.dataTransfer.setData("text/plain", tile.dataset.docId);
+			e.dataTransfer.effectAllowed = "move";
+			tile.classList.add("dragging");
+		});
+		tile.addEventListener("dragend", () => {
+			tile.classList.remove("dragging");
+		});
+	});
+}
+
+// ── Drag-and-drop between Uploaded and Classify Only zones ───────────────────
+function setupExclusionDragDrop(caseId, isActive) {
+	if (isActive) return;
+
+	const uploadedList = $("#doc-uploaded-list");
+	const classifyOnlyList = $("#doc-classify-only-list");
+
+	// Drop on classify-only zone → exclude document
+	setupDropZone(classifyOnlyList, caseId, true);
+	// Drop on uploaded zone → include document
+	setupDropZone(uploadedList, caseId, false);
+}
+
+function setupDropZone(zone, caseId, exclude) {
+	zone.addEventListener("dragover", (e) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = "move";
+		zone.classList.add("drag-over");
+	});
+	zone.addEventListener("dragleave", (e) => {
+		if (!zone.contains(e.relatedTarget)) {
+			zone.classList.remove("drag-over");
+		}
+	});
+	zone.addEventListener("drop", async (e) => {
+		e.preventDefault();
+		zone.classList.remove("drag-over");
+		const docId = e.dataTransfer.getData("text/plain");
+		if (!docId) return;
+		try {
+			await api(`/api/cases/${caseId}/documents/${docId}/exclude`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ exclude }),
+			});
+			toast(exclude ? "Document excluded from Excel" : "Document included in Excel", "success");
+			openCase(caseId);
+		} catch (err) {
+			toast(err.message, "error");
+		}
+	});
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────

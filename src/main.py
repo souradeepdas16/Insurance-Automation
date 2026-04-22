@@ -41,6 +41,63 @@ def _sanitize_ai_name(raw: str) -> str:
     return re.sub(r'[<>:"/\\|?*]', "", raw.strip().strip('"').strip("'"))[:60].strip()
 
 
+def _normalize_pdf_page(page, writer, DPI=150):
+    """Add a PDF page to the writer, normalizing oversized/landscape pages to A4 portrait."""
+    import io
+
+    import fitz  # PyMuPDF
+    from PIL import Image
+
+    A4_W_PT, A4_H_PT = 595.28, 841.89  # A4 in points
+    A4_W_PX = int(8.27 * DPI)
+    A4_H_PX = int(11.69 * DPI)
+
+    mb = page.mediabox
+    pw, ph = float(mb.width), float(mb.height)
+
+    # If page is roughly standard size and portrait, keep as-is
+    if ph >= pw and pw <= 700 and ph <= 1000:
+        writer.add_page(page)
+        return
+
+    # Page is landscape or oversized — render to image and place on A4 canvas
+    # We need to get the page's source PDF to render it, so we write it to a
+    # temp buffer, render with PyMuPDF, and create a new A4 page.
+    from pypdf import PdfWriter as _PW, PdfReader as _PR
+
+    tmp_writer = _PW()
+    tmp_writer.add_page(page)
+    tmp_buf = io.BytesIO()
+    tmp_writer.write(tmp_buf)
+    tmp_writer.close()
+    tmp_buf.seek(0)
+
+    with fitz.open(stream=tmp_buf.read(), filetype="pdf") as tmp_doc:
+        fitz_page = tmp_doc[0]
+        pix = fitz_page.get_pixmap(dpi=DPI)
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        del pix
+
+    # Scale to fit A4 portrait
+    iw, ih = img.size
+    scale = min(A4_W_PX / iw, A4_H_PX / ih)
+    new_w = int(iw * scale)
+    new_h = int(ih * scale)
+    img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+    canvas = Image.new("RGB", (A4_W_PX, A4_H_PX), (255, 255, 255))
+    x = (A4_W_PX - new_w) // 2
+    y = (A4_H_PX - new_h) // 2
+    canvas.paste(img, (x, y))
+
+    pdf_buf = io.BytesIO()
+    canvas.save(pdf_buf, format="PDF", resolution=DPI)
+    pdf_buf.seek(0)
+    norm_reader = _PR(pdf_buf)
+    for p in norm_reader.pages:
+        writer.add_page(p)
+
+
 def _merge_files_to_pdf(
     file_paths: list[str],
     output_path: str,
@@ -66,11 +123,33 @@ def _merge_files_to_pdf(
             pages_per_file[idx] if pages_per_file and idx < len(pages_per_file) else []
         )
         if ext in IMAGE_EXTS:
+            from PIL import ImageOps
+
+            # A4 dimensions in points (72 pt = 1 inch); at 150 DPI → pixels
+            DPI = 150
+            A4_W_PX = int(8.27 * DPI)  # 1240 px
+            A4_H_PX = int(11.69 * DPI)  # 1754 px
+
             with Image.open(fp) as img:
+                img = ImageOps.exif_transpose(img)  # fix phone rotation
                 if img.mode != "RGB":
                     img = img.convert("RGB")
+
+                # Scale image to fit A4 while keeping aspect ratio
+                iw, ih = img.size
+                scale = min(A4_W_PX / iw, A4_H_PX / ih)
+                new_w = int(iw * scale)
+                new_h = int(ih * scale)
+                img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+                # Create white A4 canvas and center the image
+                canvas = Image.new("RGB", (A4_W_PX, A4_H_PX), (255, 255, 255))
+                x = (A4_W_PX - new_w) // 2
+                y = (A4_H_PX - new_h) // 2
+                canvas.paste(img, (x, y))
+
                 buf = io.BytesIO()
-                img.save(buf, format="PDF")
+                canvas.save(buf, format="PDF", resolution=DPI)
                 buf.seek(0)
                 reader = PdfReader(buf)
                 for page in reader.pages:
@@ -81,10 +160,10 @@ def _merge_files_to_pdf(
                 for pn in wanted:
                     pi = pn - 1  # 1-based → 0-based
                     if 0 <= pi < len(reader.pages):
-                        writer.add_page(reader.pages[pi])
+                        _normalize_pdf_page(reader.pages[pi], writer)
             else:
                 for page in reader.pages:
-                    writer.add_page(page)
+                    _normalize_pdf_page(page, writer)
 
     with open(output_path, "wb") as f:
         writer.write(f)
@@ -100,7 +179,7 @@ def _extract_pdf_pages(pdf_path: str, pages: list[int], output_path: str) -> Non
     for page_num in pages:
         idx = page_num - 1  # convert to 0-based
         if 0 <= idx < len(reader.pages):
-            writer.add_page(reader.pages[idx])
+            _normalize_pdf_page(reader.pages[idx], writer)
     with open(output_path, "wb") as f:
         writer.write(f)
     writer.close()
@@ -117,6 +196,7 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "fitness_certificate": "Fitness Certificate",
     "police_report": "Police Report",
     "survey_report": "Survey Report",
+    "motor_survey_report": "Motor Survey Report",
     "claim_form": "Claim Form",
     "tax_report": "Tax Report",
     "labour_charges": "Labour Charges",
@@ -129,6 +209,7 @@ DOC_TYPE_DISPLAY_NAMES: dict[str, str] = {
     "cancelled_cheque": "Cancelled Cheque",
     "ncb_certificate": "NCB Certificate",
     "pre_inspection_report": "Pre-Inspection Report",
+    "rc_status": "RC Status",
     "gst_registration": "GST Registration",
     "affidavit": "Affidavit",
     "self_statement": "Self Statement",
@@ -262,6 +343,7 @@ def process_case_from_db(
         get_documents_by_case,
         reset_document_classifications,
         update_document_classification,
+        add_split_document,
     )
 
     case = get_case(case_id)
@@ -315,6 +397,11 @@ def process_case_from_db(
     # Build a flat list: (doc_db_record, doc_type, pages, extracted_data, source_file_path)
     classified_items: list[tuple[dict, str, list[int], dict, str]] = []
 
+    # Set of doc IDs excluded from data extraction / Excel filling
+    excluded_ids = {
+        doc["id"] for doc in valid_docs if doc.get("exclude_from_extraction")
+    }
+
     for doc in valid_docs:
         file_path = doc["file_path"]
         doc_list = combined_results.get(
@@ -325,11 +412,16 @@ def process_case_from_db(
             pages = doc_result.get("pages", [1])
             extracted_data = doc_result["data"]
             multi = len(doc_list) > 1
+            is_excluded = doc["id"] in excluded_ids
+            label = f"    {doc['original_name']} → {doc_type}"
             if multi:
-                print(f"    {doc['original_name']} → {doc_type} (pages {pages})")
-            else:
-                print(f"    {doc['original_name']} → {doc_type}")
-            grouped_data.setdefault(doc_type, []).append(extracted_data)
+                label += f" (pages {pages})"
+            if is_excluded:
+                label += " [classify only]"
+            print(label)
+            # Only include in grouped_data (used for extraction/Excel) if not excluded
+            if not is_excluded:
+                grouped_data.setdefault(doc_type, []).append(extracted_data)
             classified_items.append((doc, doc_type, pages, extracted_data, file_path))
 
     # ── Step 1b: Create classified/ with split/merged PDFs per type ──────────
@@ -342,6 +434,25 @@ def process_case_from_db(
         type_to_items.setdefault(doc_type, []).append(
             (doc, pages, extracted_data, file_path)
         )
+
+    # Track which doc IDs have already been classified in this run.
+    # When a source doc is split across multiple types, the first type claims the
+    # original DB record; subsequent types create new split records.
+    _classified_doc_ids: set[int] = set()
+
+    def _classify_doc(doc: dict, doc_type: str, classified_name: str) -> None:
+        """Update or create a DB record for a classified document."""
+        if doc["id"] not in _classified_doc_ids:
+            update_document_classification(doc["id"], doc_type, classified_name)
+            _classified_doc_ids.add(doc["id"])
+        else:
+            add_split_document(
+                case_id,
+                doc["original_name"],
+                doc["file_path"],
+                doc_type,
+                classified_name,
+            )
 
     for doc_type, items in type_to_items.items():
         display = DOC_TYPE_DISPLAY_NAMES.get(doc_type, "Extra Document")
@@ -373,11 +484,11 @@ def process_case_from_db(
                         f"{display}{ext}" if i == 1 else f"{display} ({i}){ext}"
                     )
                     shutil.copy2(fp, str(classified_dir / fallback_name))
-                    update_document_classification(doc["id"], doc_type, fallback_name)
+                    _classify_doc(doc, doc_type, fallback_name)
                 continue
 
             for doc, _, _, _ in items:
-                update_document_classification(doc["id"], doc_type, new_name)
+                _classify_doc(doc, doc_type, new_name)
 
             all_data_for_type = [ed for (_, _, ed, _) in items]
             with open(
@@ -439,15 +550,11 @@ def process_case_from_db(
                                 ext = Path(fp).suffix
                                 fallback = f"{d}{ext}" if j == 1 else f"{d} ({j}){ext}"
                                 shutil.copy2(fp, str(classified_dir / fallback))
-                                update_document_classification(
-                                    doc["id"], doc_type, fallback
-                                )
+                                _classify_doc(doc, doc_type, fallback)
                             continue
 
                         for doc, _, _, _ in sub_items:
-                            update_document_classification(
-                                doc["id"], doc_type, new_name
-                            )
+                            _classify_doc(doc, doc_type, new_name)
 
                         source_names = list(
                             dict.fromkeys(
@@ -489,7 +596,7 @@ def process_case_from_db(
                             new_name = f"{d}{ext}" if cnt == 1 else f"{d} ({cnt}){ext}"
                             shutil.copy2(fp, str(classified_dir / new_name))
 
-                        update_document_classification(doc["id"], doc_type, new_name)
+                        _classify_doc(doc, doc_type, new_name)
                         with open(
                             str(classified_dir / f"{Path(new_name).stem}.json"),
                             "w",
@@ -536,7 +643,7 @@ def process_case_from_db(
                             new_name = f"{d}{ext}" if cnt == 1 else f"{d} ({cnt}){ext}"
                             shutil.copy2(fp, str(classified_dir / new_name))
 
-                        update_document_classification(doc["id"], doc_type, new_name)
+                        _classify_doc(doc, doc_type, new_name)
 
                         with open(
                             str(classified_dir / f"{Path(new_name).stem}.json"),

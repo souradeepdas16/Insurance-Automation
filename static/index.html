@@ -185,6 +185,24 @@
 							<div class="doc-grid" id="doc-uploaded-list"></div>
 						</div>
 
+						<!-- Classify Only (Excluded from Excel) -->
+						<div class="card" id="docs-classify-only-card">
+							<div class="card-header">
+								<h3>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<path
+											d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+										/>
+										<line x1="9" y1="14" x2="15" y2="14" />
+									</svg>
+									Exclude from Excel
+								</h3>
+								<span class="doc-count" id="classify-only-count">0</span>
+							</div>
+							<p class="classify-only-hint">These documents will be named &amp; organized but will NOT be used for Excel data filling.</p>
+							<div class="doc-grid classify-only-drop" id="doc-classify-only-list"></div>
+						</div>
+
 						<!-- Classified Documents -->
 						<div class="card" id="docs-classified-card" style="display: none">
 							<div class="card-header">
@@ -285,7 +303,13 @@
 							</svg>
 							Extracted Data Summary
 						</h3>
+						<button class="btn btn-primary btn-save-extracted" id="btn-save-extracted" style="display: none" onclick="saveExtractedData()">
+							Save Changes
+						</button>
 					</div>
+					<p class="ext-edit-hint">
+						Double-click any value to edit. Click category columns to change part type. Changes are saved to JSON &amp; Excel.
+					</p>
 					<div id="extracted-body"></div>
 				</div>
 
