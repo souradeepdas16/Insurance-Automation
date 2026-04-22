@@ -1002,7 +1002,7 @@ def classify_and_extract_all(
     """
     results: dict[str, list[dict[str, Any]]] = {}
 
-    with ThreadPoolExecutor(max_workers=1) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         future_to_path = {
             pool.submit(classify_and_extract_single, fp, cancel_event): fp
             for fp in file_paths

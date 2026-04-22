@@ -112,6 +112,24 @@ app.add_middleware(
 )
 
 
+_worker_thread: threading.Thread | None = None
+_worker_lock = threading.Lock()
+
+
+def _ensure_worker_alive() -> None:
+    """Start or restart the processing worker thread if it's not running."""
+    global _worker_thread
+    with _worker_lock:
+        if _worker_thread is not None and _worker_thread.is_alive():
+            return
+        if _worker_thread is not None:
+            print("  ⚠ Processing worker thread died — restarting...")
+        _worker_thread = threading.Thread(
+            target=_queue_worker, daemon=True, name="processing-worker"
+        )
+        _worker_thread.start()
+
+
 @app.on_event("startup")
 def startup():
     init_db()
@@ -120,11 +138,7 @@ def startup():
         print(
             f"  ⚠ Reset {n} case(s) stuck in 'processing'/'queued' from a previous run."
         )
-    # Start the single processing worker thread
-    worker = threading.Thread(
-        target=_queue_worker, daemon=True, name="processing-worker"
-    )
-    worker.start()
+    _ensure_worker_alive()
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
@@ -356,6 +370,9 @@ def api_process_case(case_id: int):
     # Create a fresh cancellation event for this run
     cancel_event = threading.Event()
     _cancel_events[case_id] = cancel_event
+
+    # Ensure the worker thread is alive before enqueuing
+    _ensure_worker_alive()
 
     # Enqueue — the worker thread will pick it up
     _processing_queue.put(case_id)
