@@ -286,7 +286,7 @@ def process_case(
         for _fp, _doc_list in combined_results.items():
             for _res in _doc_list:
                 _dt = _res["type"]
-                _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, _dt.replace(\"_\", \" \").title())
+                _display = DOC_TYPE_DISPLAY_NAMES.get(_dt, _dt.replace("_", " ").title())
                 if _dt == "unknown":
                     _ai_name = (
                         _sanitize_ai_name(_res["data"].get("name", ""))
