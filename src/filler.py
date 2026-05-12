@@ -261,9 +261,34 @@ def _fill_fitness_cert(
 
 def _fill_route_permit(ws: Worksheet, data: RoutePermitData) -> None:
     mapping = CELLMAP["sheet1"].get("route_permit", {})
-    data_dict = asdict(data)
     for cell, field in mapping.items():
-        _write_cell(ws, cell, data_dict.get(field, ""))
+        if field == "permit_no":
+            # Format: "permit no. 123456 valid upto 01/02/2026 & authorization no. 123456 valid upto 01/02/2026"
+            parts = []
+            if data.permit_no:
+                part_a = f"Permit no. {data.permit_no}"
+                if data.valid_upto:
+                    part_a += f" valid upto {data.valid_upto}"
+                parts.append(part_a)
+            if data.permit_no_auth:
+                part_b = f"Authorization no. {data.permit_no_auth}"
+                if data.valid_upto_auth:
+                    part_b += f" valid upto {data.valid_upto_auth}"
+                parts.append(part_b)
+            _write_cell(ws, cell, " & ".join(parts) if parts else "")
+        elif field == "valid_upto":
+            # Already included in permit_no formatted string above, skip separate cell
+            pass
+        elif field == "type_of_permit":
+            _write_cell(ws, cell, data.type_of_permit or "")
+        elif field == "route_area":
+            # If authorization (Part B) is available → "Whole of India", else → "Whole State"
+            if data.permit_no_auth:
+                _write_cell(ws, cell, "Whole of India")
+            elif data.permit_no:
+                _write_cell(ws, cell, "Whole State")
+            else:
+                _write_cell(ws, cell, data.route_area or "")
 
 
 def _fill_workshop(
@@ -316,12 +341,12 @@ def _fill_accident(
         if field == "fir_detail":
             fir_text = ""
             if accident_doc and accident_doc.fir_no:
-                parts = [accident_doc.fir_no]
+                parts = [f"FIR no. {accident_doc.fir_no}"]
                 if accident_doc.fir_date:
-                    parts.append(f"dt. {accident_doc.fir_date}")
+                    parts.append(f"dtd. {accident_doc.fir_date}")
                 if accident_doc.police_station:
-                    parts.append(f"of {accident_doc.police_station}")
-                fir_text = " ".join(parts)
+                    parts.append(f"PS {accident_doc.police_station}")
+                fir_text = ", ".join(parts)
             elif data and data.fir_detail:
                 fir_text = data.fir_detail
             _write_cell(ws, cell, fir_text or "Nil (As Per Claim Form)")

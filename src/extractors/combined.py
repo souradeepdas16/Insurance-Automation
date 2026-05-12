@@ -415,19 +415,35 @@ Format:
 
 insurance_policy (vehicle insurance policy / cover note):
 {"type":"insurance_policy","pages":[1],"data":{"insurer_name":"","insurer_address":"","policy_number":"","policy_period":"DD.MM.YYYY to DD.MM.YYYY","idv":0,"insured_name":"","insured_address":"","contact_number":""}}
+• insurer_address = the policy issuing office address OR issuing office address OR policy servicing office address OR claim contact address OR "policy signed at" location. This is the BRANCH/OFFICE address of the insurance company — NOT the policy type, NOT the UIN number, NOT the product name.
+• policy_period = validity or period of insurance or period of cover. Format: "DD.MM.YYYY to DD.MM.YYYY".
 • idv is a plain integer (e.g. 1320000, NOT "13,20,000")
 
 registration_certificate (vehicle RC / registration certificate):
-{"type":"registration_certificate","pages":[1],"data":{"registration_number":"","date_of_reg_issue":"DD.MM.YYYY","date_of_reg_expiry":"DD.MM.YYYY","chassis_number":"last 6 digits","engine_number":"last 6 or full","make_year":"MAKE MODEL/YEAR","body_type":"","vehicle_class":"","laden_weight":"","unladen_weight":"","seating_capacity":0,"road_tax_paid_upto":"","fuel_type":"","colour":"","cubic_capacity":0,"hpa_with":""}}
+{"type":"registration_certificate","pages":[1],"data":{"registration_number":"","date_of_reg_issue":"DD.MM.YYYY","date_of_reg_expiry":"DD.MM.YYYY","chassis_number":"last 6 digits","engine_number":"last 6 or full","make_year":"MAKE MODEL/YEAR","body_type":"","vehicle_class":"","laden_weight":"","unladen_weight":"","seating_capacity":0,"road_tax_paid_upto":"","fuel_type":"","colour":"","cubic_capacity":0,"registered_owner":"","hpa_with":""}}
+• registration_number = registration number or regn. no. or regn number or reg no.
+• date_of_reg_issue = date of registration or date of regn or regn date or registration date.
+• date_of_reg_expiry = valid upto or regn validity or fitness validity or fitness upto. If not mentioned on RC, leave empty (will be picked from fitness certificate separately).
+• chassis_number = chassis no. or ch. no. or ch. number — extract last 6 digits only.
+• engine_number = engine no. or eng. no. or engin. number — extract last 6 digits or full number.
+• make_year = manufacturer name or maker name & model / variant (e.g. "MARUTI SWIFT/VXI 2020").
+• laden_weight = laden weight or registered laden wt. or RLW or GVW.
+• unladen_weight = unladen weight or registered unladen wt. or ULW.
+• registered_owner = registered owner or regd owner or name of owner or name of regd owner or owner name.
+• cubic_capacity = cubic capacity or CC.
 • If front+back are both visible on separate pages, combine fields from both sides into ONE entry with both page numbers.
 • hpa_with: name of the bank or financier shown in the Hypothecation/HPA field; use "" if not present.
 
-driving_license (driving licence / DL):
+driving_license (driving licence / DL / driving license status / DL status):
 {"type":"driving_license","pages":[1],"data":{"driver_name":"","dob":"DD.MM.YYYY","address":"","city_state":"","licence_number":"","alt_licence_number":"","date_of_issue":"DD.MM.YYYY","valid_till":"DD.MM.YYYY","valid_till_nt":"DD.MM.YYYY","valid_till_transport":"DD.MM.YYYY","issuing_authority":"","licence_type":""}}
-• valid_till = the overall/primary validity date shown on the DL.
+• licence_number = DL no. or number or license no. or code like HR-14, PB-04, WB-09, HP-03 followed by digits.
+• valid_till = validity or valid upto or valid till — the overall/primary validity date shown on the DL.
 • valid_till_nt = validity date for Non-Transport (NT) vehicle classes (LMV, MCWG, etc.). Look in the vehicle class table on the back of the DL. Use "" if not found.
 • valid_till_transport = validity date for Transport (T) vehicle classes (HMV, HTV, Trans, etc.). Look in the vehicle class table on the back of the DL. Use "" if not found.
-• licence_type = all vehicle classes listed on the DL separated by hyphens (e.g. "LMV-MCWG" or "LMV-HMV-TRANS").
+• licence_type = class of vehicle or vehicle class or authorized to drive or licensed to drive. Extract all vehicle classes listed on the DL separated by hyphens (e.g. "LMV-MCWG" or "LMV-HMV-TRANS").
+• date_of_issue = date of issue or issued on or issue date.
+• issuing_authority = issuing authority or licensing authority.
+• Also extract from "Know your driving License status" or "driving license details" or "DL status" online printouts.
 
 repair_estimate (repair estimate / quotation / service quotation / proforma — header says "Estimate" or "Quotation"):
 {"type":"repair_estimate","pages":[1],"data":{"parts":[{"sn":1,"name":"Part Name","estimated_price":0.0,"category":"metal"}],"labour":[{"sn":1,"description":"Labour description","estimated_price":0.0,"rr":0,"denting":0,"cw":0,"painting":0}],"total_labour_estimated":0.0,"dealer_name":"","dealer_address":"","workshop_status":""}}
@@ -457,26 +473,28 @@ final_invoice (final repair bill / tax invoice — header says "Tax Invoice" or 
 
 route_permit (route permit / goods permit / passenger permit):
 {"type":"route_permit","pages":[1],"data":{"permit_no":"","permit_holder_name":"","valid_upto":"DD.MM.YYYY","type_of_permit":"","route_area":"","permit_no_auth":"","valid_upto_auth":"DD.MM.YYYY"}}
-• permit_no = Part A permit number. valid_upto = Part A validity end date.
-• permit_no_auth = Authorization permit number. valid_upto_auth = Authorization validity end date. Use "" if not present.
-• type_of_permit = service type (e.g. Goods Service, All India Tourist Permit). route_area = region/route covered.
+• There are TWO parts: Part A and Authorization (also called Form 47 or Part B).
+• permit_no = Part A route permit number. valid_upto = Part A validity end date.
+• permit_no_auth = Authorization permit number (from Authorization / Form 47 / Part B). valid_upto_auth = Authorization validity end date. Use "" if not present.
+• type_of_permit = "Goods carrying" or "Passenger carrying" — normalize to one of these two values.
+• route_area = if ONLY Part A is available, write "Whole State". If Authorization (Part B) is ALSO available, write "Whole of India".
 
 fitness_certificate (fitness certificate / vehicle fitness):
 {"type":"fitness_certificate","pages":[1],"data":{"valid_upto":"DD.MM.YYYY"}}
 • valid_upto = fitness certificate validity end date.
 
-claim_form (insurance claim form filled by insured / claim intimation form):
+claim_form (insurance claim form filled by insured / claim intimation form / intimation letter):
 {"type":"claim_form","pages":[1,2,3],"data":{"date_of_accident":"DD.MM.YYYY","place_of_accident":"","cause_of_accident":"brief description of how the accident happened","fir_detail":"FIR number and details, or Nil","injury_third_party":"injury or third party loss details, or Nil"}}
-• Claim forms are usually 2-5 pages. Group ALL pages into ONE entry (e.g. "pages":[1,2,3,4]).
-• date_of_accident = date of accident/loss as mentioned in the claim form.
-• place_of_accident = place/location of accident/loss as mentioned in the claim form.
+• Claim forms / intimation letters are usually 2-5 pages. Group ALL pages into ONE entry (e.g. "pages":[1,2,3,4]).
+• date_of_accident = date & time of accident — pick from the claim form or intimation letter.
+• place_of_accident = place of accident — pick from the claim form or intimation letter.
 • cause_of_accident = brief narrative of how the accident happened (what the insured stated).
 • fir_detail = FIR number/police station if mentioned, otherwise "Nil (As Per Claim Form)".
 • injury_third_party = any injury or third party loss mentioned, otherwise "Nil (As Per Claim Form)".
 
 vehicle_image (vehicle damage photos / claim photos / survey photos with visible date):
 {"type":"vehicle_image","pages":[1],"data":{"date_of_survey":"DD.MM.YYYY"}}
-• date_of_survey = the date visible or stamped on the vehicle photo (e.g. date overlay, timestamp). Use "" if no date is visible.
+• date_of_survey = the date visible or stamped on the vehicle photo (e.g. date overlay, timestamp watermark). This is used as the date of allotment of survey and date & time of survey. Use "" if no date is visible.
 
 towing_bill (towing charges / towing bill / crane charges / vehicle recovery bill):
 {"type":"towing_bill","pages":[1],"data":{}}
@@ -495,7 +513,10 @@ kyc_form (KYC form / Know Your Customer form / customer verification form):
 
 police_report (FIR / police report / DDR / GD entry about the accident):
 {"type":"police_report","pages":[1],"data":{"fir_no":"","fir_date":"DD.MM.YYYY","police_station":""}}
-• fir_no = FIR/DDR/GD number. fir_date = date filed. police_station = name of police station.
+• fir_no = FIR no. or GD no. or DDR number — extract the number only.
+• fir_date = date filed (DD.MM.YYYY).
+• police_station = name of the police station (e.g. "Habbra", "Sadar").
+• These three fields will be formatted as: "FIR no. 1234, dtd. 01/02/2026, PS Habbra".
 
 survey_report (surveyor's detailed assessment report):
 {"type":"survey_report","pages":[1],"data":{"report_no":"","report_date":"DD.MM.YYYY","surveyor_name":"","surveyor_phone":"","surveyor_city":""}}

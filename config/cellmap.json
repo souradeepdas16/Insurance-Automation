@@ -15,6 +15,7 @@
 			"G25": "registration_number",
 			"G26": "date_of_reg_issue",
 			"G27": "date_of_reg_expiry",
+			"G28": "registered_owner",
 			"G29": "chassis_number",
 			"G30": "engine_number",
 			"G31": "make_year",
